@@ -183,7 +183,7 @@ class DashboardController extends Controller
      *
      * @return string
      */
-    private function currency(float|int $amount): string
+    private function currency(float|int|string $amount): string
     {
         return '$'.number_format((float) $amount, 0);
     }
