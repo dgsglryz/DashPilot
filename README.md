@@ -5,6 +5,7 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 ## Latest Updates
 
 - **Nov 15** – WordPress health integration added (`WordPressService` + `CheckSiteHealth` job + Redis caching).
+- **Nov 15** – Shopify REST + GraphQL services provide cached store metrics for dashboard cards.
 - **Nov 15** – ESLint flat config (`npm run lint`) enforces Vue 3 + TS conventions in CI.
 
 ## Tech Stack
@@ -34,6 +35,8 @@ Key environment variables:
 | `QUEUE_CONNECTION` | Uses Redis queues for health checks & notifications | `redis` |
 | `MAIL_HOST`, `MAIL_PORT` | Points to MailHog for local email previews | `mailhog`, `1025` |
 | `WORDPRESS_HTTP_TIMEOUT` | Timeout (seconds) for WordPress REST calls | `10` |
+| `SHOPIFY_API_VERSION` | REST/GraphQL version path for Shopify Admin API | `2024-10` |
+| `SHOPIFY_HTTP_TIMEOUT` | Timeout (seconds) for Shopify HTTP requests | `10` |
 
 ## Running the App
 
@@ -55,6 +58,12 @@ CI runs both commands plus Vite build; failing lint/tests block the pipeline.
 - `app/Modules/Sites/Services/WordPressService` pulls `/wp-json/dashpilot/v1/health` with optional bearer token, caches the payload in Redis for 5 minutes, and normalizes plugin/theme/version data.
 - `app/Modules/Sites/Jobs/CheckSiteHealth` dispatches on the `health-checks` queue, invokes the service, stores a `SiteCheck` record, and updates `Site::health_score` / `last_checked_at`.
 - Configure each site’s `wp_api_url` + `wp_api_key` (if required) in the database; the job will skip invalid entries via domain exception handling.
+
+## Shopify REST & GraphQL Integration
+
+- `app/Modules/Shopify/Services/ShopifyRestService` calls `/admin/api/<version>/shop.json`, `orders.json`, and `products/count.json` (with `X-Shopify-Access-Token`) to return cached overview metrics for each site.
+- `app/Modules/Shopify/Services/ShopifyGraphQLService` issues the nested analytics query (products + variants + recent orders) and caches the GraphQL payload for 10 minutes.
+- Both services throw `ShopifyApiException` when credentials (`shopify_store_url`, `shopify_access_token`) are missing or the remote responds with errors—ideal for future jobs/alerts.
 
 ## Useful Commands
 

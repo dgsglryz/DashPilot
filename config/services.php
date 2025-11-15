@@ -39,4 +39,9 @@ return [
         'timeout' => env('WORDPRESS_HTTP_TIMEOUT', 10),
     ],
 
+    'shopify' => [
+        'version' => env('SHOPIFY_API_VERSION', '2024-10'),
+        'timeout' => env('SHOPIFY_HTTP_TIMEOUT', 10),
+    ],
+
 ];
