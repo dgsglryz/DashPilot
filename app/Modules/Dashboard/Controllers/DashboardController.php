@@ -49,7 +49,7 @@ class DashboardController extends Controller
             'notifications' => $this->buildNotifications(),
         ];
 
-        return Inertia::render('Core/Pages/Dashboard', [
+        return Inertia::render('Dashboard', [
             'userProfile' => [
                 'name' => $request->user()?->name ?? 'AgencyOps',
                 'email' => $request->user()?->email ?? 'ops@agency.com',
