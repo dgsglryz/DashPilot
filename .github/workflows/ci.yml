@@ -75,35 +75,5 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-      - name: Send webhook notification
-        uses: fjogeleit/http-request-action@v1
-        if: ${{ secrets.NOTIFY_WEBHOOK_URL != '' }}
-        with:
-          url: ${{ secrets.NOTIFY_WEBHOOK_URL }}
-          method: "POST"
-          data: |
-            {
-              "status": "${{ needs.build-test.result }}",
-              "workflow": "DashPilot CI/CD",
-              "commit": "${{ github.sha }}",
-              "actor": "${{ github.actor }}"
-            }
-
-      - name: Send email notification
-        uses: dawidd6/action-send-mail@v3
-        if: ${{ secrets.SMTP_SERVER != '' && secrets.SMTP_USERNAME != '' && secrets.NOTIFY_EMAIL_TO != '' }}
-        with:
-          server_address: ${{ secrets.SMTP_SERVER }}
-          server_port: ${{ secrets.SMTP_PORT }}
-          username: ${{ secrets.SMTP_USERNAME }}
-          password: ${{ secrets.SMTP_PASSWORD }}
-          subject: "DashPilot CI/CD - ${{ needs.build-test.result }}"
-          to: ${{ secrets.NOTIFY_EMAIL_TO }}
-          from: DashPilot CI/CD <${{ secrets.NOTIFY_EMAIL_FROM }}>
-          secure: true
-          body: |
-            Workflow: DashPilot CI/CD
-            Result: ${{ needs.build-test.result }}
-            Commit: ${{ github.sha }}
-            Branch: ${{ github.ref }}
-            Actor: ${{ github.actor }}
+      - name: Notification placeholders disabled
+        run: echo "Notifications temporarily disabled until secrets are configured."
