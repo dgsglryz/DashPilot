@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'wordpress' => [
+        'timeout' => env('WORDPRESS_HTTP_TIMEOUT', 10),
+    ],
+
 ];

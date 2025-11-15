@@ -15,6 +15,15 @@ class SiteCheck extends Model
 {
     use HasFactory;
 
+    public const TYPE_UPTIME = 'uptime';
+    public const TYPE_PERFORMANCE = 'performance';
+    public const TYPE_SECURITY = 'security';
+    public const TYPE_BACKUP = 'backup';
+
+    public const STATUS_PASS = 'pass';
+    public const STATUS_WARNING = 'warning';
+    public const STATUS_FAIL = 'fail';
+
     /**
      * @var array<int, string>
      */
