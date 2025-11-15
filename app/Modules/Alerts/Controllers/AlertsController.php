@@ -1,0 +1,125 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Modules\Alerts\Controllers;
+
+use App\Http\Controllers\Controller;
+use App\Modules\Alerts\Models\Alert;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
+
+/**
+ * AlertsController exposes the alert inbox, acknowledgement, and resolve actions.
+ */
+class AlertsController extends Controller
+{
+    /**
+     * Display the alert center.
+     */
+    public function index(): Response
+    {
+        $alerts = Alert::with('site')
+            ->latest('created_at')
+            ->get()
+            ->map(function (Alert $alert) {
+                return [
+                    'id' => $alert->id,
+                    'title' => $alert->title ?? Str::headline($alert->type),
+                    'message' => $alert->message,
+                    'severity' => $this->mapSeverity($alert->severity),
+                    'status' => $alert->status ?? ($alert->is_resolved ? 'resolved' : 'active'),
+                    'type' => $this->mapType($alert->type),
+                    'siteId' => $alert->site_id,
+                    'siteName' => $alert->site?->name ?? 'Unknown Site',
+                    'isRead' => $alert->is_read,
+                    'createdAt' => $alert->created_at?->toIso8601String(),
+                ];
+            })
+            ->all();
+
+        $stats = [
+            'critical' => collect($alerts)->where('severity', 'critical')->where('status', '!=', 'resolved')->count(),
+            'warning' => collect($alerts)->where('severity', 'warning')->where('status', '!=', 'resolved')->count(),
+            'info' => collect($alerts)->where('severity', 'info')->where('status', '!=', 'resolved')->count(),
+            'resolved' => collect($alerts)->where('status', 'resolved')->count(),
+        ];
+
+        return Inertia::render('Alerts/Pages/Index', [
+            'alerts' => $alerts,
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Mark every unread alert as read.
+     */
+    public function markAllRead(): RedirectResponse
+    {
+        Alert::where('is_read', false)->update(['is_read' => true]);
+
+        return back()->with('success', 'All alerts marked as read.');
+    }
+
+    /**
+     * Acknowledge an alert without resolving it.
+     */
+    public function acknowledge(Alert $alert): RedirectResponse
+    {
+        $alert->update([
+            'status' => 'acknowledged',
+            'is_read' => true,
+            'acknowledged_at' => now(),
+            'acknowledged_by' => Auth::id(),
+        ]);
+
+        return back()->with('success', 'Alert acknowledged.');
+    }
+
+    /**
+     * Resolve an alert and mark it complete.
+     */
+    public function resolve(Alert $alert): RedirectResponse
+    {
+        $alert->update([
+            'status' => 'resolved',
+            'is_resolved' => true,
+            'is_read' => true,
+            'resolved_at' => now(),
+            'resolved_by' => Auth::id(),
+        ]);
+
+        return back()->with('success', 'Alert resolved.');
+    }
+
+    /**
+     * Normalize severity buckets used by the UI.
+     */
+    private function mapSeverity(?string $severity): string
+    {
+        return match ($severity) {
+            'critical', 'high' => 'critical',
+            'medium' => 'warning',
+            default => 'info',
+        };
+    }
+
+    /**
+     * Normalize alert type labels.
+     */
+    private function mapType(?string $type): string
+    {
+        return match ($type) {
+            'site_down', 'downtime' => 'downtime',
+            'security' => 'security',
+            'backup_failed', 'backup' => 'backup',
+            'ssl_expiry', 'ssl' => 'ssl',
+            'performance' => 'performance',
+            default => 'general',
+        };
+    }
+}
+

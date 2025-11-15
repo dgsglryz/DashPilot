@@ -1,0 +1,38 @@
+<?php
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('liquid_snippets', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->string('category');
+            $table->text('description')->nullable();
+            $table->longText('code');
+            $table->boolean('is_public')->default(false);
+            $table->unsignedInteger('usage_count')->default(0);
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->timestamps();
+
+            $table->index(['category', 'is_public']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('liquid_snippets');
+    }
+};
+

@@ -10,6 +10,7 @@ use App\Modules\Reports\Models\Report;
 use App\Modules\Sites\Models\Site;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,162 +31,110 @@ class DashboardController extends Controller
         $totalSites = Site::count();
         $healthySites = Site::where('status', 'healthy')->count();
         $criticalAlerts = Alert::where('is_resolved', false)->count();
-        $latestReport = Report::latest('report_month')->first();
         $averageSeo = (int) round(Site::avg('health_score') ?: 82);
+        $avgUptime = (float) (Report::avg('uptime_percentage') ?? 99.2);
+        $activitiesToday = ActivityLog::whereDate('created_at', Carbon::today())->count();
 
-        $cards = $this->buildCards($totalSites, $healthySites, $criticalAlerts, $latestReport, $averageSeo);
-
-        $operations = [
-            'sitePerformance' => [
-                'updatedAgo' => 'Updated: '.Carbon::now()->subMinutes(5)->diffForHumans(null, true),
-                'activeSites' => "{$healthySites}/{$totalSites}",
-                'status' => $healthySites >= ($totalSites * 0.8) ? 'Healthy' : 'Needs attention',
+        return Inertia::render('Dashboard/Pages/Index', [
+            'stats' => [
+                'totalSites' => $totalSites,
+                'activeSites' => $healthySites,
+                'healthySites' => $healthySites,
+                'criticalAlerts' => $criticalAlerts,
+                'avgUptime' => $avgUptime,
+                'totalRevenue' => $this->estimateRevenue($totalSites, $avgUptime),
+                'avgSeoScore' => $averageSeo,
+                'activitiesToday' => $activitiesToday,
             ],
-            'metrics' => [
-                ['label' => 'Uptime', 'value' => '99%', 'subtitle' => 'Load time'],
-                ['label' => 'Revenue', 'value' => $this->currency($latestReport?->uptime_percentage ?? 5000), 'subtitle' => 'Last month'],
-                ['label' => 'SEO Score', 'value' => "{$averageSeo}", 'subtitle' => 'Current'],
-            ],
-            'notifications' => $this->buildNotifications(),
-        ];
-
-        return Inertia::render('Dashboard', [
-            'userProfile' => [
-                'name' => $request->user()?->name ?? 'AgencyOps',
-                'email' => $request->user()?->email ?? 'ops@agency.com',
-                'avatar' => 'https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=200&q=80',
-            ],
-            'cards' => $cards,
-            'calendar' => [
-                'range' => 'May 01 - May 21, 2023',
-                'days' => $this->calendarDays(),
-            ],
-            'operations' => $operations,
-            'activityFeed' => ActivityLog::latest()->take(5)->get(['action', 'description', 'created_at'])->map(fn (ActivityLog $log) => [
-                'action' => $log->action,
-                'description' => $log->description,
-                'time' => $log->created_at?->diffForHumans(),
-            ]),
+            'recentAlerts' => $this->recentAlerts(),
+            'scheduledChecks' => $this->scheduledChecks(),
         ]);
     }
 
     /**
-     * Build overview cards.
+     * Build recent alert payload for the sidebar.
      *
-     * @param int $totalSites
-     * @param int $healthySites
-     * @param int $criticalAlerts
-     * @param Report|null $latestReport
-     * @param int $averageSeo
-     *
-     * @return array<int, array<string, mixed>>
+     * @return array<int, array<string, string|int>>
      */
-    private function buildCards(int $totalSites, int $healthySites, int $criticalAlerts, ?Report $latestReport, int $averageSeo): array
+    private function recentAlerts(): array
     {
-        return [
-            [
-                'title' => 'Site Monitoring',
-                'subtitle' => 'Track site performance',
-                'description' => 'Real-time updates available. '.$totalSites.' sites monitored.',
-                'stats' => [
-                    ['label' => 'Uptime', 'value' => '99.5%'],
-                    ['label' => 'Alerts', 'value' => "{$criticalAlerts} open"],
-                ],
-                'image' => 'https://images.unsplash.com/photo-1517430816045-df4b7de11d1d?auto=format&fit=crop&w=600&q=80',
-            ],
-            [
-                'title' => 'SEO Performance',
-                'subtitle' => 'Check SEO scores now',
-                'description' => 'Last updated: '.Carbon::now()->subMinutes(15)->format('g:i A'),
-                'tag' => 'View Report',
-                'stats' => [
-                    ['label' => 'SEO Score', 'value' => "{$averageSeo}%"],
-                    ['label' => 'Issues', 'value' => '5 unresolved'],
-                ],
-                'image' => 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80',
-            ],
-            [
-                'title' => 'Revenue Overview',
-                'subtitle' => 'Shopify earnings this month',
-                'description' => 'Total revenue: '.$this->currency($latestReport?->uptime_percentage ?? 5000),
-                'tag' => 'View Stats',
-                'stats' => [
-                    ['label' => 'Growth', 'value' => '15% this week'],
-                ],
-                'image' => 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80',
-            ],
-            [
-                'title' => 'Recent Activities',
-                'subtitle' => 'Updates on all sites',
-                'description' => 'Last activity: '.Carbon::now()->subHours(1)->format('g A'),
-                'stats' => [
-                    ['label' => 'Weekly Summary', 'value' => 'Report ready'],
-                ],
-                'image' => 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=600&q=80',
-            ],
-        ];
+        return Alert::latest('created_at')
+            ->take(5)
+            ->get(['id', 'type', 'severity', 'message', 'created_at'])
+            ->map(function (Alert $alert): array {
+                return [
+                    'id' => $alert->id,
+                    'title' => $alert->type.' · '.Str::limit($alert->message, 40),
+                    'severity' => $this->mapSeverity($alert->severity),
+                    'time' => $alert->created_at?->diffForHumans() ?? 'Just now',
+                ];
+            })
+            ->all();
     }
 
     /**
-     * Generate calendar tiles.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function calendarDays(): array
-    {
-        $events = [
-            4 => ['title' => 'Site Monitoring', 'subtitle' => '15 Active Sites', 'tag' => 'Uptime 99.5%'],
-            10 => ['title' => 'SEO Performance', 'subtitle' => 'Revenue Overview', 'tag' => '$5,000'],
-            15 => ['title' => 'Alerts', 'subtitle' => '3 alerts pending', 'tag' => 'Check'],
-            19 => ['title' => 'Recent Activities', 'subtitle' => 'Weekly summary'],
-        ];
-
-        return collect(range(1, 21))->map(function (int $day) use ($events) {
-            return [
-                'day' => $day,
-                'title' => $events[$day]['title'] ?? null,
-                'subtitle' => $events[$day]['subtitle'] ?? null,
-                'tag' => $events[$day]['tag'] ?? null,
-            ];
-        })->all();
-    }
-
-    /**
-     * Build notifications array.
+     * Generate scheduled calendar events that match the UI.
      *
      * @return array<int, array<string, string>>
      */
-    private function buildNotifications(): array
+    private function scheduledChecks(): array
     {
-        $latestAlert = Alert::where('is_resolved', false)->latest()->first();
-
-        if ($latestAlert === null) {
-            return [
-                [
-                    'title' => 'All systems nominal',
-                    'description' => 'No new alerts. Keep monitoring scheduled jobs.',
-                ],
-            ];
-        }
+        $base = Carbon::now()->startOfMonth();
 
         return [
             [
-                'title' => 'New alert: '.$latestAlert->type,
-                'description' => $latestAlert->message,
+                'date' => $base->copy()->addDays(3)->toDateString(),
+                'title' => 'Site Monitoring',
+                'subtitle' => '15 active sites',
+                'tag' => 'Uptime 99.5%',
+                'status' => 'info',
+            ],
+            [
+                'date' => $base->copy()->addDays(9)->toDateString(),
+                'title' => 'SEO Performance',
+                'subtitle' => 'Revenue overview',
+                'tag' => '$5,000',
+                'status' => 'warning',
+            ],
+            [
+                'date' => $base->copy()->addDays(14)->toDateString(),
+                'title' => 'Alerts review',
+                'subtitle' => '3 alerts pending',
+                'tag' => 'Follow-up',
+                'status' => 'danger',
+            ],
+            [
+                'date' => $base->copy()->addDays(18)->toDateString(),
+                'title' => 'Weekly activity report',
+                'subtitle' => 'Ops & support',
+                'tag' => 'Sync',
+                'status' => 'success',
             ],
         ];
     }
 
     /**
-     * Format monetary values.
+     * Rough revenue estimation used for demo purposes.
      *
-     * @param float|int $amount
+     * @param int $totalSites
+     * @param float $uptime
      *
-     * @return string
+     * @return int
      */
-    private function currency(float|int|string $amount): string
+    private function estimateRevenue(int $totalSites, float $uptime): int
     {
-        return '$'.number_format((float) $amount, 0);
+        $base = max(1, $totalSites) * 750;
+
+        return (int) round($base * ($uptime / 95));
+    }
+
+    private function mapSeverity(?string $severity): string
+    {
+        return match (strtolower($severity ?? 'info')) {
+            'critical', 'high' => 'critical',
+            'medium' => 'warning',
+            default => 'info',
+        };
     }
 }
 

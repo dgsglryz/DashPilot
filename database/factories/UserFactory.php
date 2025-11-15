@@ -38,6 +38,24 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'role' => fake()->randomElement(['member', 'manager', 'admin']),
+            'status' => 'active',
+            'company' => fake()->company(),
+            'timezone' => fake()->randomElement(['UTC', 'America/Los_Angeles', 'Europe/London']),
+            'language' => 'en',
+            'last_active_at' => now()->subMinutes(random_int(5, 120)),
+            'notification_settings' => [
+                'emailAlerts' => true,
+                'emailReports' => true,
+                'emailDowntime' => true,
+                'twoFactorEnabled' => false,
+            ],
+            'monitoring_settings' => [
+                'checkInterval' => 5,
+                'timeout' => 10,
+                'uptimeThreshold' => 95,
+                'responseTimeThreshold' => 2000,
+            ],
         ];
     }
 

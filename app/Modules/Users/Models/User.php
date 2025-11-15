@@ -27,6 +27,14 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'status',
+        'company',
+        'timezone',
+        'language',
+        'last_active_at',
+        'notification_settings',
+        'monitoring_settings',
     ];
 
     /**
@@ -49,6 +57,9 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_active_at' => 'datetime',
+            'notification_settings' => 'array',
+            'monitoring_settings' => 'array',
         ];
     }
 

@@ -21,12 +21,17 @@ class Alert extends Model
      */
     protected $fillable = [
         'site_id',
+        'title',
         'type',
         'severity',
+        'status',
         'message',
         'is_resolved',
+        'is_read',
         'resolved_at',
         'resolved_by',
+        'acknowledged_at',
+        'acknowledged_by',
         'resolution_notes',
     ];
 
@@ -37,7 +42,10 @@ class Alert extends Model
         'site_id' => 'int',
         'is_resolved' => 'bool',
         'resolved_at' => 'datetime',
+        'acknowledged_at' => 'datetime',
         'resolved_by' => 'int',
+        'acknowledged_by' => 'int',
+        'is_read' => 'bool',
     ];
 
     /**
@@ -54,5 +62,13 @@ class Alert extends Model
     public function resolver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'resolved_by');
+    }
+
+    /**
+     * User who acknowledged the alert (optional).
+     */
+    public function acknowledger(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'acknowledged_by');
     }
 }

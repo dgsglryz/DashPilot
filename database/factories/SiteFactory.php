@@ -6,6 +6,7 @@ namespace Database\Factories;
 use App\Modules\Clients\Models\Client;
 use App\Modules\Sites\Models\Site;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Site>
@@ -16,12 +17,27 @@ class SiteFactory extends Factory
 
     public function definition(): array
     {
+        $name = $this->faker->company().' '.$this->faker->randomElement(['Studio', 'Labs', 'Collective', 'Digital', 'Partners']);
+        $slug = Str::slug($name.'-'.$this->faker->unique()->numberBetween(100, 999));
+        $industry = $this->faker->randomElement([
+            'E-commerce & Retail',
+            'Hospitality & Travel',
+            'Healthcare',
+            'Financial Services',
+            'Education',
+            'Media & Publishing',
+            'Non-profit',
+        ]);
+
         return [
             'client_id' => Client::factory(),
-            'name' => $this->faker->domainWord().' Site',
+            'name' => $name,
             'url' => $this->faker->unique()->url(),
             'type' => $this->faker->randomElement(['wordpress', 'shopify', 'woocommerce', 'custom']),
-            'status' => $this->faker->randomElement(['healthy', 'warning', 'critical', 'offline']),
+            'status' => $this->faker->randomElement(['healthy', 'warning', 'critical']),
+            'industry' => $industry,
+            'region' => $this->faker->randomElement(['North America', 'Europe', 'Asia-Pacific', 'Latin America', 'Middle East & Africa']),
+            'thumbnail_url' => "https://picsum.photos/seed/{$slug}/640/360",
             'health_score' => $this->faker->numberBetween(40, 100),
             'last_checked_at' => $this->faker->dateTimeBetween('-1 day'),
             'uptime_percentage' => $this->faker->randomFloat(2, 92, 100),

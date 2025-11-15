@@ -24,6 +24,7 @@ module.exports = defineConfigWithVueTs(
             'vue/attributes-order': 'off',
             'vue/html-closing-bracket-newline': 'off',
             'vue/multiline-html-element-content-newline': 'off',
+            '@typescript-eslint/ban-ts-comment': 'off',
         },
     },
 );

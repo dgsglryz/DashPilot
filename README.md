@@ -4,6 +4,7 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 
 ## Latest Updates
 
+- **Nov 16** – Demo seeder now loads **125 production-like sites** (unique industries, thumbnails, alerts, tasks, reports) for instant dashboard testing.
 - **Nov 15** – WordPress health integration added (`WordPressService` + `CheckSiteHealth` job + Redis caching).
 - **Nov 15** – Shopify REST + GraphQL services provide cached store metrics for dashboard cards.
 - **Nov 15** – SEOService computes on-page score (meta/H1/SSL/speed/viewport/alt) with Redis caching.
@@ -30,21 +31,37 @@ npm run build
 
 Key environment variables:
 
-| Variable | Purpose | Default |
-| --- | --- | --- |
-| `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | MySQL connection (Docker service `db`) | `db`, `3306`, `dashpilot`, `dashpilot`, `secret` |
-| `QUEUE_CONNECTION` | Uses Redis queues for health checks & notifications | `redis` |
-| `MAIL_HOST`, `MAIL_PORT` | Points to MailHog for local email previews | `mailhog`, `1025` |
-| `WORDPRESS_HTTP_TIMEOUT` | Timeout (seconds) for WordPress REST calls | `10` |
-| `SHOPIFY_API_VERSION` | REST/GraphQL version path for Shopify Admin API | `2024-10` |
-| `SHOPIFY_HTTP_TIMEOUT` | Timeout (seconds) for Shopify HTTP requests | `10` |
-| `SEO_MOCK_ENDPOINT` | Temporary endpoint returning mock SEO payloads | `https://dashpilot.mock/api/seo` |
+| Variable                                                          | Purpose                                             | Default                                          |
+| ----------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------ |
+| `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | MySQL connection (Docker service `db`)              | `db`, `3306`, `dashpilot`, `dashpilot`, `secret` |
+| `QUEUE_CONNECTION`                                                | Uses Redis queues for health checks & notifications | `redis`                                          |
+| `MAIL_HOST`, `MAIL_PORT`                                          | Points to MailHog for local email previews          | `mailhog`, `1025`                                |
+| `WORDPRESS_HTTP_TIMEOUT`                                          | Timeout (seconds) for WordPress REST calls          | `10`                                             |
+| `SHOPIFY_API_VERSION`                                             | REST/GraphQL version path for Shopify Admin API     | `2024-10`                                        |
+| `SHOPIFY_HTTP_TIMEOUT`                                            | Timeout (seconds) for Shopify HTTP requests         | `10`                                             |
+| `SEO_MOCK_ENDPOINT`                                               | Temporary endpoint returning mock SEO payloads      | `https://dashpilot.mock/api/seo`                 |
 
 ## Running the App
 
 - `docker-compose up -d` – spins up PHP-FPM, MySQL, Redis, MailHog, phpMyAdmin.
 - `docker-compose exec app php artisan serve --host=0.0.0.0 --port=8000` (or use `php artisan serve` locally) – serves Inertia SPA.
 - `docker-compose exec app php artisan queue:work --queue=health-checks,default` – processes queued jobs such as `CheckSiteHealth`.
+- Demo login: `demo@dashpilot.test / Password123`
+
+## Demo Data (125 Sites)
+
+- `database/seeders/DatabaseSeeder` now generates 125 sites across ecommerce, hospitality, healthcare, finance, education, media, and SaaS verticals.
+- Every site gets a unique `picsum.photos` thumbnail, uptime/load metrics, SiteChecks, alerts, tasks, reports, and recent activity so the dashboard/alerts/metrics pages feel real.
+- Run **any time** to refresh data:
+
+```bash
+# Local or within Docker
+php artisan migrate:fresh --seed
+# Docker helper
+docker-compose exec app php artisan migrate:fresh --seed
+```
+
+- Data is written to MySQL (Docker service `db`); inspect/edit via phpMyAdmin at `http://localhost:8080`.
 
 ## Testing & Linting
 
