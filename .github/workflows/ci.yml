@@ -72,22 +72,14 @@ jobs:
   notify:
     name: Notify Team
     needs: [build-test]
-    if: ${{ always() && (env.NOTIFY_WEBHOOK_URL != '' || env.NOTIFY_EMAIL_TO != '') }}
+    if: ${{ always() && (secrets.NOTIFY_WEBHOOK_URL != '' || secrets.NOTIFY_EMAIL_TO != '') }}
     runs-on: ubuntu-latest
-    env:
-      NOTIFY_WEBHOOK_URL: ${{ secrets.NOTIFY_WEBHOOK_URL }}
-      NOTIFY_EMAIL_TO: ${{ secrets.NOTIFY_EMAIL_TO }}
-      NOTIFY_EMAIL_FROM: ${{ secrets.NOTIFY_EMAIL_FROM }}
-      SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-      SMTP_PORT: ${{ secrets.SMTP_PORT }}
-      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
     steps:
       - name: Send webhook notification
         uses: fjogeleit/http-request-action@v1
-        if: ${{ env.NOTIFY_WEBHOOK_URL != '' }}
+        if: ${{ secrets.NOTIFY_WEBHOOK_URL != '' }}
         with:
-          url: ${{ env.NOTIFY_WEBHOOK_URL }}
+          url: ${{ secrets.NOTIFY_WEBHOOK_URL }}
           method: "POST"
           data: |
             {
@@ -99,15 +91,15 @@ jobs:
 
       - name: Send email notification
         uses: dawidd6/action-send-mail@v3
-        if: ${{ env.SMTP_SERVER != '' && env.SMTP_USERNAME != '' && env.NOTIFY_EMAIL_TO != '' }}
+        if: ${{ secrets.SMTP_SERVER != '' && secrets.SMTP_USERNAME != '' && secrets.NOTIFY_EMAIL_TO != '' }}
         with:
-          server_address: ${{ env.SMTP_SERVER }}
-          server_port: ${{ env.SMTP_PORT }}
-          username: ${{ env.SMTP_USERNAME }}
-          password: ${{ env.SMTP_PASSWORD }}
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
           subject: "DashPilot CI/CD - ${{ needs.build-test.result }}"
-          to: ${{ env.NOTIFY_EMAIL_TO }}
-          from: DashPilot CI/CD <${{ env.NOTIFY_EMAIL_FROM }}>
+          to: ${{ secrets.NOTIFY_EMAIL_TO }}
+          from: DashPilot CI/CD <${{ secrets.NOTIFY_EMAIL_FROM }}>
           secure: true
           body: |
             Workflow: DashPilot CI/CD
