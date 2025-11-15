@@ -38,6 +38,14 @@ jobs:
           extensions: mbstring, intl, pcntl, bcmath, mysql
           coverage: none
 
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
       - name: Validate composer.json
         run: composer validate --no-check-lock
 
