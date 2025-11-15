@@ -72,7 +72,7 @@ jobs:
   notify:
     name: Notify Team
     needs: [build-test]
-    if: ${{ always() && (secrets.NOTIFY_WEBHOOK_URL != '' || secrets.NOTIFY_EMAIL_TO != '') }}
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
       - name: Send webhook notification
