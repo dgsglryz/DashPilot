@@ -44,4 +44,8 @@ return [
         'timeout' => env('SHOPIFY_HTTP_TIMEOUT', 10),
     ],
 
+    'seo' => [
+        'mock_endpoint' => env('SEO_MOCK_ENDPOINT', 'https://dashpilot.mock/api/seo'),
+    ],
+
 ];

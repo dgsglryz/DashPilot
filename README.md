@@ -6,6 +6,7 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 
 - **Nov 15** – WordPress health integration added (`WordPressService` + `CheckSiteHealth` job + Redis caching).
 - **Nov 15** – Shopify REST + GraphQL services provide cached store metrics for dashboard cards.
+- **Nov 15** – SEOService computes on-page score (meta/H1/SSL/speed/viewport/alt) with Redis caching.
 - **Nov 15** – ESLint flat config (`npm run lint`) enforces Vue 3 + TS conventions in CI.
 
 ## Tech Stack
@@ -37,6 +38,7 @@ Key environment variables:
 | `WORDPRESS_HTTP_TIMEOUT` | Timeout (seconds) for WordPress REST calls | `10` |
 | `SHOPIFY_API_VERSION` | REST/GraphQL version path for Shopify Admin API | `2024-10` |
 | `SHOPIFY_HTTP_TIMEOUT` | Timeout (seconds) for Shopify HTTP requests | `10` |
+| `SEO_MOCK_ENDPOINT` | Temporary endpoint returning mock SEO payloads | `https://dashpilot.mock/api/seo` |
 
 ## Running the App
 
@@ -64,6 +66,11 @@ CI runs both commands plus Vite build; failing lint/tests block the pipeline.
 - `app/Modules/Shopify/Services/ShopifyRestService` calls `/admin/api/<version>/shop.json`, `orders.json`, and `products/count.json` (with `X-Shopify-Access-Token`) to return cached overview metrics for each site.
 - `app/Modules/Shopify/Services/ShopifyGraphQLService` issues the nested analytics query (products + variants + recent orders) and caches the GraphQL payload for 10 minutes.
 - Both services throw `ShopifyApiException` when credentials (`shopify_store_url`, `shopify_access_token`) are missing or the remote responds with errors—ideal for future jobs/alerts.
+
+## SEO Scoring
+
+- `app/Modules/SEO/Services/SEOService` runs a lightweight audit that checks meta description, H1 count, SSL, page speed, viewport meta, and missing image alt tags. Each issue deducts from 100 with caps noted in `.cursorrules`.
+- Results are cached for 1 hour per site via Redis. `tests/Unit/SEO/Services/SEOServiceTest` covers issue detection and cache behavior.
 
 ## Useful Commands
 
