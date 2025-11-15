@@ -34,7 +34,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: "8.2"
           extensions: mbstring, intl, pcntl, bcmath, mysql
           coverage: none
 
@@ -47,8 +47,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install Node dependencies
         run: npm install
@@ -72,14 +72,15 @@ jobs:
   notify:
     name: Notify Team
     needs: [build-test]
-    if: always()
+    if: always() && (secrets.NOTIFY_WEBHOOK_URL != '' || secrets.NOTIFY_EMAIL_TO != '')
     runs-on: ubuntu-latest
     steps:
       - name: Send webhook notification
         uses: fjogeleit/http-request-action@v1
+        if: ${{ secrets.NOTIFY_WEBHOOK_URL != '' }}
         with:
           url: ${{ secrets.NOTIFY_WEBHOOK_URL }}
-          method: 'POST'
+          method: "POST"
           data: |
             {
               "status": "${{ needs.build-test.result }}",
@@ -90,6 +91,7 @@ jobs:
 
       - name: Send email notification
         uses: dawidd6/action-send-mail@v3
+        if: ${{ secrets.SMTP_SERVER != '' && secrets.SMTP_USERNAME != '' && secrets.NOTIFY_EMAIL_TO != '' }}
         with:
           server_address: ${{ secrets.SMTP_SERVER }}
           server_port: ${{ secrets.SMTP_PORT }}
