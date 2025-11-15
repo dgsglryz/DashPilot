@@ -1,0 +1,74 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dashpilot-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    networks:
+      - dashpilot
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: mysql:8.0
+    container_name: dashpilot-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: dashpilot
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_PASSWORD: secret
+      MYSQL_USER: dashpilot
+    volumes:
+      - dashpilot-dbdata:/var/lib/mysql
+    networks:
+      - dashpilot
+    ports:
+      - "13306:3306"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: dashpilot-phpmyadmin
+    restart: unless-stopped
+    platform: linux/amd64
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: secret
+    ports:
+      - "8080:80"
+    networks:
+      - dashpilot
+    depends_on:
+      - db
+
+  redis:
+    image: redis:7-alpine
+    container_name: dashpilot-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - dashpilot
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: dashpilot-mailhog
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+    networks:
+      - dashpilot
+
+networks:
+  dashpilot:
+    driver: bridge
+
+volumes:
+  dashpilot-dbdata:

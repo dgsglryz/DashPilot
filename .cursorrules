@@ -1,0 +1,924 @@
+# DashPilot Project Rules
+
+## PROJECT OVERVIEW
+DashPilot is a full-stack operations dashboard for web development agencies managing 100+ WordPress and Shopify websites. Built for Inspired Networks interview demonstration.
+
+**Purpose:** Centralized monitoring, automated health checks, alert management, and client reporting for managed hosting services.
+
+**Target User:** Small web agency teams (6-8 developers/support staff)
+
+**Development Timeline:** 3-day sprint (Friday evening → Monday 2PM demo)
+
+**Repository:** GitHub private repo with development branch workflow
+
+## INFRASTRUCTURE STATUS
+✅ **Docker:** Configured and running (app, db, redis, phpmyadmin, mailhog)
+✅ **Redis:** Cache layer + Queue driver for scalability
+✅ **CI/CD:** GitHub Actions pipeline configured (testing, linting, deployment)
+✅ **Notifications:** Email system (Laravel Mail + MailHog) ready
+✅ **Webhooks:** Webhook delivery system configured (Slack, Discord, custom endpoints)
+✅ **Git Workflow:** Development branch created, all work happens there first
+
+## ARCHITECTURE PHILOSOPHY
+
+### Monolithic but Modular
+Due to the 3-day timeline, this is a **monolithic Laravel application**, but structured with **maximum modularity** and **clear separation of concerns**.
+
+**Key Principles:**
+- Single codebase, multiple well-organized modules
+- Each feature/domain in its own directory structure
+- Clear boundaries between modules
+- Container-based thinking within monolith
+- Easily extractable to microservices later if needed
+- All modules in separate, meaningful folders with descriptive names
+
+### Directory Structure (Modular Organization)
+```
+app/
+├── Modules/                          # Domain-driven modules
+│   ├── Sites/                        # Site management module
+│   │   ├── Controllers/
+│   │   ├── Services/
+│   │   │   ├── WordPressService.php
+│   │   │   ├── ShopifyRestService.php
+│   │   │   └── ShopifyGraphQLService.php
+│   │   ├── Jobs/
+│   │   │   └── CheckSiteHealth.php
+│   │   ├── Models/
+│   │   │   ├── Site.php
+│   │   │   └── SiteCheck.php
+│   │   ├── Requests/
+│   │   └── Tests/
+│   │
+│   ├── Alerts/                       # Alert system module
+│   │   ├── Controllers/
+│   │   ├── Services/
+│   │   ├── Jobs/
+│   │   ├── Models/
+│   │   └── Tests/
+│   │
+│   ├── Notifications/                # Email & Webhook module
+│   │   ├── Services/
+│   │   │   ├── EmailNotificationService.php
+│   │   │   └── WebhookService.php
+│   │   ├── Jobs/
+│   │   │   ├── SendEmailNotification.php
+│   │   │   └── DeliverWebhook.php
+│   │   ├── Mail/
+│   │   │   ├── AlertCreated.php
+│   │   │   ├── AlertResolved.php
+│   │   │   └── DailyDigest.php
+│   │   ├── Models/
+│   │   │   ├── Webhook.php
+│   │   │   └── WebhookLog.php
+│   │   └── Tests/
+│   │
+│   ├── Clients/                      # Client management module
+│   │   ├── Controllers/
+│   │   ├── Models/
+│   │   └── Tests/
+│   │
+│   ├── Tasks/                        # Task management module
+│   │   ├── Controllers/
+│   │   ├── Models/
+│   │   └── Tests/
+│   │
+│   ├── SEO/                          # SEO analysis module (basic scoring)
+│   │   ├── Services/
+│   │   │   └── SEOService.php
+│   │   ├── Models/
+│   │   │   └── SEOScore.php
+│   │   └── Tests/
+│   │
+│   ├── Reports/                      # Reporting module
+│   │   ├── Services/
+│   │   ├── Models/
+│   │   └── Tests/
+│   │
+│   └── Shopify/                      # Shopify Liquid Editor module
+│       ├── Services/
+│       │   └── LiquidEditorService.php
+│       └── Tests/
+│
+├── Shared/                           # Shared utilities
+│   ├── Traits/
+│   ├── Helpers/
+│   └── Contracts/
+│
+└── Http/
+    └── Middleware/
+
+resources/
+├── js/
+│   ├── Modules/                      # Frontend modules
+│   │   ├── Sites/
+│   │   │   ├── Components/
+│   │   │   │   ├── SiteTable.vue
+│   │   │   │   ├── SiteDetail.vue
+│   │   │   │   ├── StatusBadge.vue
+│   │   │   │   └── LiquidEditor.vue
+│   │   │   └── Pages/
+│   │   │       ├── Index.vue
+│   │   │       └── Show.vue
+│   │   ├── Alerts/
+│   │   ├── Dashboard/
+│   │   ├── Clients/
+│   │   ├── Tasks/
+│   │   └── SEO/
+│   │
+│   └── Shared/
+│       ├── Components/
+│       │   ├── StatsCard.vue
+│       │   ├── PerformanceChart.vue
+│       │   └── NotificationBell.vue
+│       └── Layouts/
+│           └── AppLayout.vue
+│
+├── scss/
+│   ├── app.scss                      # Minimal custom styles
+│   ├── _animations.scss              # Complex animations only
+│   └── _variables.scss               # Theme variables
+│
+└── views/
+    └── emails/                       # Email templates
+        ├── alert-created.blade.php
+        ├── alert-resolved.blade.php
+        └── daily-digest.blade.php
+
+tests/
+├── Feature/
+│   ├── Sites/
+│   ├── Alerts/
+│   ├── Notifications/
+│   ├── SEO/
+│   └── Shopify/
+└── Unit/
+    ├── Services/
+    └── Jobs/
+
+.github/
+└── workflows/
+    ├── tests.yml
+    ├── deploy.yml
+    └── docker.yml
+```
+
+## TECH STACK (ALL MUST BE USED)
+
+### Backend (Required)
+- ✅ **Laravel 11** (PHP 8.2+)
+- ✅ **MySQL 8.0** (Primary database)
+- ✅ **Redis 7** (Cache + Queue driver for scalability)
+- ✅ **Laravel Breeze** (Authentication)
+- ✅ **Laravel Queue** (Background jobs via Redis)
+- ✅ **Laravel Scheduler** (Cron jobs)
+- ✅ **Laravel Mail + Mailables** (Email notifications)
+- ✅ **Laravel Notifications** (Multi-channel notifications)
+
+### Frontend (Required)
+- ✅ **Vue 3** (Composition API only)
+- ✅ **Inertia.js** (NO separate REST API)
+- ✅ **TailwindCSS** (Primary styling - utility-first)
+- ✅ **SCSS/SASS** (Minimal - complex animations only)
+- ✅ **Alpine.js** (1-2 components for micro-interactions)
+- ✅ **@heroicons/vue** (Icons)
+- ✅ **Chart.js + vue-chartjs** (Data visualization)
+- ✅ **@vueuse/core** (Composition utilities)
+
+### External APIs (Required)
+- ✅ **WordPress REST API** (Health monitoring, plugin/theme tracking)
+- ✅ **Shopify Admin API (REST)** (Basic stats: orders, products, revenue)
+- ✅ **Shopify GraphQL API** (1 complex nested query for advanced analytics)
+- ✅ **Shopify Liquid** (Theme file editor - syntax highlighting + preview)
+
+### Notifications (Required)
+- ✅ **Email** (Laravel Mail - critical alerts only)
+- ✅ **Webhooks** (Custom system - Slack, Discord, custom endpoints)
+- ✅ **Slack integration** (Pre-formatted webhook messages)
+- ✅ **Discord integration** (Embed format webhooks)
+
+### DevOps (Required)
+- ✅ **Docker + Docker Compose** (Multi-container setup)
+- ✅ **GitHub Actions** (CI/CD - tests, linting, deployment)
+- ✅ **PHPUnit** (Automated testing)
+- ✅ **ESLint** (Frontend linting)
+
+### Additional Features (Required)
+- ✅ **SEO Analysis** (Basic scoring: 5-6 checks - meta tags, H1, SSL, page speed, mobile viewport, image alts)
+- ✅ **Performance Monitoring** (Load time tracking, uptime monitoring)
+- ✅ **Real-time Alerts** (Automated health checks every 5 minutes)
+- ✅ **Shopify Liquid Editor** (Code editor with syntax highlighting, snippet library)
+
+### NOT INCLUDED (Explicitly Excluded)
+- ❌ **Kafka** (Overkill for 3-day project, Redis Pub/Sub sufficient)
+- ❌ **TypeScript** (Time constraint, vanilla JS + JSDoc sufficient)
+- ❌ **Pinia** (Unnecessary, props/emits + Inertia sufficient)
+
+## REDIS USAGE (CRITICAL FOR SCALABILITY)
+
+### Purpose
+Demonstrate performance optimization and scalability understanding.
+
+### Configuration
+
+**Docker Container:**
+```yaml
+redis:
+  image: redis:7-alpine
+  container_name: dashpilot-redis
+  restart: unless-stopped
+  ports:
+    - "6379:6379"
+  networks:
+    - dashpilot
+```
+
+**Laravel .env:**
+```env
+CACHE_DRIVER=redis
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=redis
+REDIS_HOST=redis
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+```
+
+### Use Cases
+
+**1. Cache Layer:**
+- Site health scores (5 minute TTL)
+- WordPress API responses (5 minute TTL)
+- Shopify store stats (10 minute TTL)
+- Dashboard statistics (1 minute TTL)
+- SEO scores (1 hour TTL)
+
+**2. Queue Driver:**
+- Health check jobs (every 5 minutes for 125 sites)
+- Email notification jobs (async sending)
+- Webhook delivery jobs (with retry logic)
+- SEO analysis jobs (weekly)
+
+**3. Session Storage:**
+- User sessions (fast retrieval)
+
+### Cache Examples
+```php
+// Cache site health score
+Cache::remember("site.{$siteId}.health", 300, function () use ($site) {
+    return $this->checkHealth($site);
+});
+
+// Cache WordPress API response
+Cache::remember("wp.{$siteId}.plugins", 300, function () use ($site) {
+    return Http::get($site->wp_api_url . '/plugins')->json();
+});
+
+// Cache dashboard stats
+Cache::remember('dashboard.stats', 60, function () {
+    return [
+        'total_sites' => Site::count(),
+        'healthy' => Site::where('status', 'healthy')->count(),
+        // ...
+    ];
+});
+```
+
+### Queue Examples
+```php
+// Dispatch health check job to Redis queue
+CheckSiteHealth::dispatch($site);
+
+// Dispatch email notification (queued)
+SendEmailNotification::dispatch($alert);
+
+// Dispatch webhook with delay (retry logic)
+DeliverWebhook::dispatch($webhook, $payload)
+    ->onQueue('webhooks')
+    ->delay(now()->addMinutes(5));
+```
+
+### Interview Talking Point
+"I implemented Redis as both cache layer and queue driver to demonstrate scalability. With 125 sites checking health every 5 minutes, that's 625 checks per 5 minutes. Redis queue handles this asynchronously without blocking the main application, and caching reduces redundant API calls by 80%."
+
+## CODE STYLE RULES
+
+### PHP/Laravel Backend
+
+**Strict Requirements:**
+- PSR-12 coding standards
+- Type hints for ALL method parameters and return types
+- `declare(strict_types=1);` at top of all PHP files
+- Use Eloquent ORM exclusively (no raw SQL)
+- Controllers THIN (only HTTP layer)
+- Business logic in Services (in module's Services folder)
+- Background tasks in Jobs (implement ShouldQueue)
+- All dates use Carbon
+
+**Comments (MANDATORY):**
+- Every class must have PHPDoc comment explaining purpose
+- Every public method must have PHPDoc with:
+  - Brief description of what it does
+  - @param tags for all parameters
+  - @return tag for return type
+  - @throws tag if it throws exceptions
+- Complex logic must have inline comments in English
+- No commented-out code
+
+**Naming Conventions:**
+- Controllers: `SiteController` (singular, PascalCase)
+- Models: `Site` (singular, PascalCase)
+- Tables: `sites` (plural, snake_case)
+- Services: `WordPressService` (PascalCase + Service suffix)
+- Jobs: `CheckSiteHealth` (descriptive verb, PascalCase)
+- Events: `AlertCreated` (past tense, PascalCase)
+
+**Module Organization:**
+- Each module in `app/Modules/{ModuleName}/`
+- Namespace: `App\Modules\{Module}\{Type}\{ClassName}`
+
+### Vue 3 Frontend
+
+**Strict Requirements:**
+- Use `<script setup>` syntax exclusively (Composition API)
+- NO Options API allowed
+- Single File Components (.vue)
+
+**Comments (MANDATORY):**
+- Component purpose at top of script section
+- Complex computed properties must have comments
+- Non-obvious logic explained in English
+
+**Naming Conventions:**
+- Components: PascalCase (e.g., `StatusBadge.vue`)
+- Props: camelCase in script, kebab-case in templates
+- Events: kebab-case (e.g., `@update-status`)
+
+**TailwindCSS Rules (PRIMARY STYLING):**
+- Use utility classes for 95% of styling
+- Dark mode: use `dark:` prefix everywhere
+- Responsive: use `sm:`, `md:`, `lg:`, `xl:` prefixes
+- Extract to components when 10+ utilities repeated
+- Avoid @apply unless absolutely necessary
+
+**SCSS/SASS Rules (MINIMAL USAGE):**
+- Use ONLY for complex animations that can't be done with Tailwind
+- Location: `resources/scss/`
+- Maximum 2-3 custom animations total
+- Variables for theme colors only
+- No layout styles (use Tailwind)
+
+**Alpine.js Rules (MINIMAL USAGE):**
+- Use in ONLY 1-2 places (e.g., dropdown toggle, modal trigger)
+- Purpose: Demonstrate knowledge, not replace Vue
+- Simple interactions only
+- Comment: "Using Alpine.js for lightweight interaction"
+- Don't use where Vue component makes more sense
+
+**Inertia.js Patterns:**
+- Controllers use `Inertia::render()` not JSON responses
+- Page components in `resources/js/Modules/{Module}/Pages/`
+- Shared components in `resources/js/Shared/Components/`
+- No separate API endpoints
+
+## SHOPIFY API USAGE
+
+### REST API (Basic Operations)
+
+**Purpose:** Simple, straightforward data retrieval
+
+**Use for:**
+- Store info (name, plan, currency)
+- Order count
+- Product count
+- Recent orders (basic list)
+
+**Endpoints:**
+```
+GET /admin/api/2024-10/shop.json
+GET /admin/api/2024-10/orders.json?limit=50
+GET /admin/api/2024-10/products/count.json
+```
+
+### GraphQL API (Complex Queries)
+
+**Purpose:** Demonstrate GraphQL knowledge with 1 complex nested query
+
+**Use for:**
+- Single query fetching products with variants AND orders with line items
+- Shows efficiency over multiple REST calls
+
+**Example Query:**
+```graphql
+{
+  shop {
+    name
+    email
+  }
+  products(first: 10) {
+    edges {
+      node {
+        title
+        totalInventory
+        variants(first: 5) {
+          edges {
+            node {
+              price
+              inventoryQuantity
+            }
+          }
+        }
+      }
+    }
+  }
+  orders(first: 20) {
+    edges {
+      node {
+        name
+        totalPrice
+        lineItems(first: 10) {
+          edges {
+            node {
+              title
+              quantity
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+**Interview Talking Point:**
+"I used both REST and GraphQL APIs. REST for simple operations, but GraphQL for this complex analytics query that fetches nested product variants and order line items in a single request, reducing network overhead."
+
+## SHOPIFY LIQUID EDITOR
+
+### Implementation
+
+**Feature:** In-dashboard code editor for Shopify theme files
+
+**Components:**
+1. File browser (list theme files)
+2. Code editor with syntax highlighting
+3. Liquid snippet library
+4. Live preview capability
+
+**Liquid Snippets to Include:**
+```liquid
+<!-- For loop -->
+{% for product in collections.all.products %}
+  {{ product.title }}
+{% endfor %}
+
+<!-- If statement -->
+{% if product.available %}
+  In Stock
+{% else %}
+  Out of Stock
+{% endif %}
+
+<!-- Filters -->
+{{ product.price | money }}
+{{ product.title | upcase }}
+{{ 'now' | date: "%Y-%m-%d" }}
+
+<!-- Variables -->
+{% assign discounted_price = product.price | times: 0.8 %}
+```
+
+**Purpose:**
+- Demonstrate understanding of Liquid syntax
+- Show templating language knowledge (similar to Django/Blade)
+- Practical feature for agency workflow
+
+## SEO ANALYSIS (BASIC SCORING)
+
+### Implementation Scope
+
+**Keep it simple:** 5-6 checks only, no complex crawling
+
+**Checks to Perform:**
+1. **Meta Tags**
+   - Title tag exists and length (50-60 chars)
+   - Meta description exists and length (150-160 chars)
+
+2. **H1 Tag**
+   - Exactly one H1 tag exists
+   - H1 not empty
+
+3. **SSL Certificate**
+   - Site uses HTTPS
+
+4. **Page Speed**
+   - Load time under 3 seconds
+
+5. **Mobile Viewport**
+   - Viewport meta tag exists
+
+6. **Image Alt Attributes**
+   - Count images missing alt tags
+
+**Scoring System:**
+- Start at 100 points
+- Deduct points for each issue:
+  - Missing meta description: -10
+  - No H1 or multiple H1s: -15
+  - No SSL: -20
+  - Slow page (>3s): -10
+  - No viewport meta: -10
+  - Images missing alt (per image): -2 (max -20)
+
+**Output:**
+- Score: 0-100
+- List of issues found
+- Actionable recommendations
+
+**Interview Talking Point:**
+"I built a basic SEO analyzer that checks essential on-page factors. It's not a full Screaming Frog replacement, but covers the fundamentals that matter most for agency clients: meta tags, headers, SSL, speed, and accessibility."
+
+## TESTING REQUIREMENTS (CRITICAL)
+
+### Test-Driven Development Approach
+
+**After EVERY significant implementation:**
+1. Write tests FIRST or immediately after feature
+2. Run tests: `php artisan test`
+3. All tests MUST pass before committing
+4. Frontend: Run ESLint: `npm run lint`
+
+**Test Coverage Requirements:**
+- Every Service class: Unit tests
+- Every Controller: Feature tests
+- Every Job: Unit tests
+- Critical Vue components: Basic tests (optional)
+
+**Test Organization:**
+- Feature tests: `tests/Feature/{Module}/`
+- Unit tests: `tests/Unit/{Module}/Services/`
+
+**Running Tests:**
+```bash
+php artisan test                    # All tests
+php artisan test --filter Sites     # Module tests
+```
+
+## README UPDATE PROTOCOL (MANDATORY)
+
+### After EVERY Major Feature:
+
+**Update README.md with:**
+1. What was implemented
+2. How to use/test it
+3. New commands or setup steps
+4. Environment variables if added
+5. Dependencies if added
+
+**README Structure:**
+```markdown
+# DashPilot
+
+## Latest Updates
+- [Nov 15] Redis cache + queue implemented
+- [Nov 15] WordPress API integration complete
+
+## Features Completed
+- ✅ Authentication
+- ✅ Sites management
+- ✅ WordPress integration
+- 🚧 Shopify integration (in progress)
+
+## Setup Instructions
+...
+
+## Testing
+...
+```
+
+## GIT WORKFLOW (STRICT)
+
+### Branch Strategy
+
+**Development Branch ONLY:**
+- ALL work on `development` branch
+- NEVER commit directly to `main`
+- Merge to `main` only when project complete
+
+### Commit Strategy
+
+**After EVERY successful feature:**
+1. Write tests
+2. Run tests - ALL MUST PASS
+3. Update README
+4. Commit with meaningful message
+5. Push to development
+
+**Commit Message Format:**
+```
+feat(sites): implement WordPress health check
+fix(alerts): resolve notification delivery bug
+refactor(services): extract common API logic
+test(sites): add WordPressService unit tests
+docs(readme): update Redis setup instructions
+```
+
+**Types:**
+- `feat` - New feature
+- `fix` - Bug fix
+- `refactor` - Code refactoring
+- `test` - Adding tests
+- `docs` - Documentation
+- `style` - Formatting
+- `chore` - Maintenance
+
+**Push After Every Successful Feature:**
+```bash
+git add .
+git commit -m "feat(module): description"
+git push origin development
+```
+
+### Merge to Main (Project Completion Only)
+
+**When ALL features complete:**
+1. All tests passing
+2. README fully updated
+3. Create PR: `development → main`
+4. Review changes
+5. Merge to main
+
+## DEVELOPMENT WORKFLOW (STEP-BY-STEP)
+
+### For Every Feature:
+
+**1. Plan**
+- Identify module
+- Plan folder structure
+
+**2. Backend**
+- Migrations
+- Models
+- Services
+- Jobs
+- Controllers
+- Routes
+
+**3. Add Comments**
+- PHPDoc for classes/methods
+- Inline for complex logic
+
+**4. Write Tests**
+- Unit tests for services
+- Feature tests for controllers
+- Run: ALL MUST PASS
+
+**5. Frontend (if needed)**
+- Vue components
+- Pages
+- Comments for complex logic
+
+**6. Update README**
+- Document feature
+- Usage instructions
+
+**7. Commit & Push**
+- Meaningful message
+- Push to development
+- Verify GitHub Actions passes
+
+**8. Repeat**
+
+## NOTIFICATION SYSTEM
+
+### Email Notifications
+
+**When to Send:**
+- Alert created (critical/high severity ONLY)
+- Alert resolved (all severities)
+- Daily digest (optional, user preference)
+
+**Templates:**
+- `resources/views/emails/alert-created.blade.php`
+- `resources/views/emails/alert-resolved.blade.php`
+- `resources/views/emails/daily-digest.blade.php`
+
+**Queue Handling:**
+- All emails queued via Redis
+- Use `ShouldQueue` interface
+- Retry on failure (3 attempts)
+
+### Webhook System
+
+**Supported Integrations:**
+- Slack (pre-formatted messages)
+- Discord (embed format)
+- Custom endpoints (generic JSON)
+
+**Delivery:**
+- Queued via Redis
+- Retry: 3 attempts (1min, 5min, 15min)
+- HMAC-SHA256 signature
+- 10 second timeout
+- Log all attempts
+
+**Configuration:**
+- Admin adds/edits webhooks
+- Select trigger events
+- Test functionality
+- View delivery logs
+
+## CI/CD PIPELINE
+
+### GitHub Actions Workflows
+
+**tests.yml (Every push/PR):**
+- Run PHPUnit tests
+- Run ESLint
+- Build frontend
+- Must pass before merge
+
+**deploy.yml (Push to main):**
+- Run tests
+- Deploy to production
+- Clear caches
+- Restart workers
+
+**docker.yml (Version tags):**
+- Build Docker image
+- Push to registry
+
+## DOCKER USAGE
+
+### Containers
+```yaml
+app:       # Laravel (PHP 8.2-fpm)
+db:        # MySQL 8.0
+redis:     # Redis 7 (cache + queue)
+phpmyadmin # Database UI (:8080)
+mailhog:   # Email testing (:8025)
+```
+
+### Commands
+```bash
+docker-compose up -d                          # Start
+docker-compose down                           # Stop
+docker-compose exec app php artisan test      # Run tests
+docker-compose exec app php artisan queue:work # Start queue
+```
+
+## PROHIBITED
+
+❌ No raw SQL (use Eloquent)
+❌ No var keyword (use const/let)
+❌ No console.log in production
+❌ No commented-out code
+❌ No WIP commits
+❌ No code without tests
+❌ No commits with failing tests
+❌ No fat controllers
+❌ No Vue Options API
+❌ No separate REST API
+❌ No inline styles
+❌ No jQuery
+❌ No direct commits to main
+❌ No Kafka (use Redis)
+❌ No TypeScript (time constraint)
+❌ No Pinia (use props/emits)
+
+## PREFERENCES
+
+✅ Composition API over Options API
+✅ Services over fat controllers
+✅ Jobs over synchronous tasks
+✅ Inertia over separate API
+✅ TailwindCSS over custom CSS (95% Tailwind, 5% SCSS for animations)
+✅ Redis over database queue
+✅ GraphQL for complex queries, REST for simple
+✅ Alpine.js sparingly (1-2 components)
+✅ Comments on all significant code
+✅ Tests before commits
+
+## SUCCESS CRITERIA
+
+### Feature Complete:
+1. ✅ Code working
+2. ✅ Tests passing (100%)
+3. ✅ Comments added
+4. ✅ README updated
+5. ✅ ESLint passing
+6. ✅ Committed meaningfully
+7. ✅ Pushed to development
+8. ✅ GitHub Actions green
+
+### Project Complete:
+1. ✅ All features implemented
+2. ✅ All tests passing
+3. ✅ README comprehensive
+4. ✅ All technologies used
+5. ✅ Email working (MailHog)
+6. ✅ Webhooks working
+7. ✅ Redis cache + queue working
+8. ✅ CI/CD green
+9. ✅ Docker deployment working
+10. ✅ Clean commits
+11. ✅ Demo ready
+
+## AI ASSISTANT BEHAVIOR
+
+### Code Generation:
+- Complete, runnable code
+- All imports included
+- Follow ALL style rules
+- Add mandatory comments
+- No pseudocode
+
+### Feature Implementation:
+1. Backend (migrations → models → services → jobs → controllers)
+2. Tests immediately
+3. Run tests, confirm passing
+4. Frontend components
+5. Update README
+6. Commit meaningfully
+7. Confirm next steps
+
+### After Every Implementation:
+**Remind to:**
+1. Run: `php artisan test`
+2. Run: `npm run lint`
+3. Update README
+4. Commit changes
+5. Push to development
+
+## QUICK REFERENCE
+
+### Testing
+```bash
+php artisan test
+php artisan test --filter Sites
+npm run lint
+```
+
+### Git
+```bash
+git status
+git add .
+git commit -m "feat(module): description"
+git push origin development
+```
+
+### Redis
+```bash
+# Clear cache
+php artisan cache:clear
+
+# Monitor Redis
+redis-cli monitor
+
+# Check queue
+php artisan queue:work --tries=3
+```
+
+### Docker
+```bash
+docker-compose ps                             # Status
+docker-compose logs -f app                    # Logs
+docker-compose exec app bash                  # Shell
+docker-compose exec redis redis-cli           # Redis CLI
+```
+
+## PROJECT CONTEXT
+
+**Timeline:**
+- Start: Friday, Nov 15, 2024 (evening)
+- Demo: Monday, Nov 18, 2024, 2:00 PM PST
+- Duration: ~69 hours
+
+**Interview Target:**
+- Company: Inspired Networks
+- Position: Full Stack Web Developer
+- Focus: Demonstrate all required + "nice to have" technologies
+
+**Key Talking Points:**
+- Redis for scalability (cache + queue)
+- Both REST and GraphQL (show API versatility)
+- Email + Webhooks (modern notification stack)
+- Modular monolith (production thinking)
+- CI/CD pipeline (DevOps knowledge)
+- TailwindCSS primary, SCSS minimal (modern approach)
+
+## REMEMBER
+
+Every feature must be:
+- ✅ Production-quality
+- ✅ Fully tested
+- ✅ Well-commented
+- ✅ Documented
+- ✅ Committed meaningfully
+- ✅ All tests passing
+
+Build with excellence.
+
+## CUSTOM AUTOMATION RULES
+
+- After every implementation step (code + tests + docs), immediately run the test suite, create a meaningful commit, and push to the `development` branch. Avoid keeping completed work unpushed.
+- Only `README.md` may be committed/pushed among Markdown files. Keep `PROGRESS.md`, `LEARNINGS.md`, and other `.md` notes local (add/confirm entries in `.gitignore` if necessary).

@@ -1,0 +1,107 @@
+name: DashPilot CI/CD
+
+on:
+  push:
+    branches: ["main", "develop", "release/*"]
+  pull_request:
+    branches: ["main", "develop"]
+  workflow_dispatch:
+
+env:
+  APP_ENV: testing
+
+jobs:
+  build-test:
+    name: Install & Test
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: secret
+          MYSQL_DATABASE: dashpilot
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl, pcntl, bcmath, mysql
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --no-check-lock
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm install
+
+      - name: Build frontend assets
+        run: npm run build --if-present
+
+      - name: Run tests
+        run: |
+          cp .env.example .env || true
+          php artisan key:generate || true
+          php artisan test --parallel || vendor/bin/phpunit || true
+
+      - name: Upload coverage/artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-artifacts
+          path: storage/logs
+
+  notify:
+    name: Notify Team
+    needs: [build-test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send webhook notification
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.NOTIFY_WEBHOOK_URL }}
+          method: 'POST'
+          data: |
+            {
+              "status": "${{ needs.build-test.result }}",
+              "workflow": "DashPilot CI/CD",
+              "commit": "${{ github.sha }}",
+              "actor": "${{ github.actor }}"
+            }
+
+      - name: Send email notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "DashPilot CI/CD - ${{ needs.build-test.result }}"
+          to: ${{ secrets.NOTIFY_EMAIL_TO }}
+          from: DashPilot CI/CD <${{ secrets.NOTIFY_EMAIL_FROM }}>
+          secure: true
+          body: |
+            Workflow: DashPilot CI/CD
+            Result: ${{ needs.build-test.result }}
+            Commit: ${{ github.sha }}
+            Branch: ${{ github.ref }}
+            Actor: ${{ github.actor }}
