@@ -62,7 +62,8 @@ class TasksController extends Controller
             });
         }
 
-        $tasks = $query->orderBy('created_at', 'desc')->get()->map(fn (Task $task) => [
+        $perPage = $request->integer('per_page', 20);
+        $tasks = $query->orderBy('created_at', 'desc')->paginate($perPage)->through(fn (Task $task) => [
             'id' => $task->id,
             'title' => $task->title,
             'description' => $task->description,
@@ -85,6 +86,9 @@ class TasksController extends Controller
             ] : null,
         ]);
 
+        // Get all tasks for stats (before pagination)
+        $allTasks = $query->get();
+        
         // Group tasks by status for Kanban board
         $tasksByStatus = [
             'pending' => $tasks->where('status', 'pending')->values()->all(),
@@ -94,10 +98,11 @@ class TasksController extends Controller
         ];
 
         $stats = [
-            'total' => $tasks->count(),
-            'pending' => $tasks->where('status', 'pending')->count(),
-            'in_progress' => $tasks->where('status', 'in_progress')->count(),
-            'completed' => $tasks->where('status', 'completed')->count(),
+            'total' => $allTasks->count(),
+            'pending' => $allTasks->where('status', 'pending')->count(),
+            'in_progress' => $allTasks->where('status', 'in_progress')->count(),
+            'completed' => $allTasks->where('status', 'completed')->count(),
+            'cancelled' => $allTasks->where('status', 'cancelled')->count(),
             'urgent' => $tasks->where('priority', 'urgent')->count(),
         ];
 
@@ -122,6 +127,7 @@ class TasksController extends Controller
 
         return Inertia::render('Tasks/Pages/Index', [
             'tasks' => $tasksByStatus,
+            'tasksPaginated' => $tasks,
             'stats' => $stats,
             'users' => $users,
             'sites' => $sites,

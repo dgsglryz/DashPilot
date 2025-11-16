@@ -28,6 +28,7 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/api/search', [\App\Modules\Dashboard\Controllers\SearchController::class, 'search'])->name('search');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('/metrics', [MetricsController::class, 'index'])->name('metrics.index');
@@ -58,6 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/sites/{site}/health-check', [SitesController::class, 'runHealthCheck'])->name('sites.health-check');
 
     Route::resource('clients', ClientsController::class);
+    Route::get('/clients/{client}/reports', [ClientsController::class, 'reports'])->name('clients.reports');
 
     Route::resource('tasks', TasksController::class);
     Route::post('/tasks/{task}/status', [TasksController::class, 'updateStatus'])->name('tasks.status');

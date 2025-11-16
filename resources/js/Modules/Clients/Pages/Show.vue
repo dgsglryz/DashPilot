@@ -377,9 +377,17 @@ const statusBadge = computed(() => {
                 <div
                     class="rounded-2xl border border-gray-700/70 bg-gray-900/60 p-6"
                 >
-                    <h3 class="mb-4 text-lg font-semibold text-white">
-                        Latest Monthly Report
-                    </h3>
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-white">
+                            Latest Monthly Report
+                        </h3>
+                        <Link
+                            :href="route('clients.reports', client.id)"
+                            class="text-sm font-semibold text-blue-400 transition-colors hover:text-blue-300"
+                        >
+                            View all →
+                        </Link>
+                    </div>
                     <div
                         v-if="latestReport"
                         class="space-y-4 rounded-xl border border-gray-700/60 bg-gray-800/60 p-4"

@@ -4,27 +4,25 @@
  * global search, and quick actions. Every operations page is rendered
  * inside this layout to keep the UI consistent with the v0.dev design.
  */
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { Link, router } from "@inertiajs/vue3";
+import { useDebounceFn } from "@vueuse/core";
+import axios from "axios";
 import {
     ArrowRightOnRectangleIcon,
     BellIcon,
     ChartBarIcon,
-    ChatBubbleLeftIcon,
     Cog6ToothIcon,
     DocumentChartBarIcon,
     DocumentTextIcon,
-    EnvelopeIcon,
     HomeIcon,
     MagnifyingGlassIcon,
-    MoonIcon,
-    SunIcon,
     UsersIcon,
     UserGroupIcon,
     GlobeAltIcon,
     ClockIcon,
+    CurrencyDollarIcon,
 } from "@heroicons/vue/24/outline";
-import { useDarkMode } from "@/Shared/Composables/useDarkMode";
 import CommandPalette from "@/Shared/Components/CommandPalette.vue";
 
 type NavigationItem = {
@@ -51,7 +49,20 @@ const navigation: NavigationItem[] = [
 
 const isMobileMenuOpen = ref(false);
 const isCommandPaletteOpen = ref(false);
-const { isDark, toggleDarkMode } = useDarkMode();
+const searchQuery = ref("");
+const searchResults = ref<
+    Array<{
+        type: string;
+        id?: number;
+        label: string;
+        subtitle?: string;
+        route: string;
+        params?: Record<string, any>;
+        icon?: string;
+        badge?: string;
+    }>
+>([]);
+const isSearching = ref(false);
 
 /**
  * Recent viewed items from localStorage
@@ -66,13 +77,11 @@ interface RecentItem {
 
 const recentItems = computed<RecentItem[]>(() => {
     try {
-        const stored = localStorage.getItem('dashpilot_recent_items');
+        const stored = localStorage.getItem("dashpilot_recent_items");
         if (!stored) return [];
         const items = JSON.parse(stored) as RecentItem[];
         // Sort by timestamp, most recent first, limit to 5
-        return items
-            .sort((a, b) => b.timestamp - a.timestamp)
-            .slice(0, 5);
+        return items.sort((a, b) => b.timestamp - a.timestamp).slice(0, 5);
     } catch {
         return [];
     }
@@ -85,24 +94,24 @@ onMounted(() => {
     const currentRoute = route().current();
     if (currentRoute) {
         const routeName = currentRoute;
-        let label = '';
+        let label = "";
         let icon = ClockIcon;
 
         // Map route names to labels and icons
-        if (routeName === 'dashboard') {
-            label = 'Dashboard';
+        if (routeName === "dashboard") {
+            label = "Dashboard";
             icon = HomeIcon;
-        } else if (routeName === 'sites.index') {
-            label = 'Sites';
+        } else if (routeName === "sites.index") {
+            label = "Sites";
             icon = GlobeAltIcon;
-        } else if (routeName === 'sites.show') {
-            label = 'Site Details';
+        } else if (routeName === "sites.show") {
+            label = "Site Details";
             icon = GlobeAltIcon;
-        } else if (routeName === 'alerts.index') {
-            label = 'Alerts';
+        } else if (routeName === "alerts.index") {
+            label = "Alerts";
             icon = BellIcon;
-        } else if (routeName === 'settings.index') {
-            label = 'Settings';
+        } else if (routeName === "settings.index") {
+            label = "Settings";
             icon = Cog6ToothIcon;
         }
 
@@ -116,14 +125,17 @@ onMounted(() => {
             };
 
             try {
-                const stored = localStorage.getItem('dashpilot_recent_items');
+                const stored = localStorage.getItem("dashpilot_recent_items");
                 const items: RecentItem[] = stored ? JSON.parse(stored) : [];
                 // Remove duplicates for same href
-                const filtered = items.filter(i => i.href !== item.href);
+                const filtered = items.filter((i) => i.href !== item.href);
                 filtered.unshift(item);
                 // Keep only last 10
                 const limited = filtered.slice(0, 10);
-                localStorage.setItem('dashpilot_recent_items', JSON.stringify(limited));
+                localStorage.setItem(
+                    "dashpilot_recent_items",
+                    JSON.stringify(limited),
+                );
             } catch {
                 // Ignore localStorage errors
             }
@@ -137,6 +149,132 @@ const toggleMobileMenu = (): void => {
 
 const closeMobileMenu = (): void => {
     isMobileMenuOpen.value = false;
+};
+
+/**
+ * Perform backend search
+ */
+const performSearch = useDebounceFn(async (query: string) => {
+    if (!query.trim() || query.length < 2) {
+        searchResults.value = [];
+        return;
+    }
+
+    isSearching.value = true;
+    try {
+        const response = await axios.get(route("search"), {
+            params: { q: query },
+        });
+        searchResults.value = response.data.results || [];
+    } catch (error) {
+        console.error("Search error:", error);
+        searchResults.value = [];
+    } finally {
+        isSearching.value = false;
+    }
+}, 300);
+
+/**
+ * Watch search query and perform search
+ */
+watch(searchQuery, (newQuery) => {
+    if (newQuery.trim().length >= 2) {
+        performSearch(newQuery);
+    } else {
+        searchResults.value = [];
+    }
+});
+
+/**
+ * Search suggestions from backend results
+ */
+const searchSuggestions = computed(() => {
+    return searchResults.value;
+});
+
+const showSuggestions = ref(false);
+
+/**
+ * Handle search input enter key
+ */
+const handleSearch = (): void => {
+    if (!searchQuery.value.trim()) return;
+
+    // Check if we have results
+    const suggestion = searchSuggestions.value[0];
+    if (suggestion) {
+        if (suggestion.params && Object.keys(suggestion.params).length > 0) {
+            router.visit(route(suggestion.route, suggestion.params), {
+                preserveState: false,
+                preserveScroll: false,
+            });
+        } else {
+            router.visit(route(suggestion.route), {
+                preserveState: false,
+                preserveScroll: false,
+            });
+        }
+    } else {
+        // Default to sites page with search query
+        router.visit(route("sites.index", { query: searchQuery.value }), {
+            preserveState: false,
+            preserveScroll: false,
+        });
+    }
+    showSuggestions.value = false;
+    searchQuery.value = "";
+};
+
+/**
+ * Select a suggestion
+ */
+const selectSuggestion = (suggestion: {
+    route: string;
+    params?: Record<string, any>;
+}): void => {
+    if (suggestion.params && Object.keys(suggestion.params).length > 0) {
+        router.visit(route(suggestion.route, suggestion.params), {
+            preserveState: false,
+            preserveScroll: false,
+        });
+    } else {
+        router.visit(route(suggestion.route), {
+            preserveState: false,
+            preserveScroll: false,
+        });
+    }
+    showSuggestions.value = false;
+    searchQuery.value = "";
+};
+
+/**
+ * Handle search input blur with delay
+ */
+const handleSearchBlur = (): void => {
+    setTimeout(() => {
+        showSuggestions.value = false;
+    }, 200);
+};
+
+/**
+ * Get icon component by name
+ */
+const getIconComponent = (iconName: string) => {
+    const iconMap: Record<string, any> = {
+        GlobeAltIcon: GlobeAltIcon,
+        BellIcon: BellIcon,
+        DocumentTextIcon: DocumentTextIcon,
+        DocumentChartBarIcon: DocumentChartBarIcon,
+        UserGroupIcon: UserGroupIcon,
+        HomeIcon: HomeIcon,
+        ClockIcon: ClockIcon,
+        CurrencyDollarIcon: CurrencyDollarIcon,
+        UsersIcon: UsersIcon,
+        Cog6ToothIcon: Cog6ToothIcon,
+        ChartBarIcon: ChartBarIcon,
+        MagnifyingGlassIcon: MagnifyingGlassIcon,
+    };
+    return iconMap[iconName] || MagnifyingGlassIcon;
 };
 
 const isCurrent = (item: NavigationItem): boolean => {
@@ -263,8 +401,13 @@ onUnmounted(() => {
             </nav>
 
             <!-- Recent Viewed Items -->
-            <div v-if="recentItems.length > 0" class="border-t border-gray-800 px-4 py-4">
-                <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <div
+                v-if="recentItems.length > 0"
+                class="border-t border-gray-800 px-4 py-4"
+            >
+                <h3
+                    class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500"
+                >
                     Recent
                 </h3>
                 <div class="space-y-1">
@@ -281,14 +424,6 @@ onUnmounted(() => {
             </div>
 
             <div class="space-y-1 border-t border-gray-800 px-4 py-4">
-                <button
-                    @click="toggleDarkMode"
-                    class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
-                >
-                    <SunIcon v-if="isDark" class="h-5 w-5" />
-                    <MoonIcon v-else class="h-5 w-5" />
-                    <span>{{ isDark ? "Light Mode" : "Dark Mode" }}</span>
-                </button>
                 <Link
                     :href="route('settings.index')"
                     class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
@@ -339,9 +474,12 @@ onUnmounted(() => {
                             class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
                         />
                         <input
+                            v-model="searchQuery"
                             type="text"
-                            placeholder="Search sites, alerts, reports... (Cmd+K)"
-                            @focus="isCommandPaletteOpen = true"
+                            placeholder="Search sites, alerts, reports..."
+                            @keydown.enter="handleSearch"
+                            @focus="showSuggestions = true"
+                            @blur="handleSearchBlur"
                             class="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-20 text-sm text-white placeholder:text-gray-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <kbd
@@ -349,6 +487,69 @@ onUnmounted(() => {
                         >
                             ⌘K
                         </kbd>
+
+                        <!-- Search Suggestions Dropdown -->
+                        <div
+                            v-if="
+                                showSuggestions &&
+                                (searchSuggestions.length > 0 || isSearching)
+                            "
+                            class="absolute top-full left-0 right-0 mt-2 rounded-lg border border-gray-700 bg-gray-800 shadow-xl z-50 max-h-96 overflow-y-auto"
+                        >
+                            <div
+                                v-if="isSearching"
+                                class="px-4 py-3 text-center text-gray-400 text-sm"
+                            >
+                                Searching...
+                            </div>
+                            <div
+                                v-else
+                                v-for="(suggestion, index) in searchSuggestions"
+                                :key="`${suggestion.type}-${suggestion.id || index}`"
+                                @mousedown="selectSuggestion(suggestion)"
+                                class="px-4 py-3 hover:bg-gray-700 cursor-pointer transition-colors flex items-center gap-3 border-b border-gray-700/50 last:border-b-0"
+                            >
+                                <component
+                                    :is="
+                                        getIconComponent(
+                                            suggestion.icon ||
+                                                'MagnifyingGlassIcon',
+                                        )
+                                    "
+                                    class="h-5 w-5 text-gray-400 flex-shrink-0"
+                                />
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="text-white font-medium truncate"
+                                            >{{ suggestion.label }}</span
+                                        >
+                                        <span
+                                            v-if="suggestion.badge"
+                                            class="px-2 py-0.5 text-xs rounded bg-blue-500/20 text-blue-400"
+                                        >
+                                            {{ suggestion.badge }}
+                                        </span>
+                                    </div>
+                                    <p
+                                        v-if="suggestion.subtitle"
+                                        class="text-xs text-gray-400 truncate mt-0.5"
+                                    >
+                                        {{ suggestion.subtitle }}
+                                    </p>
+                                </div>
+                            </div>
+                            <div
+                                v-if="
+                                    !isSearching &&
+                                    searchSuggestions.length === 0 &&
+                                    searchQuery.length >= 2
+                                "
+                                class="px-4 py-3 text-center text-gray-400 text-sm"
+                            >
+                                No results found
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -396,18 +597,6 @@ onUnmounted(() => {
                             </div>
                         </div>
                     </div>
-                    <button
-                        class="rounded-lg p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white"
-                    >
-                        <EnvelopeIcon class="h-6 w-6" />
-                        <span class="sr-only">Email</span>
-                    </button>
-                    <button
-                        class="rounded-lg p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white"
-                    >
-                        <ChatBubbleLeftIcon class="h-6 w-6" />
-                        <span class="sr-only">Messages</span>
-                    </button>
                 </div>
             </header>
 

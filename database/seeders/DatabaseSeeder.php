@@ -326,6 +326,7 @@ class DatabaseSeeder extends Seeder
         $usedNames = [];
         $blueprints = [];
 
+        $index = 0;
         while (count($blueprints) < $count) {
             $industry = Arr::random($industries);
             $name = $this->uniqueSiteName($industry, $prefixes, $usedNames);
@@ -345,6 +346,7 @@ class DatabaseSeeder extends Seeder
                 'uptime_percentage' => $this->uptimeForStatus($status),
                 'avg_load_time' => $this->loadTimeForStatus($status),
             ];
+            $index++;
         }
 
         return $blueprints;

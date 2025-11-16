@@ -13,7 +13,7 @@
  * @component
  */
 import { ref, onMounted } from "vue";
-import { Head, Link } from "@inertiajs/vue3";
+import { Head, Link, router } from "@inertiajs/vue3";
 import AppLayout from "@/Shared/Layouts/AppLayout.vue";
 import StatCard from "@/Shared/Components/StatCard.vue";
 import MetricCard from "@/Shared/Components/MetricCard.vue";
@@ -150,9 +150,7 @@ onMounted(() => {
     <AppLayout>
         <section class="space-y-8">
             <Breadcrumbs
-                :items="[
-                    { label: 'Dashboard', href: route('dashboard') },
-                ]"
+                :items="[{ label: 'Dashboard', href: route('dashboard') }]"
             />
             <div
                 class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
@@ -186,7 +184,7 @@ onMounted(() => {
 
             <div class="grid grid-cols-1 gap-6 xl:grid-cols-12">
                 <div class="space-y-6 xl:col-span-8">
-                    <!-- Top Stats Cards (5 large cards) -->
+                    <!-- Top Stats Cards (6 cards - 2 rows of 3) -->
                     <div
                         class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3"
                     >
@@ -213,7 +211,6 @@ onMounted(() => {
                                 },
                             ]"
                             image-query="person working on laptop with multiple website dashboards"
-                            :href="route('sites.index')"
                         />
 
                         <!-- SEO Performance Card -->
@@ -232,7 +229,7 @@ onMounted(() => {
                                     variant: 'warning',
                                 },
                             ]"
-                            badge-text="View Report"
+                            badge-text="View Metrics"
                             badge-variant="primary"
                             image-query="smiling professional woman in red sweater"
                             :href="route('metrics.index')"
@@ -263,53 +260,6 @@ onMounted(() => {
                             :href="route('revenue.index')"
                         />
 
-                        <!-- Recent Activities Card -->
-                        <StatCard
-                            title="Recent Activities"
-                            subtitle="Updates on all sites"
-                            :value="stats.activitiesToday ?? 12"
-                            label="activities today"
-                            status="active"
-                            :metrics="[
-                                { label: 'Last sync', value: '5 min ago' },
-                                {
-                                    label: 'Report',
-                                    value: 'Weekly summary',
-                                    variant: 'info',
-                                },
-                            ]"
-                            image-query="multiple website dashboards and analytics screens"
-                            :href="route('activity.index')"
-                        />
-
-                        <!-- System Health Card (5th card) -->
-                        <StatCard
-                            title="System Health"
-                            subtitle="Warning sites monitor"
-                            :value="stats.warningSites ?? 0"
-                            label="sites need attention"
-                            status="warning"
-                            :metrics="[
-                                {
-                                    label: 'Healthy',
-                                    value: `${stats.healthySites}/${stats.totalSites}`,
-                                    variant: 'success',
-                                },
-                                {
-                                    label: 'Status',
-                                    value:
-                                        stats.warningSites === 0
-                                            ? 'All good'
-                                            : 'Needs review',
-                                    variant:
-                                        stats.warningSites === 0
-                                            ? 'success'
-                                            : 'warning',
-                                },
-                            ]"
-                            image-query="server room with network equipment and monitors"
-                            :href="route('sites.index', { status: 'warning' })"
-                        />
                     </div>
 
                     <!-- Calendar Widget -->
@@ -499,14 +449,28 @@ onMounted(() => {
                             Current operations
                         </h3>
                         <p class="text-sm text-gray-400">Runbook snapshot</p>
-                        <div
-                            class="mt-4 overflow-hidden rounded-xl border border-gray-700 bg-gray-900"
-                        >
-                            <img
-                                src="/placeholder.svg?height=300&width=400"
-                                alt="Current operations preview"
-                                class="h-48 w-full object-cover opacity-60"
-                            />
+                        <div class="mt-4 space-y-3">
+                            <div class="rounded-lg border border-gray-700 bg-gray-900/50 p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-300">Health Checks</span>
+                                    <span class="text-xs text-green-400">Running</span>
+                                </div>
+                                <div class="text-xs text-gray-400">125 sites checked in last 5 min</div>
+                            </div>
+                            <div class="rounded-lg border border-gray-700 bg-gray-900/50 p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-300">Queue Workers</span>
+                                    <span class="text-xs text-green-400">Active</span>
+                                </div>
+                                <div class="text-xs text-gray-400">3 workers processing jobs</div>
+                            </div>
+                            <div class="rounded-lg border border-gray-700 bg-gray-900/50 p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-300">Cache Status</span>
+                                    <span class="text-xs text-green-400">Healthy</span>
+                                </div>
+                                <div class="text-xs text-gray-400">Redis cache operational</div>
+                            </div>
                         </div>
                         <dl class="mt-4 space-y-2 text-sm text-gray-300">
                             <div class="flex justify-between">
@@ -658,7 +622,7 @@ onMounted(() => {
 
                         <div class="space-y-3">
                             <article
-                                v-for="activity in activities.slice(0, 6)"
+                                v-for="activity in activities.slice(0, 10)"
                                 :key="activity.id"
                                 class="flex items-start gap-3 rounded-lg border border-gray-800 bg-gray-950 p-3 transition hover:border-gray-700"
                             >
@@ -701,7 +665,10 @@ onMounted(() => {
             </div>
 
             <!-- Pinned/Favorited Sites -->
-            <section v-if="favoritedSites && favoritedSites.length > 0" class="space-y-4">
+            <section
+                v-if="favoritedSites && favoritedSites.length > 0"
+                class="space-y-4"
+            >
                 <div
                     class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
                 >

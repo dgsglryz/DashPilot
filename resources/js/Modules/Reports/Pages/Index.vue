@@ -84,13 +84,13 @@
               </td>
               <td class="px-6 py-4">
                 <div class="flex items-center justify-end gap-2">
-                  <a 
+                  <Link 
                     :href="report.downloadUrl"
                     class="p-2 hover:bg-gray-700 rounded-lg transition-colors"
                     title="Download"
                   >
                     <ArrowDownTrayIcon class="w-4 h-4 text-gray-400" />
-                  </a>
+                  </Link>
                   <button 
                     @click="deleteReport(report.id)"
                     class="p-2 hover:bg-gray-700 rounded-lg transition-colors"
@@ -120,7 +120,7 @@
 <script setup lang="ts">
 // @ts-nocheck
 import { ref } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Shared/Layouts/AppLayout.vue'
 import GenerateReportModal from '@/Modules/Reports/Components/GenerateReportModal.vue'
 import { 

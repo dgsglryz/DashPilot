@@ -32,7 +32,7 @@ class DashboardController extends Controller
         $healthySites = Site::where('status', 'healthy')->count();
         $criticalAlerts = Alert::where('is_resolved', false)->count();
         $averageSeo = (int) round(Site::avg('health_score') ?: 82);
-        $avgUptime = (float) (Report::avg('uptime_percentage') ?? 99.2);
+        $avgUptime = round((float) (Report::avg('uptime_percentage') ?? 99.2), 2);
         $activitiesToday = ActivityLog::whereDate('created_at', Carbon::today())->count();
 
         return Inertia::render('Dashboard/Pages/Index', [

@@ -56,10 +56,21 @@ class SitesController extends Controller
             });
         }
 
+        // Get stats before pagination
+        $allSites = $query->get();
+        $stats = [
+            'total' => $allSites->count(),
+            'healthy' => $allSites->where('status', 'healthy')->count(),
+            'warning' => $allSites->where('status', 'warning')->count(),
+            'critical' => $allSites->where('status', 'critical')->count(),
+        ];
+
+        // Paginate results
+        $perPage = $request->integer('per_page', 20);
         $sites = $query
             ->orderBy('name')
-            ->get()
-            ->map(fn (Site $site) => [
+            ->paginate($perPage)
+            ->through(fn (Site $site) => [
                 'id' => $site->id,
                 'name' => $site->name,
                 'url' => $site->url,
@@ -72,18 +83,12 @@ class SitesController extends Controller
                 'uptime' => (float) ($site->uptime_percentage ?? 0),
                 'responseTime' => (int) ($site->avg_load_time ? $site->avg_load_time * 1000 : 0),
                 'lastChecked' => $site->last_checked_at?->toIso8601String(),
+                'is_favorited' => (bool) $site->is_favorited,
                 'client' => [
                     'id' => $site->client_id,
                     'name' => $site->client?->name,
                 ],
             ]);
-
-        $stats = [
-            'total' => $sites->count(),
-            'healthy' => $sites->where('status', 'healthy')->count(),
-            'warning' => $sites->where('status', 'warning')->count(),
-            'critical' => $sites->where('status', 'critical')->count(),
-        ];
 
         return Inertia::render('Sites/Pages/Index', [
             'sites' => $sites,
@@ -166,8 +171,8 @@ class SitesController extends Controller
                 'region' => $site->region,
                 'thumbnail' => $site->thumbnail_url ?? $this->fallbackThumbnail($site->id),
                 'logo' => $site->logo_url ?? $this->fallbackLogo($site->name),
-                'uptime' => (float) ($site->uptime_percentage ?? 0),
-                'response' => (float) ($site->avg_load_time ?? 0),
+                'uptime' => round((float) ($site->uptime_percentage ?? 0), 2),
+                'response' => round((float) ($site->avg_load_time ?? 0), 2),
                 'healthScore' => (int) ($site->health_score ?? 0),
                 'lastChecked' => $site->last_checked_at?->toIso8601String(),
                 'client' => [
@@ -513,21 +518,27 @@ class SitesController extends Controller
     {
         $query = Site::query()->with('client:id,name');
 
-        // Apply same filters as index
-        if ($request->filled('platform') && $request->string('platform')->toString() !== 'all') {
-            $query->where('type', $request->string('platform')->toString());
-        }
+        // If specific site IDs are provided, only export those
+        if ($request->has('ids') && is_array($request->input('ids'))) {
+            $ids = array_map('intval', $request->input('ids'));
+            $query->whereIn('id', $ids);
+        } else {
+            // Apply same filters as index
+            if ($request->filled('platform') && $request->string('platform')->toString() !== 'all') {
+                $query->where('type', $request->string('platform')->toString());
+            }
 
-        if ($request->filled('status') && $request->string('status')->toString() !== 'all') {
-            $query->where('status', $request->string('status')->toString());
-        }
+            if ($request->filled('status') && $request->string('status')->toString() !== 'all') {
+                $query->where('status', $request->string('status')->toString());
+            }
 
-        if ($request->filled('query')) {
-            $search = $request->string('query')->toString();
-            $query->where(function ($inner) use ($search): void {
-                $inner->where('name', 'like', "%{$search}%")
-                    ->orWhere('url', 'like', "%{$search}%");
-            });
+            if ($request->filled('query')) {
+                $search = $request->string('query')->toString();
+                $query->where(function ($inner) use ($search): void {
+                    $inner->where('name', 'like', "%{$search}%")
+                        ->orWhere('url', 'like', "%{$search}%");
+                });
+            }
         }
 
         $format = $request->string('format', 'csv')->toString();

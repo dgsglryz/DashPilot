@@ -286,5 +286,42 @@ class ClientsController extends Controller
         return redirect()->route('clients.index')
             ->with('success', 'Client deleted successfully.');
     }
+
+    /**
+     * Display all reports for a specific client.
+     *
+     * @param Client $client
+     *
+     * @return Response
+     */
+    public function reports(Client $client): Response
+    {
+        $reports = $client->reports()
+            ->with('site:id,name,url')
+            ->latest('report_month')
+            ->get()
+            ->map(fn (Report $report) => [
+                'id' => $report->id,
+                'siteName' => $report->site?->name ?? 'N/A',
+                'siteUrl' => $report->site?->url ?? null,
+                'month' => $report->report_month?->format('F Y'),
+                'uptime' => $report->uptime_percentage,
+                'avgLoadTime' => $report->avg_load_time,
+                'totalBackups' => $report->total_backups,
+                'securityScans' => $report->security_scans,
+                'incidentsCount' => $report->incidents_count,
+                'generatedAt' => $report->generated_at?->toIso8601String(),
+                'downloadUrl' => $report->pdf_path ? route('reports.download', $report) : null,
+            ]);
+
+        return Inertia::render('Clients/Pages/Reports', [
+            'client' => [
+                'id' => $client->id,
+                'name' => $client->name,
+                'company' => $client->company,
+            ],
+            'reports' => $reports,
+        ]);
+    }
 }
 

@@ -46,7 +46,11 @@ class ReportsController extends Controller
 
         $siteIds = $validated['siteIds'];
 
-        if (in_array('all', $siteIds, true)) {
+        // Filter out 'all' if specific sites are selected
+        $siteIds = array_filter($siteIds, fn($id) => $id !== 'all');
+        
+        // If no specific sites selected or only 'all' was selected, use all sites
+        if (empty($siteIds)) {
             $siteIds = Site::pluck('id')->map(fn ($id) => (string) $id)->all();
         }
 

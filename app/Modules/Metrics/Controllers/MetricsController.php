@@ -31,14 +31,14 @@ class MetricsController extends Controller
             $bounds = $this->resolveTimeBounds($timeRange);
 
             return [
-                'averageUptime' => $this->calculateAverageUptime(),
-                'uptimeTrend' => $this->calculateUptimeTrend($bounds['start'], $bounds['previous']),
-                'averageResponseTime' => $this->calculateAverageResponseTime($bounds['start']),
-                'responseTrend' => $this->calculateResponseTrend($bounds['start'], $bounds['previous']),
+                'averageUptime' => round($this->calculateAverageUptime(), 2),
+                'uptimeTrend' => round($this->calculateUptimeTrend($bounds['start'], $bounds['previous']), 2),
+                'averageResponseTime' => round($this->calculateAverageResponseTime($bounds['start']), 2),
+                'responseTrend' => round($this->calculateResponseTrend($bounds['start'], $bounds['previous']), 2),
                 'totalRequests' => $this->calculateTotalRequests($bounds['start']),
-                'requestsTrend' => $this->calculateRequestsTrend($bounds['start'], $bounds['previous']),
-                'errorRate' => $this->calculateErrorRate($bounds['start']),
-                'errorTrend' => $this->calculateErrorTrend($bounds['start'], $bounds['previous']),
+                'requestsTrend' => round($this->calculateRequestsTrend($bounds['start'], $bounds['previous']), 2),
+                'errorRate' => round($this->calculateErrorRate($bounds['start']), 2),
+                'errorTrend' => round($this->calculateErrorTrend($bounds['start'], $bounds['previous']), 2),
                 'uptimeHistory' => $this->uptimeHistory($bounds['start']),
                 'responseTimeHistory' => $this->responseTimeHistory($bounds['start']),
                 'trafficHistory' => $this->trafficHistory($bounds['start']),

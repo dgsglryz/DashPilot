@@ -158,7 +158,10 @@
               </p>
             </div>
           </SettingsCard>
+        </div>
 
+        <!-- Webhooks Tab -->
+        <div v-if="activeTab === 'webhooks'" class="space-y-6">
           <SettingsCard title="Webhook Configuration">
             <div class="space-y-4">
               <div v-for="(webhook, index) in webhooks" :key="index" class="p-4 bg-gray-900/50 rounded-lg">
@@ -490,7 +493,8 @@ const settingsTabs = [
   { id: 'general', label: 'General', icon: UserCircleIcon },
   { id: 'notifications', label: 'Notifications', icon: BellIcon },
   { id: 'security', label: 'Security', icon: ShieldCheckIcon },
-  { id: 'monitoring', label: 'Monitoring', icon: ChartBarIcon }
+  { id: 'monitoring', label: 'Monitoring', icon: ChartBarIcon },
+  { id: 'webhooks', label: 'Webhooks', icon: BellIcon }
 ]
 
 /**
@@ -613,9 +617,21 @@ const changePassword = () => {
 /**
  * Toggle 2FA
  */
+const isToggling2FA = ref(false)
 const toggle2FA = () => {
-  router.post('/settings/2fa/toggle')
-  twoFactorEnabled.value = !twoFactorEnabled.value
+  isToggling2FA.value = true
+  router.post('/settings/2fa/toggle', {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      twoFactorEnabled.value = !twoFactorEnabled.value
+      toast.success(twoFactorEnabled.value ? '2FA enabled successfully' : '2FA disabled successfully')
+      isToggling2FA.value = false
+    },
+    onError: () => {
+      toast.error('Failed to toggle 2FA')
+      isToggling2FA.value = false
+    }
+  })
 }
 
 /**

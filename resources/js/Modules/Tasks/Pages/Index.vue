@@ -6,6 +6,7 @@
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Shared/Layouts/AppLayout.vue';
+import Pagination from '@/Shared/Components/Pagination.vue';
 import {
     PlusIcon,
     MagnifyingGlassIcon,
@@ -49,6 +50,13 @@ type TasksByStatus = {
 
 const props = defineProps<{
     tasks: TasksByStatus;
+    tasksPaginated?: {
+        data: any[];
+        links: any[];
+        from: number | null;
+        to: number | null;
+        total: number;
+    };
     stats: {
         total: number;
         pending: number;
@@ -469,6 +477,16 @@ const columns = [
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Pagination -->
+            <div v-if="props.tasksPaginated && props.tasksPaginated.links.length > 3" class="mt-6">
+                <Pagination
+                    :links="props.tasksPaginated.links"
+                    :from="props.tasksPaginated.from ?? undefined"
+                    :to="props.tasksPaginated.to ?? undefined"
+                    :total="props.tasksPaginated.total"
+                />
             </div>
         </div>
     </AppLayout>

@@ -1,44 +1,38 @@
 /**
  * useDarkMode composable provides dark mode toggle functionality with localStorage persistence.
  * Manages dark mode state and applies 'dark' class to document.documentElement.
+ * Uses singleton pattern to ensure consistent state across all components.
  */
 import { ref, watch, onMounted } from 'vue';
 
+// Singleton state - shared across all instances
 const isDark = ref<boolean>(false);
+let initialized = false;
 
 /**
- * Initialize dark mode from localStorage or system preference
+ * Initialize dark mode - always dark mode for this app
  */
 const initDarkMode = (): void => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || initialized) return;
     
-    const stored = localStorage.getItem('darkMode');
-    
-    if (stored !== null) {
-        isDark.value = stored === 'true';
-    } else {
-        // Check system preference
-        isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
+    initialized = true;
+    // Always dark mode - no toggle needed
+    isDark.value = true;
     
     applyDarkMode();
 };
 
 /**
- * Apply dark mode class to document element
+ * Apply dark mode class to document element - always dark
  */
 const applyDarkMode = (): void => {
     if (typeof document === 'undefined') return;
     
-    if (isDark.value) {
-        document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark');
-    }
-    
-    if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('darkMode', String(isDark.value));
-    }
+    // Always apply dark mode
+    document.documentElement.classList.add('dark');
+    document.documentElement.style.colorScheme = 'dark';
+    document.body.classList.remove('bg-white');
+    document.body.classList.add('bg-gray-950');
 };
 
 /**
@@ -46,6 +40,7 @@ const applyDarkMode = (): void => {
  */
 const toggleDarkMode = (): void => {
     isDark.value = !isDark.value;
+    applyDarkMode();
 };
 
 /**
@@ -53,23 +48,26 @@ const toggleDarkMode = (): void => {
  */
 const setDarkMode = (value: boolean): void => {
     isDark.value = value;
+    applyDarkMode();
 };
 
 export function useDarkMode() {
-    // Initialize on mount
-    onMounted(() => {
-        initDarkMode();
-    });
-    
     // Initialize immediately if in browser
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !initialized) {
         initDarkMode();
     }
+    
+    // Initialize on mount as well (for SSR safety)
+    onMounted(() => {
+        if (!initialized) {
+            initDarkMode();
+        }
+    });
     
     // Watch for changes and apply
     watch(isDark, () => {
         applyDarkMode();
-    });
+    }, { immediate: true });
     
     return {
         isDark,

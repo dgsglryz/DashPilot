@@ -48,7 +48,7 @@ class ActivityController extends Controller
             $query->whereDate('created_at', '<=', $request->string('date_to'));
         }
 
-        $activities = $query->paginate(50)->through(function (ActivityLog $log) {
+        $activities = $query->paginate(20)->through(function (ActivityLog $log) {
             return [
                 'id' => $log->id,
                 'action' => $log->action,

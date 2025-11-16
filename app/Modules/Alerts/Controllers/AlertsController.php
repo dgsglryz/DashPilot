@@ -21,12 +21,13 @@ class AlertsController extends Controller
     /**
      * Display the alert center.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $perPage = $request->integer('per_page', 20);
         $alerts = Alert::with('site')
             ->latest('created_at')
-            ->get()
-            ->map(function (Alert $alert) {
+            ->paginate($perPage)
+            ->through(function (Alert $alert) {
                 return [
                     'id' => $alert->id,
                     'title' => $alert->title ?? Str::headline($alert->type),
@@ -39,14 +40,15 @@ class AlertsController extends Controller
                     'isRead' => $alert->is_read,
                     'createdAt' => $alert->created_at?->toIso8601String(),
                 ];
-            })
-            ->all();
+            });
 
+        // Get stats from all alerts (not paginated)
+        $allAlerts = Alert::with('site')->get();
         $stats = [
-            'critical' => collect($alerts)->where('severity', 'critical')->where('status', '!=', 'resolved')->count(),
-            'warning' => collect($alerts)->where('severity', 'warning')->where('status', '!=', 'resolved')->count(),
-            'info' => collect($alerts)->where('severity', 'info')->where('status', '!=', 'resolved')->count(),
-            'resolved' => collect($alerts)->where('status', 'resolved')->count(),
+            'critical' => $allAlerts->where('severity', 'critical')->where('status', '!=', 'resolved')->count(),
+            'warning' => $allAlerts->where('severity', 'warning')->where('status', '!=', 'resolved')->count(),
+            'info' => $allAlerts->where('severity', 'info')->where('status', '!=', 'resolved')->count(),
+            'resolved' => $allAlerts->where('status', 'resolved')->count(),
         ];
 
         return Inertia::render('Alerts/Pages/Index', [

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { router } from '@inertiajs/vue3';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline';
 
 type ScheduledCheck = {
@@ -116,6 +117,21 @@ const previousMonth = (): void => {
 const nextMonth = (): void => {
     currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() + 1, 1);
 };
+
+/**
+ * Handle event click - navigate to relevant page
+ */
+const handleEventClick = (event: ScheduledCheck): void => {
+    if (event.title?.toLowerCase().includes('monitoring') || event.title?.toLowerCase().includes('site')) {
+        router.visit(route('sites.index'));
+    } else if (event.title?.toLowerCase().includes('seo') || event.title?.toLowerCase().includes('performance')) {
+        router.visit(route('metrics.index'));
+    } else if (event.title?.toLowerCase().includes('alert')) {
+        router.visit(route('alerts.index'));
+    } else if (event.title?.toLowerCase().includes('activity')) {
+        router.visit(route('activity.index'));
+    }
+};
 </script>
 
 <template>
@@ -172,10 +188,11 @@ const nextMonth = (): void => {
         <div v-if="dayObj.isCurrentMonth" class="flex h-full flex-col">
           <span class="text-sm font-medium text-gray-300">{{ dayObj.day }}</span>
 
-          <div
+          <button
             v-for="event in eventsByDay.get(dayObj.day as number) ?? []"
             :key="`${event.title}-${event.tag}`"
-            class="mt-2 rounded px-2 py-1 text-xs"
+            @click="handleEventClick(event)"
+            class="mt-2 w-full rounded px-2 py-1 text-xs text-left transition-colors hover:opacity-80"
             :class="eventClasses[event.status ?? 'info']"
           >
             <p class="font-semibold">
@@ -187,7 +204,7 @@ const nextMonth = (): void => {
             <p v-if="event.tag" class="text-[11px] text-gray-100/70">
               {{ event.tag }}
             </p>
-          </div>
+          </button>
         </div>
       </div>
 

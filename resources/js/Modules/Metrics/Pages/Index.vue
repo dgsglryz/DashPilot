@@ -143,23 +143,29 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 p-6">
           <h3 class="text-lg font-semibold text-white mb-6">Error Types</h3>
-          <div class="space-y-3">
-            <div v-for="error in metrics.errorTypes" :key="error.type" class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="w-2 h-2 rounded-full" :class="getErrorColor(error.type)"></div>
-                <span class="text-gray-300">{{ error.label }}</span>
-              </div>
-              <div class="flex items-center gap-3">
-                <span class="text-white font-semibold">{{ error.count }}</span>
-                <div class="w-32 h-2 bg-gray-900 rounded-full overflow-hidden">
-                  <div 
-                    class="h-full rounded-full"
-                    :class="getErrorBgColor(error.type)"
-                    :style="{ width: `${error.percentage}%` }"
-                  ></div>
+          <div v-if="metrics.errorTypes && metrics.errorTypes.length > 0" class="space-y-4">
+            <div v-for="error in metrics.errorTypes" :key="error.type" class="space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-3 h-3 rounded-full" :class="getErrorColor(error.type)"></div>
+                  <span class="text-gray-300 font-medium">{{ error.label }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-white font-semibold">{{ error.count }}</span>
+                  <span class="text-gray-500 text-sm">({{ error.percentage }}%)</span>
                 </div>
               </div>
+              <div class="w-full h-3 bg-gray-900 rounded-full overflow-hidden">
+                <div 
+                  class="h-full rounded-full transition-all duration-500"
+                  :class="getErrorBgColor(error.type)"
+                  :style="{ width: `${error.percentage}%` }"
+                ></div>
+              </div>
             </div>
+          </div>
+          <div v-else class="text-center py-8 text-gray-500">
+            <p>No errors detected in the selected time range</p>
           </div>
         </div>
 

@@ -135,6 +135,15 @@
           <p class="text-gray-500 text-sm mt-1">All systems are running smoothly</p>
         </div>
       </div>
+
+      <!-- Pagination -->
+      <Pagination 
+        v-if="alerts.links && alerts.links.length > 3"
+        :links="alerts.links"
+        :from="alerts.from"
+        :to="alerts.to"
+        :total="alerts.total"
+      />
     </div>
   </AppLayout>
 </template>
@@ -146,6 +155,7 @@ import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Shared/Layouts/AppLayout.vue'
 import AlertCard from '@/Modules/Alerts/Components/AlertCard.vue'
 import Breadcrumbs from '@/Shared/Components/Breadcrumbs.vue'
+import Pagination from '@/Shared/Components/Pagination.vue'
 import { ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
 import { 
   MagnifyingGlassIcon,
@@ -185,7 +195,9 @@ const filterType = ref('all')
  * @returns {Array} Filtered alert list
  */
 const filteredAlerts = computed(() => {
-  return props.alerts.filter(alert => {
+  // If alerts is paginated, use alerts.data, otherwise use alerts directly
+  const alertsList = props.alerts.data || props.alerts;
+  return alertsList.filter(alert => {
     const matchesSearch = alert.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                          alert.message.toLowerCase().includes(searchQuery.value.toLowerCase())
     const matchesSeverity = filterSeverity.value === 'all' || alert.severity === filterSeverity.value

@@ -279,7 +279,8 @@ const stats = computed(() => {
                             <tr
                                 v-for="client in filteredClients"
                                 :key="client.id"
-                                class="transition-colors hover:bg-gray-700/20"
+                                @click="router.visit(route('clients.show', client.id))"
+                                class="cursor-pointer transition-colors hover:bg-gray-700/20"
                             >
                                 <td class="px-6 py-4">
                                     <div>
@@ -366,6 +367,7 @@ const stats = computed(() => {
                                             :href="
                                                 route('clients.show', client.id)
                                             "
+                                            @click.stop
                                             class="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-700 hover:text-white"
                                         >
                                             <EyeIcon class="h-4 w-4" />
@@ -374,12 +376,13 @@ const stats = computed(() => {
                                             :href="
                                                 route('clients.edit', client.id)
                                             "
+                                            @click.stop
                                             class="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-700 hover:text-white"
                                         >
                                             <PencilIcon class="h-4 w-4" />
                                         </Link>
                                         <button
-                                            @click="deleteClient(client)"
+                                            @click.stop="deleteClient(client)"
                                             class="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-500/10 hover:text-red-400"
                                         >
                                             <TrashIcon class="h-4 w-4" />

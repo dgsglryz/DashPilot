@@ -252,17 +252,52 @@
                 </div>
             </div>
 
-            <!-- SEO + Alerts -->
-            <div class="grid gap-6 lg:grid-cols-2">
+            <!-- SEO Section with Charts -->
+            <div class="space-y-6">
                 <SEOScoreCard :site="site" />
-
-                <div
-                    class="rounded-3xl border border-gray-700/70 bg-gray-900/60 p-6"
-                >
-                    <h3 class="text-lg font-semibold text-white">
-                        Latest alerts
-                    </h3>
-                    <div class="mt-4 space-y-3">
+                
+                <!-- SEO Charts -->
+                <div class="grid gap-6 lg:grid-cols-2">
+                    <!-- Uptime Overview Chart -->
+                    <div class="rounded-3xl border border-gray-700/70 bg-gray-900/60 p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">Uptime Overview</h3>
+                        <UptimeChart 
+                            v-if="chart.labels && chart.labels.length > 0"
+                            :data="{
+                                labels: chart.labels || [],
+                                values: chart.datasets?.[0]?.data || []
+                            }"
+                            time-range="7d"
+                        />
+                        <div v-else class="flex items-center justify-center h-64 text-gray-500">
+                            <p class="text-sm">No data available</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Response Time Trends Chart -->
+                    <div class="rounded-3xl border border-gray-700/70 bg-gray-900/60 p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">Response Time Trends</h3>
+                        <ResponseTimeChart 
+                            v-if="chart.labels && chart.labels.length > 0"
+                            :data="{
+                                labels: chart.labels || [],
+                                values: chart.datasets?.[1]?.data || []
+                            }"
+                            time-range="7d"
+                        />
+                        <div v-else class="flex items-center justify-center h-64 text-gray-500">
+                            <p class="text-sm">No data available</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alerts -->
+            <div class="rounded-3xl border border-gray-700/70 bg-gray-900/60 p-6">
+                <h3 class="text-lg font-semibold text-white">
+                    Latest alerts
+                </h3>
+                <div class="mt-4 space-y-3">
                         <div
                             v-for="alert in alerts"
                             :key="alert.id"
@@ -299,7 +334,6 @@
                         >
                             No alerts in the last 48 hours.
                         </p>
-                    </div>
                 </div>
             </div>
 
@@ -345,6 +379,8 @@ import { Link } from "@inertiajs/vue3";
 import AppLayout from "@/Shared/Layouts/AppLayout.vue";
 import PerformanceChart from "@/Shared/Components/PerformanceChart.vue";
 import SEOScoreCard from "@/Modules/Sites/Components/SEOScoreCard.vue";
+import UptimeChart from "@/Modules/Metrics/Components/UptimeChart.vue";
+import ResponseTimeChart from "@/Modules/Metrics/Components/ResponseTimeChart.vue";
 import Breadcrumbs from "@/Shared/Components/Breadcrumbs.vue";
 import { ArrowLeftIcon, PlayIcon } from "@heroicons/vue/24/outline";
 

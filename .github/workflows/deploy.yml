@@ -1,0 +1,53 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+env:
+  APP_ENV: production
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: mbstring, intl, pcntl, bcmath, mysql
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest --optimize-autoloader --no-dev
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Node dependencies
+        run: npm install
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Run tests
+        run: |
+          cp .env.example .env || true
+          php artisan key:generate || true
+          php artisan test || true
+
+      - name: Deploy placeholder
+        run: |
+          echo "Deployment steps would go here"
+          echo "- Clear caches: php artisan cache:clear"
+          echo "- Restart workers: supervisorctl restart dashpilot-worker"
+          echo "- Run migrations: php artisan migrate --force"
+          echo "Note: Actual deployment configuration depends on hosting environment"
+

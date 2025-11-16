@@ -26,13 +26,13 @@
                         <ArrowDownTrayIcon class="h-4 w-4" />
                         {{ isExporting ? "Exporting..." : "Export" }}
                     </button>
-                    <button
-                        @click="showAddSiteModal = true"
+                    <Link
+                        :href="route('sites.create')"
                         class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
                     >
                         <PlusIcon class="w-5 h-5" />
                         Add Site
-                    </button>
+                    </Link>
                 </div>
             </div>
 
@@ -273,7 +273,8 @@
                             <tr
                                 v-for="site in filteredSites"
                                 :key="site.id"
-                                class="hover:bg-gray-700/20 transition-colors"
+                                @click="router.visit(route('sites.show', site.id))"
+                                class="cursor-pointer hover:bg-gray-700/20 transition-colors"
                                 :class="{
                                     'bg-blue-500/10': selectedSites.includes(
                                         site.id,
@@ -438,6 +439,15 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Pagination -->
+                <Pagination 
+                    v-if="sites.links && sites.links.length > 3"
+                    :links="sites.links"
+                    :from="sites.from"
+                    :to="sites.to"
+                    :total="sites.total"
+                />
             </div>
         </div>
     </AppLayout>
@@ -460,6 +470,7 @@ import {
 } from "@heroicons/vue/24/outline";
 import QuickActionsDropdown from "@/Shared/Components/QuickActionsDropdown.vue";
 import Breadcrumbs from "@/Shared/Components/Breadcrumbs.vue";
+import Pagination from "@/Shared/Components/Pagination.vue";
 import { useToast } from "@/Shared/Composables/useToast";
 
 /**
@@ -503,7 +514,9 @@ const toast = useToast();
  * @returns {Array} Filtered site list
  */
 const filteredSites = computed(() => {
-    return props.sites.filter((site) => {
+    // If sites is paginated, use sites.data, otherwise use sites directly
+    const sitesList = props.sites.data || props.sites;
+    return sitesList.filter((site) => {
         const matchesSearch =
             site.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
             site.url.toLowerCase().includes(searchQuery.value.toLowerCase());
