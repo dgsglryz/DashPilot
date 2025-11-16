@@ -5,6 +5,7 @@ namespace App\Modules\Sites\Services;
 
 use App\Modules\Sites\Exceptions\WordPressApiException;
 use App\Modules\Sites\Models\Site;
+use App\Shared\Services\LoggingService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -52,32 +53,48 @@ class WordPressService
     {
         $endpoint = rtrim($site->wp_api_url, '/').'/wp-json/dashpilot/v1/health';
 
-        $response = Http::timeout((int) config('services.wordpress.timeout', 10))
-            ->acceptJson()
-            ->when(
-                !empty($site->wp_api_key),
-                fn ($request) => $request->withToken($site->wp_api_key),
-            )
-            ->get($endpoint);
+        $logger = app(LoggingService::class);
+        $logger->logApiRequest('WordPress', $endpoint, [
+            'site_id' => $site->id,
+            'site_name' => $site->name,
+        ]);
 
-        if ($response->failed()) {
-            throw new WordPressApiException(
-                sprintf('WordPress API request failed with status %s', $response->status()),
-                $response->status()
-            );
-        }
+        $startTime = microtime(true);
 
-        $payload = $response->json();
+        try {
+            $response = Http::timeout((int) config('services.wordpress.timeout', 10))
+                ->acceptJson()
+                ->when(
+                    !empty($site->wp_api_key),
+                    fn ($request) => $request->withToken($site->wp_api_key),
+                )
+                ->get($endpoint);
 
-        if (!is_array($payload)) {
-            throw new WordPressApiException('Unexpected WordPress API payload.');
-        }
+            $duration = (microtime(true) - $startTime) * 1000;
 
-        return [
-            'status' => $payload['status'] ?? 'unknown',
-            'score' => $payload['score'] ?? null,
-            'plugins' => $payload['plugins'] ?? [],
-            'themes' => $payload['themes'] ?? [],
+            $logger->logApiResponse('WordPress', $endpoint, $response->status(), [
+                'site_id' => $site->id,
+                'duration_ms' => round($duration, 2),
+            ]);
+
+            if ($response->failed()) {
+                throw new WordPressApiException(
+                    sprintf('WordPress API request failed with status %s', $response->status()),
+                    $response->status()
+                );
+            }
+
+            $payload = $response->json();
+
+            if (!is_array($payload)) {
+                throw new WordPressApiException('Unexpected WordPress API payload.');
+            }
+
+            return [
+                'status' => $payload['status'] ?? 'unknown',
+                'score' => $payload['score'] ?? null,
+                'plugins' => $payload['plugins'] ?? [],
+                'themes' => $payload['themes'] ?? [],
             'php_version' => $payload['php_version'] ?? null,
             'wp_version' => $payload['wp_version'] ?? null,
             'last_backup' => $payload['last_backup'] ?? null,

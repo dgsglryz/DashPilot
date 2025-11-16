@@ -2,15 +2,25 @@
   <AppLayout>
     <div class="space-y-6">
       <!-- Header -->
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 class="text-3xl font-bold text-white">Sites</h1>
           <p class="text-gray-400 mt-1">Monitor and manage all your WordPress and Shopify sites</p>
         </div>
-        <button @click="showAddSiteModal = true" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2">
-          <PlusIcon class="w-5 h-5" />
-          Add Site
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            @click="exportSites"
+            :disabled="isExporting"
+            class="inline-flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
+          >
+            <ArrowDownTrayIcon class="h-4 w-4" />
+            {{ isExporting ? 'Exporting...' : 'Export' }}
+          </button>
+          <button @click="showAddSiteModal = true" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2">
+            <PlusIcon class="w-5 h-5" />
+            Add Site
+          </button>
+        </div>
       </div>
 
       <!-- Filters & Search -->
@@ -117,10 +127,47 @@
 
       <!-- Sites Table -->
       <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden">
+        <!-- Batch Actions Bar -->
+        <div
+          v-if="selectedSites.length > 0"
+          class="flex items-center justify-between border-b border-gray-700 bg-gray-900/50 px-6 py-3"
+        >
+          <span class="text-sm text-gray-300">
+            {{ selectedSites.length }} site{{ selectedSites.length > 1 ? 's' : '' }} selected
+          </span>
+          <div class="flex items-center gap-2">
+            <button
+              @click="runBulkHealthCheck"
+              class="rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-sm text-white transition-colors hover:bg-gray-700"
+            >
+              Run Health Check
+            </button>
+            <button
+              @click="exportSelected"
+              class="rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-sm text-white transition-colors hover:bg-gray-700"
+            >
+              Export Selected
+            </button>
+            <button
+              @click="clearSelection"
+              class="rounded-lg px-3 py-1.5 text-sm text-gray-400 transition-colors hover:text-white"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
         <div class="overflow-x-auto">
           <table class="w-full">
             <thead class="bg-gray-900/50">
               <tr>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <input
+                    type="checkbox"
+                    :checked="allSelected"
+                    @change="toggleSelectAll"
+                    class="rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
+                  />
+                </th>
                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Site</th>
                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Platform</th>
                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
@@ -131,15 +178,32 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-700/50">
-              <tr v-for="site in filteredSites" :key="site.id" class="hover:bg-gray-700/20 transition-colors cursor-pointer" @click="goToSite(site.id)">
-                <td class="px-6 py-4">
+              <tr v-for="site in filteredSites" :key="site.id" class="hover:bg-gray-700/20 transition-colors" :class="{ 'bg-blue-500/10': selectedSites.includes(site.id) }">
+                <td class="px-6 py-4" @click.stop>
+                  <input
+                    type="checkbox"
+                    :checked="selectedSites.includes(site.id)"
+                    @change="toggleSiteSelection(site.id)"
+                    class="rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
+                  />
+                </td>
+                <td class="px-6 py-4 cursor-pointer" @click="goToSite(site.id)">
                   <div class="flex items-center gap-3">
                     <div class="relative">
                       <img :src="site.thumbnail" :alt="site.name" class="h-12 w-12 rounded-xl object-cover" />
                       <img :src="site.logo" :alt="`${site.name} logo`" class="absolute -bottom-1 -right-1 h-6 w-6 rounded-full border border-gray-900 bg-gray-900 object-cover" />
                     </div>
-                    <div>
-                      <p class="font-medium text-white">{{ site.name }}</p>
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2">
+                        <p class="font-medium text-white">{{ site.name }}</p>
+                        <button
+                          @click.stop="toggleFavorite(site.id)"
+                          class="rounded p-0.5 transition-colors"
+                          :class="site.is_favorited ? 'text-yellow-400 hover:text-yellow-300' : 'text-gray-500 hover:text-yellow-400'"
+                        >
+                          <StarIcon class="h-4 w-4" :class="{ 'fill-current': site.is_favorited }" />
+                        </button>
+                      </div>
                       <p class="text-sm text-gray-400">{{ site.url }}</p>
                     </div>
                   </div>
@@ -186,17 +250,12 @@
                   <span class="text-gray-400 text-sm">{{ formatRelativeTime(site.lastChecked) }}</span>
                 </td>
                 <td class="px-6 py-4" @click.stop>
-                  <div class="flex items-center justify-end gap-2">
-                    <Link :href="route('sites.show', site.id)" class="p-2 hover:bg-gray-700 rounded-lg transition-colors" @click.stop>
-                      <EyeIcon class="w-4 h-4 text-gray-400" />
-                    </Link>
-                    <button @click.stop="refreshSite" class="p-2 hover:bg-gray-700 rounded-lg transition-colors">
-                      <ArrowPathIcon class="w-4 h-4 text-gray-400" />
-                    </button>
-                    <button @click.stop class="p-2 hover:bg-gray-700 rounded-lg transition-colors">
-                      <EllipsisVerticalIcon class="w-4 h-4 text-gray-400" />
-                    </button>
-                  </div>
+                  <QuickActionsDropdown
+                    :site-id="site.id"
+                    :site-url="site.url"
+                    :is-favorited="site.is_favorited"
+                    @favorite-toggled="refreshSite"
+                  />
                 </td>
               </tr>
             </tbody>
@@ -210,7 +269,7 @@
 <script setup lang="ts">
 // @ts-nocheck
 import { ref, computed, watch } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Shared/Layouts/AppLayout.vue'
 import { 
   MagnifyingGlassIcon, 
@@ -219,10 +278,11 @@ import {
   ExclamationTriangleIcon,
   XCircleIcon,
   GlobeAltIcon,
-  EyeIcon,
-  ArrowPathIcon,
-  EllipsisVerticalIcon
+  ArrowDownTrayIcon,
+  StarIcon
 } from '@heroicons/vue/24/outline'
+import QuickActionsDropdown from '@/Shared/Components/QuickActionsDropdown.vue'
+import { useToast } from '@/Shared/Composables/useToast'
 
 /**
  * Component props from Inertia
@@ -256,6 +316,9 @@ const filterPlatform = ref(props.filters?.platform ?? 'all')
 const filterStatus = ref(props.filters?.status ?? 'all')
 const showAddSiteModal = ref(false)
 const suggestionOpen = ref(false)
+const selectedSites = ref<number[]>([])
+const isExporting = ref(false)
+const toast = useToast()
 
 /**
  * Computed filtered sites based on search and filters
@@ -291,6 +354,104 @@ const formatRelativeTime = (timestamp) => {
   
   const diffDays = Math.floor(diffHours / 24)
   return `${diffDays}d ago`
+}
+
+/**
+ * All sites selected
+ */
+const allSelected = computed(() => {
+  return filteredSites.value.length > 0 && selectedSites.value.length === filteredSites.value.length
+})
+
+/**
+ * Toggle select all sites
+ */
+const toggleSelectAll = () => {
+  if (allSelected.value) {
+    selectedSites.value = []
+  } else {
+    selectedSites.value = filteredSites.value.map((s: { id: number }) => s.id)
+  }
+}
+
+/**
+ * Toggle site selection
+ */
+const toggleSiteSelection = (siteId: number) => {
+  const index = selectedSites.value.indexOf(siteId)
+  if (index > -1) {
+    selectedSites.value.splice(index, 1)
+  } else {
+    selectedSites.value.push(siteId)
+  }
+}
+
+/**
+ * Clear selection
+ */
+const clearSelection = () => {
+  selectedSites.value = []
+}
+
+/**
+ * Run bulk health check
+ */
+const runBulkHealthCheck = async () => {
+  if (selectedSites.value.length === 0) return
+  
+  try {
+    for (const siteId of selectedSites.value) {
+      await router.post(route('sites.health-check', siteId))
+    }
+    toast.success(`Health check initiated for ${selectedSites.value.length} site(s)`)
+    clearSelection()
+  } catch {
+    toast.error('Failed to run health checks')
+  }
+}
+
+/**
+ * Export selected sites
+ */
+const exportSelected = () => {
+  if (selectedSites.value.length === 0) return
+  
+  const params = new URLSearchParams()
+  selectedSites.value.forEach(id => params.append('ids[]', id.toString()))
+  window.location.href = route('sites.export') + '?' + params.toString()
+  clearSelection()
+}
+
+/**
+ * Export all sites
+ */
+const exportSites = () => {
+  isExporting.value = true
+  window.location.href = route('sites.export')
+  setTimeout(() => {
+    isExporting.value = false
+  }, 2000)
+}
+
+/**
+ * Toggle favorite status
+ */
+const toggleFavorite = async (siteId: number) => {
+  try {
+    await router.post(route('sites.toggle-favorite', siteId), {}, {
+      preserveState: true,
+      preserveScroll: true,
+      onSuccess: () => {
+        // Update local state
+        const site = props.sites.find((s: { id: number }) => s.id === siteId)
+        if (site) {
+          site.is_favorited = !site.is_favorited
+        }
+      }
+    })
+  } catch {
+    toast.error('Failed to update favorite status')
+  }
 }
 
 /**

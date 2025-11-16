@@ -5,6 +5,13 @@
       <div class="flex items-center gap-2">
         <span class="text-3xl font-bold" :class="scoreColor">{{ site.seoScore }}</span>
         <span class="text-gray-400">/100</span>
+        <button
+          @click="showModal = true"
+          class="ml-2 rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-700 hover:text-white"
+          title="View score breakdown"
+        >
+          <InformationCircleIcon class="h-5 w-5" />
+        </button>
       </div>
     </div>
 
@@ -38,13 +45,23 @@
         </div>
       </div>
     </div>
+
+    <!-- Health Score Modal -->
+    <HealthScoreModal
+      :is-open="showModal"
+      :score="site.seoScore"
+      :breakdown="scoreBreakdown"
+      :site-name="site.name"
+      @close="showModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 // @ts-nocheck
-import { computed } from 'vue'
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import { computed, ref } from 'vue'
+import { ExclamationTriangleIcon, InformationCircleIcon } from '@heroicons/vue/24/outline'
+import HealthScoreModal from '@/Shared/Components/HealthScoreModal.vue'
 
 /**
  * Component props
@@ -71,6 +88,30 @@ const seoMetrics = computed(() => props.site.seoMetrics || [
  * SEO issues to fix
  */
 const seoIssues = computed(() => props.site.seoIssues || [])
+
+/**
+ * Modal state
+ */
+const showModal = ref(false)
+
+/**
+ * Score breakdown for modal
+ */
+const scoreBreakdown = computed(() => {
+  const breakdown = []
+  const score = props.site.seoScore
+  
+  if (score < 100) {
+    if (score < 90) breakdown.push({ issue: 'Missing meta description', points: -10, description: 'Add a compelling meta description for better SEO' })
+    if (score < 85) breakdown.push({ issue: 'No H1 or multiple H1s', points: -15, description: 'Ensure exactly one H1 tag exists' })
+    if (score < 80) breakdown.push({ issue: 'No SSL certificate', points: -20, description: 'Site should use HTTPS' })
+    if (score < 75) breakdown.push({ issue: 'Slow page load time', points: -10, description: 'Page takes longer than 3 seconds to load' })
+    if (score < 70) breakdown.push({ issue: 'No viewport meta tag', points: -10, description: 'Add viewport meta for mobile responsiveness' })
+    if (score < 60) breakdown.push({ issue: 'Images missing alt tags', points: -20, description: 'Multiple images lack alt attributes' })
+  }
+  
+  return breakdown
+})
 
 /**
  * Overall score color

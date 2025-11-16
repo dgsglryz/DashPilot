@@ -13,6 +13,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * User model represents application users with authentication and authorization capabilities.
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -63,21 +66,41 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Get all clients assigned to this user as a developer.
+     *
+     * @return HasMany<Client>
+     */
     public function assignedClients(): HasMany
     {
         return $this->hasMany(Client::class, 'assigned_developer_id');
     }
 
+    /**
+     * Get all tasks assigned to this user.
+     *
+     * @return HasMany<Task>
+     */
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class, 'assigned_to');
     }
 
+    /**
+     * Get all alerts resolved by this user.
+     *
+     * @return HasMany<Alert>
+     */
     public function resolvedAlerts(): HasMany
     {
         return $this->hasMany(Alert::class, 'resolved_by');
     }
 
+    /**
+     * Get all activity logs created by this user.
+     *
+     * @return HasMany<ActivityLog>
+     */
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class);

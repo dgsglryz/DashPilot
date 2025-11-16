@@ -7,6 +7,7 @@ use App\Modules\Notifications\Mail\AlertCreated;
 use App\Modules\Notifications\Mail\AlertResolved;
 use App\Modules\Notifications\Mail\DailyDigest;
 use App\Modules\Users\Models\User;
+use App\Shared\Services\LoggingService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -44,20 +45,37 @@ class SendEmailNotification implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(LoggingService $logger): void
     {
-        match ($this->type) {
-            'alert_created' => $this->sendAlertCreated(),
-            'alert_resolved' => $this->sendAlertResolved(),
-            'daily_digest' => $this->sendDailyDigest(),
-            default => throw new \InvalidArgumentException("Unknown notification type: {$this->type}"),
-        };
+        $logger->logJob(SendEmailNotification::class, [
+            'type' => $this->type,
+        ], 'started');
+
+        try {
+            match ($this->type) {
+                'alert_created' => $this->sendAlertCreated($logger),
+                'alert_resolved' => $this->sendAlertResolved($logger),
+                'daily_digest' => $this->sendDailyDigest($logger),
+                default => throw new \InvalidArgumentException("Unknown notification type: {$this->type}"),
+            };
+
+            $logger->logJob(SendEmailNotification::class, [
+                'type' => $this->type,
+            ], 'completed');
+        } catch (\Throwable $e) {
+            $logger->logJob(SendEmailNotification::class, [
+                'type' => $this->type,
+                'error' => $e->getMessage(),
+            ], 'failed');
+
+            throw $e;
+        }
     }
 
     /**
      * Send alert created notification (only for critical/high severity).
      */
-    private function sendAlertCreated(): void
+    private function sendAlertCreated(LoggingService $logger): void
     {
         $alert = $this->data;
 
@@ -70,14 +88,24 @@ class SendEmailNotification implements ShouldQueue
         $users = $this->getUsersForNotification('emailAlerts');
 
         foreach ($users as $user) {
-            Mail::to($user->email)->send(new AlertCreated($alert));
+            try {
+                Mail::to($user->email)->send(new AlertCreated($alert));
+                $logger->logEmailNotification(AlertCreated::class, $user->email, true, [
+                    'alert_id' => $alert->id,
+                ]);
+            } catch (\Throwable $e) {
+                $logger->logEmailNotification(AlertCreated::class, $user->email, false, [
+                    'alert_id' => $alert->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
     /**
      * Send alert resolved notification (all severities).
      */
-    private function sendAlertResolved(): void
+    private function sendAlertResolved(LoggingService $logger): void
     {
         $alert = $this->data;
 
@@ -85,14 +113,24 @@ class SendEmailNotification implements ShouldQueue
         $users = $this->getUsersForNotification('emailAlerts');
 
         foreach ($users as $user) {
-            Mail::to($user->email)->send(new AlertResolved($alert));
+            try {
+                Mail::to($user->email)->send(new AlertResolved($alert));
+                $logger->logEmailNotification(AlertResolved::class, $user->email, true, [
+                    'alert_id' => $alert->id,
+                ]);
+            } catch (\Throwable $e) {
+                $logger->logEmailNotification(AlertResolved::class, $user->email, false, [
+                    'alert_id' => $alert->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
     /**
      * Send daily digest to users who opted in.
      */
-    private function sendDailyDigest(): void
+    private function sendDailyDigest(LoggingService $logger): void
     {
         [$alerts, $sites] = $this->data;
 
@@ -100,7 +138,14 @@ class SendEmailNotification implements ShouldQueue
         $users = $this->getUsersForNotification('emailReports');
 
         foreach ($users as $user) {
-            Mail::to($user->email)->send(new DailyDigest($user, $alerts, $sites));
+            try {
+                Mail::to($user->email)->send(new DailyDigest($user, $alerts, $sites));
+                $logger->logEmailNotification(DailyDigest::class, $user->email, true);
+            } catch (\Throwable $e) {
+                $logger->logEmailNotification(DailyDigest::class, $user->email, false, [
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 

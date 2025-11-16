@@ -2,7 +2,7 @@
 /**
  * HealthScoreModal displays detailed breakdown of site health score calculation.
  */
-import { XMarkIcon, InformationCircleIcon } from '@heroicons/vue/24/outline';
+import { XMarkIcon, InformationCircleIcon } from "@heroicons/vue/24/outline";
 
 interface ScoreBreakdown {
     issue: string;
@@ -19,11 +19,11 @@ interface Props {
 
 withDefaults(defineProps<Props>(), {
     breakdown: () => [],
-    siteName: 'Site',
+    siteName: "Site",
 });
 
 const emit = defineEmits<{
-    (e: 'close'): void;
+    (e: "close"): void;
 }>();
 </script>
 
@@ -66,7 +66,9 @@ const emit = defineEmits<{
                 </div>
 
                 <!-- Score Summary -->
-                <div class="mb-6 rounded-lg border border-gray-700 bg-gray-900 p-4">
+                <div
+                    class="mb-6 rounded-lg border border-gray-700 bg-gray-900 p-4"
+                >
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-400">Current Score</p>
@@ -88,10 +90,7 @@ const emit = defineEmits<{
                     <h4 class="text-sm font-semibold text-gray-300">
                         Score Calculation
                     </h4>
-                    <div
-                        v-if="breakdown.length > 0"
-                        class="space-y-2"
-                    >
+                    <div v-if="breakdown.length > 0" class="space-y-2">
                         <div
                             v-for="(item, index) in breakdown"
                             :key="index"
@@ -116,7 +115,8 @@ const emit = defineEmits<{
                                         : 'text-green-400'
                                 "
                             >
-                                {{ item.points > 0 ? '+' : '' }}{{ item.points }}
+                                {{ item.points > 0 ? "+" : ""
+                                }}{{ item.points }}
                             </span>
                         </div>
                     </div>
@@ -124,7 +124,8 @@ const emit = defineEmits<{
                         v-else
                         class="rounded-lg border border-gray-700 bg-gray-900 p-4 text-center text-sm text-gray-400"
                     >
-                        No breakdown available. Score is calculated automatically.
+                        No breakdown available. Score is calculated
+                        automatically.
                     </div>
                 </div>
 
@@ -141,4 +142,3 @@ const emit = defineEmits<{
         </div>
     </Transition>
 </template>
-

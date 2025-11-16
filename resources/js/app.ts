@@ -55,6 +55,14 @@ createInertiaApp({
     },
 });
 
+/**
+ * Resolve the module path for an Inertia page component.
+ * Tries multiple common paths to locate the Vue component file.
+ *
+ * @param name - The page component name
+ * @returns The resolved path to the component
+ * @throws Error if the page component is not found
+ */
 function resolveModulePath(name: string): string {
     const guesses = [
         `./Modules/${name}.vue`,

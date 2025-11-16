@@ -6,6 +6,7 @@ namespace App\Modules\Sites\Jobs;
 use App\Modules\Monitoring\Models\SiteCheck;
 use App\Modules\Sites\Models\Site;
 use App\Modules\Sites\Services\WordPressService;
+use App\Shared\Services\LoggingService;
 use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -38,25 +39,45 @@ class CheckSiteHealth implements ShouldQueue
      *
      * @return void
      */
-    public function handle(WordPressService $wordpressService): void
+    public function handle(WordPressService $wordpressService, LoggingService $logger): void
     {
-        $payload = $wordpressService->fetchHealthData($this->site);
+        $logger->logJob(CheckSiteHealth::class, [
+            'site_id' => $this->site->id,
+            'site_name' => $this->site->name,
+        ], 'started');
 
-        $status = $payload['status'] ?? 'unknown';
-        $score = (int) ($payload['score'] ?? $this->site->health_score);
+        try {
+            $payload = $wordpressService->fetchHealthData($this->site);
 
-        $this->site->checks()->create([
-            'check_type' => SiteCheck::TYPE_PERFORMANCE,
-            'status' => $status === 'ok' ? SiteCheck::STATUS_PASS : SiteCheck::STATUS_WARNING,
-            'response_time' => $payload['response_time'] ?? null,
-            'details' => $payload,
-            'checked_at' => CarbonImmutable::now(),
-        ]);
+            $status = $payload['status'] ?? 'unknown';
+            $score = (int) ($payload['score'] ?? $this->site->health_score);
 
-        $this->site->forceFill([
-            'health_score' => $score,
-            'last_checked_at' => CarbonImmutable::now(),
-        ])->save();
+            $this->site->checks()->create([
+                'check_type' => SiteCheck::TYPE_PERFORMANCE,
+                'status' => $status === 'ok' ? SiteCheck::STATUS_PASS : SiteCheck::STATUS_WARNING,
+                'response_time' => $payload['response_time'] ?? null,
+                'details' => $payload,
+                'checked_at' => CarbonImmutable::now(),
+            ]);
+
+            $this->site->forceFill([
+                'health_score' => $score,
+                'last_checked_at' => CarbonImmutable::now(),
+            ])->save();
+
+            $logger->logJob(CheckSiteHealth::class, [
+                'site_id' => $this->site->id,
+                'status' => $status,
+                'score' => $score,
+            ], 'completed');
+        } catch (\Throwable $e) {
+            $logger->logJob(CheckSiteHealth::class, [
+                'site_id' => $this->site->id,
+                'error' => $e->getMessage(),
+            ], 'failed');
+
+            throw $e;
+        }
     }
 }
 

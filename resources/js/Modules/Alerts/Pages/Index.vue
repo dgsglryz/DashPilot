@@ -2,14 +2,24 @@
   <AppLayout>
     <div class="space-y-6">
       <!-- Header -->
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 class="text-3xl font-bold text-white">Alerts</h1>
           <p class="text-gray-400 mt-1">Monitor and manage system alerts and notifications</p>
         </div>
-        <button @click="markAllAsRead" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
-          Mark All as Read
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            @click="exportAlerts"
+            :disabled="isExporting"
+            class="inline-flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
+          >
+            <ArrowDownTrayIcon class="h-4 w-4" />
+            {{ isExporting ? 'Exporting...' : 'Export' }}
+          </button>
+          <button @click="markAllAsRead" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
+            Mark All as Read
+          </button>
+        </div>
       </div>
 
       <!-- Alert Stats -->
@@ -129,6 +139,7 @@ import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Shared/Layouts/AppLayout.vue'
 import AlertCard from '@/Modules/Alerts/Components/AlertCard.vue'
+import { ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
 import { 
   MagnifyingGlassIcon,
   ExclamationCircleIcon,
@@ -207,5 +218,21 @@ const resolveAlert = (alertId) => {
  */
 const viewSite = (siteId) => {
   router.visit(`/sites/${siteId}`)
+}
+
+/**
+ * Export state
+ */
+const isExporting = ref(false)
+
+/**
+ * Export alerts
+ */
+const exportAlerts = () => {
+  isExporting.value = true
+  window.location.href = route('alerts.export')
+  setTimeout(() => {
+    isExporting.value = false
+  }, 2000)
 }
 </script>

@@ -147,7 +147,7 @@ class AlertsController extends Controller
             fclose($handle);
         }, $filename, [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 

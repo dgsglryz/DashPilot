@@ -5,6 +5,7 @@ namespace App\Modules\Shopify\Services;
 
 use App\Modules\Shopify\Exceptions\ShopifyApiException;
 use App\Modules\Sites\Models\Site;
+use App\Shared\Services\LoggingService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -65,9 +66,15 @@ class ShopifyRestService
             'Accept' => 'application/json',
         ];
 
-        $shop = $this->get("{$base}/shop.json", $headers);
-        $orders = $this->get("{$base}/orders.json?status=any&limit=50", $headers);
-        $productsCount = $this->get("{$base}/products/count.json", $headers);
+        $logger = app(LoggingService::class);
+        $logger->logServiceMethod(ShopifyRestService::class, 'requestOverview', [
+            'site_id' => $site->id,
+            'base_url' => $base,
+        ]);
+
+        $shop = $this->get("{$base}/shop.json", $headers, $logger);
+        $orders = $this->get("{$base}/orders.json?status=any&limit=50", $headers, $logger);
+        $productsCount = $this->get("{$base}/products/count.json", $headers, $logger);
 
         return [
             'shop' => $shop['shop'] ?? [],
@@ -82,29 +89,48 @@ class ShopifyRestService
      *
      * @param string $url
      * @param array<string, string> $headers
+     * @param LoggingService|null $logger
      *
      * @return array<string, mixed>
      */
-    private function get(string $url, array $headers): array
+    private function get(string $url, array $headers, ?LoggingService $logger = null): array
     {
-        $response = Http::timeout((int) config('services.shopify.timeout', 10))
-            ->withHeaders($headers)
-            ->get($url);
+        $logger = $logger ?? app(LoggingService::class);
+        $logger->logApiRequest('Shopify', $url);
 
-        if ($response->failed()) {
-            throw new ShopifyApiException(
-                sprintf('Shopify REST request failed: %s', $response->status()),
-                $response->status()
-            );
+        $startTime = microtime(true);
+
+        try {
+            $response = Http::timeout((int) config('services.shopify.timeout', 10))
+                ->withHeaders($headers)
+                ->get($url);
+
+            $duration = (microtime(true) - $startTime) * 1000;
+            $logger->logApiResponse('Shopify', $url, $response->status(), [
+                'duration_ms' => round($duration, 2),
+            ]);
+
+            if ($response->failed()) {
+                throw new ShopifyApiException(
+                    sprintf('Shopify REST request failed: %s', $response->status()),
+                    $response->status()
+                );
+            }
+
+            $payload = $response->json();
+
+            if (!is_array($payload)) {
+                throw new ShopifyApiException('Unexpected Shopify REST payload.');
+            }
+
+            return $payload;
+        } catch (\Throwable $e) {
+            $logger->logException($e, [
+                'url' => $url,
+                'service' => 'Shopify',
+            ]);
+            throw $e;
         }
-
-        $payload = $response->json();
-
-        if (!is_array($payload)) {
-            throw new ShopifyApiException('Unexpected Shopify REST payload.');
-        }
-
-        return $payload;
     }
 }
 

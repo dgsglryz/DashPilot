@@ -6,6 +6,7 @@ namespace App\Modules\Notifications\Services;
 use App\Modules\Alerts\Models\Alert;
 use App\Modules\Notifications\Jobs\DeliverWebhook;
 use App\Modules\Notifications\Models\Webhook;
+use App\Shared\Services\LoggingService;
 use Illuminate\Support\Collection;
 
 /**
@@ -22,12 +23,25 @@ class WebhookService
      */
     public function triggerAlertEvent(string $eventType, Alert $alert): void
     {
+        $logger = app(LoggingService::class);
+        $logger->logServiceMethod(WebhookService::class, 'triggerAlertEvent', [
+            'event_type' => $eventType,
+            'alert_id' => $alert->id,
+        ]);
+
         $webhooks = $this->getActiveWebhooksForEvent($eventType);
+
+        $logger->debug("Found {$webhooks->count()} active webhooks for event: {$eventType}");
 
         foreach ($webhooks as $webhook) {
             $payload = $this->buildAlertPayload($eventType, $alert, $webhook);
 
             DeliverWebhook::dispatch($webhook, $eventType, $payload);
+
+            $logger->debug("Dispatched webhook job", [
+                'webhook_id' => $webhook->id,
+                'url' => $webhook->url,
+            ]);
         }
     }
 

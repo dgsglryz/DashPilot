@@ -14,10 +14,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\LogControllerActions::class,
         ]);
 
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Log all exceptions
+        $exceptions->report(function (\Throwable $e): void {
+            if (app()->bound(\App\Shared\Services\LoggingService::class)) {
+                app(\App\Shared\Services\LoggingService::class)->logException($e);
+            }
+        });
     })->create();

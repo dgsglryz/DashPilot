@@ -236,6 +236,13 @@ class SitesController extends Controller
         ];
     }
 
+    /**
+     * Calculate uptime percentage based on site status.
+     *
+     * @param string|null $status
+     *
+     * @return float
+     */
     private function uptimePoint(?string $status): float
     {
         return match ($status) {
@@ -245,6 +252,13 @@ class SitesController extends Controller
         };
     }
 
+    /**
+     * Build SEO insights data for a site including score, metrics, and issues.
+     *
+     * @param Site $site
+     *
+     * @return array<string, mixed>
+     */
     private function buildSeoInsights(Site $site): array
     {
         $baseScore = (int) ($site->health_score ?? 78);
@@ -279,11 +293,25 @@ class SitesController extends Controller
         ];
     }
 
+    /**
+     * Generate a fallback thumbnail URL for a site.
+     *
+     * @param int $siteId
+     *
+     * @return string
+     */
     private function fallbackThumbnail(int $siteId): string
     {
         return "https://picsum.photos/seed/site-{$siteId}/640/360";
     }
 
+    /**
+     * Generate a fallback logo URL using DiceBear initials API.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
     private function fallbackLogo(string $name): string
     {
         $seed = Str::slug($name);
@@ -551,7 +579,7 @@ class SitesController extends Controller
             fclose($handle);
         }, $filename, [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 }

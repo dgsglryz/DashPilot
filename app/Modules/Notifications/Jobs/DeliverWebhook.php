@@ -6,6 +6,7 @@ namespace App\Modules\Notifications\Jobs;
 use App\Modules\Notifications\Models\Webhook;
 use App\Modules\Notifications\Models\WebhookLog;
 use App\Modules\Notifications\Services\WebhookService;
+use App\Shared\Services\LoggingService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -55,9 +56,16 @@ class DeliverWebhook implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(WebhookService $webhookService): void
+    public function handle(WebhookService $webhookService, LoggingService $logger): void
     {
         $attemptNumber = $this->attempts();
+
+        $logger->logJob(DeliverWebhook::class, [
+            'webhook_id' => $this->webhook->id,
+            'url' => $this->webhook->url,
+            'event_type' => $this->eventType,
+            'attempt' => $attemptNumber,
+        ], 'started');
 
         try {
             $payload = $this->payload;
@@ -69,6 +77,7 @@ class DeliverWebhook implements ShouldQueue
             }
 
             // Send webhook with 10 second timeout
+            $startTime = microtime(true);
             $response = Http::timeout(10)
                 ->withHeaders([
                     'Content-Type' => 'application/json',
@@ -76,12 +85,26 @@ class DeliverWebhook implements ShouldQueue
                 ])
                 ->post($this->webhook->url, $payload);
 
+            $duration = (microtime(true) - $startTime) * 1000;
             $success = $response->ok();
             $statusCode = $response->status();
             $responseBody = $response->body();
 
             // Log the attempt
             $this->logAttempt($attemptNumber, $success, $statusCode, $responseBody);
+
+            // Log via LoggingService
+            $logger->logWebhookDelivery(
+                $this->webhook->id,
+                $this->webhook->url,
+                $this->eventType,
+                $success,
+                [
+                    'status_code' => $statusCode,
+                    'duration_ms' => round($duration, 2),
+                    'attempt' => $attemptNumber,
+                ]
+            );
 
             // Update webhook last triggered timestamp
             $this->webhook->update([
@@ -91,16 +114,29 @@ class DeliverWebhook implements ShouldQueue
             if (!$success) {
                 throw new \RuntimeException("Webhook delivery failed with status {$statusCode}: {$responseBody}");
             }
+
+            $logger->logJob(DeliverWebhook::class, [
+                'webhook_id' => $this->webhook->id,
+                'success' => true,
+            ], 'completed');
         } catch (\Exception $e) {
             $this->logAttempt($attemptNumber, false, 0, $e->getMessage());
 
-            Log::error('Webhook delivery failed', [
+            $logger->logWebhookDelivery(
+                $this->webhook->id,
+                $this->webhook->url,
+                $this->eventType,
+                false,
+                [
+                    'error' => $e->getMessage(),
+                    'attempt' => $attemptNumber,
+                ]
+            );
+
+            $logger->logJob(DeliverWebhook::class, [
                 'webhook_id' => $this->webhook->id,
-                'url' => $this->webhook->url,
-                'event_type' => $this->eventType,
-                'attempt' => $attemptNumber,
                 'error' => $e->getMessage(),
-            ]);
+            ], 'failed');
 
             throw $e;
         }

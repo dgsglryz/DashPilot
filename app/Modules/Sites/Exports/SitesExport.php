@@ -14,6 +14,8 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 class SitesExport implements FromArray, WithHeadings, WithStyles
 {
     /**
+     * Initialize the export with data array.
+     *
      * @param array<int, array<string, mixed>> $data
      */
     public function __construct(private array $data)
@@ -21,6 +23,8 @@ class SitesExport implements FromArray, WithHeadings, WithStyles
     }
 
     /**
+     * Get the array representation of the export data.
+     *
      * @return array<int, array<string, mixed>>
      */
     public function array(): array
@@ -29,6 +33,8 @@ class SitesExport implements FromArray, WithHeadings, WithStyles
     }
 
     /**
+     * Get the column headings for the export.
+     *
      * @return array<int, string>
      */
     public function headings(): array
@@ -37,7 +43,11 @@ class SitesExport implements FromArray, WithHeadings, WithStyles
     }
 
     /**
-     * Apply styles to the worksheet.
+     * Apply styles to the worksheet headers.
+     *
+     * @param Worksheet $sheet
+     *
+     * @return void
      */
     public function styles(Worksheet $sheet): void
     {

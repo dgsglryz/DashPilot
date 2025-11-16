@@ -144,7 +144,7 @@ class ActivityController extends Controller
             fclose($handle);
         }, $filename, [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 
@@ -160,7 +160,7 @@ class ActivityController extends Controller
     {
         // Use DiceBear Avataaars for consistent avatars
         $seed = md5($email);
-        return "https://api.dicebear.com/7.x/avataaars/svg?seed={$seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf";
+        return 'https://api.dicebear.com/7.x/avataaars/svg?seed='.$seed.'&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf';
     }
 }
 
