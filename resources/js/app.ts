@@ -9,7 +9,7 @@ import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import Toast from 'vue-toastification';
 import 'vue-toastification/dist/index.css';
 import { InertiaProgress } from '@inertiajs/progress';
-import { initializeErrorHandlers, handleVueError, handleInertiaError } from './error-handler';
+import { initializeErrorHandlers, handleVueError } from './error-handler';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -61,9 +61,6 @@ createInertiaApp({
     },
     progress: {
         color: '#3B82F6',
-    },
-    onError: (error, page) => {
-        handleInertiaError(error as Error, page);
     },
 });
 
