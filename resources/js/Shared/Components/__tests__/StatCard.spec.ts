@@ -7,9 +7,11 @@ describe('StatCard', () => {
     const wrapper = mount(StatCard, {
       props: {
         title: 'Test Title',
+        subtitle: 'Test Subtitle',
         value: 100,
         total: 200,
         label: 'items',
+        imageQuery: 'test image',
       },
     })
 
@@ -22,8 +24,11 @@ describe('StatCard', () => {
     const wrapper = mount(StatCard, {
       props: {
         title: 'Test',
+        subtitle: 'Test Subtitle',
         value: 10,
+        label: 'items',
         href: '/test',
+        imageQuery: 'test image',
       },
     })
 
@@ -35,7 +40,10 @@ describe('StatCard', () => {
     const wrapper = mount(StatCard, {
       props: {
         title: 'Test',
+        subtitle: 'Test Subtitle',
         value: 10,
+        label: 'items',
+        imageQuery: 'test image',
       },
     })
 

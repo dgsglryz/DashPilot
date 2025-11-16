@@ -4,8 +4,8 @@
  * global search, and quick actions. Every operations page is rendered
  * inside this layout to keep the UI consistent with the v0.dev design.
  */
-import { ref, onMounted, onUnmounted } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { ref, onMounted, onUnmounted } from "vue";
+import { Link, router } from "@inertiajs/vue3";
 import {
     ArrowRightOnRectangleIcon,
     BellIcon,
@@ -21,9 +21,9 @@ import {
     SunIcon,
     UsersIcon,
     UserGroupIcon,
-} from '@heroicons/vue/24/outline';
-import { useDarkMode } from '@/Shared/Composables/useDarkMode';
-import CommandPalette from '@/Shared/Components/CommandPalette.vue';
+} from "@heroicons/vue/24/outline";
+import { useDarkMode } from "@/Shared/Composables/useDarkMode";
+import CommandPalette from "@/Shared/Components/CommandPalette.vue";
 
 type NavigationItem = {
     name: string;
@@ -34,17 +34,17 @@ type NavigationItem = {
 
 const navigation: NavigationItem[] = [
     {
-        name: 'Overview',
+        name: "Overview",
         icon: HomeIcon,
-        routeName: 'dashboard',
+        routeName: "dashboard",
     },
-    { name: 'Sites', icon: ChartBarIcon, routeName: 'sites.index' },
-    { name: 'Clients', icon: UserGroupIcon, routeName: 'clients.index' },
-    { name: 'Tasks', icon: DocumentTextIcon, routeName: 'tasks.index' },
-    { name: 'Metrics', icon: ChartBarIcon, routeName: 'metrics.index' },
-    { name: 'Alerts', icon: BellIcon, routeName: 'alerts.index' },
-    { name: 'Team', icon: UsersIcon, routeName: 'team.index' },
-    { name: 'Reports', icon: DocumentChartBarIcon, routeName: 'reports.index' },
+    { name: "Sites", icon: ChartBarIcon, routeName: "sites.index" },
+    { name: "Clients", icon: UserGroupIcon, routeName: "clients.index" },
+    { name: "Tasks", icon: DocumentTextIcon, routeName: "tasks.index" },
+    { name: "Metrics", icon: ChartBarIcon, routeName: "metrics.index" },
+    { name: "Alerts", icon: BellIcon, routeName: "alerts.index" },
+    { name: "Team", icon: UsersIcon, routeName: "team.index" },
+    { name: "Reports", icon: DocumentChartBarIcon, routeName: "reports.index" },
 ];
 
 const isMobileMenuOpen = ref(false);
@@ -72,71 +72,71 @@ const isCurrent = (item: NavigationItem): boolean => {
  */
 const handleKeyboardShortcuts = (e: KeyboardEvent): void => {
     // Cmd+K or Ctrl+K - Open command palette
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         isCommandPaletteOpen.value = true;
         return;
     }
 
     // Cmd+/ or Ctrl+/ - Show shortcuts modal (coming soon)
-    if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+    if ((e.metaKey || e.ctrlKey) && e.key === "/") {
         e.preventDefault();
         // TODO: Show shortcuts modal
         return;
     }
 
     // G + D - Go to Dashboard
-    if (e.key === 'g' && !e.metaKey && !e.ctrlKey) {
+    if (e.key === "g" && !e.metaKey && !e.ctrlKey) {
         const handler = (e2: KeyboardEvent) => {
-            if (e2.key === 'd' && !e2.metaKey && !e2.ctrlKey) {
+            if (e2.key === "d" && !e2.metaKey && !e2.ctrlKey) {
                 e2.preventDefault();
-                router.visit(route('dashboard'));
-                document.removeEventListener('keydown', handler);
-            } else if (e2.key !== 'g') {
-                document.removeEventListener('keydown', handler);
+                router.visit(route("dashboard"));
+                document.removeEventListener("keydown", handler);
+            } else if (e2.key !== "g") {
+                document.removeEventListener("keydown", handler);
             }
         };
-        document.addEventListener('keydown', handler);
+        document.addEventListener("keydown", handler);
         return;
     }
 
     // G + S - Go to Sites
-    if (e.key === 'g' && !e.metaKey && !e.ctrlKey) {
+    if (e.key === "g" && !e.metaKey && !e.ctrlKey) {
         const handler = (e2: KeyboardEvent) => {
-            if (e2.key === 's' && !e2.metaKey && !e2.ctrlKey) {
+            if (e2.key === "s" && !e2.metaKey && !e2.ctrlKey) {
                 e2.preventDefault();
-                router.visit(route('sites.index'));
-                document.removeEventListener('keydown', handler);
-            } else if (e2.key !== 'g') {
-                document.removeEventListener('keydown', handler);
+                router.visit(route("sites.index"));
+                document.removeEventListener("keydown", handler);
+            } else if (e2.key !== "g") {
+                document.removeEventListener("keydown", handler);
             }
         };
-        document.addEventListener('keydown', handler);
+        document.addEventListener("keydown", handler);
         return;
     }
 
     // G + A - Go to Alerts
-    if (e.key === 'g' && !e.metaKey && !e.ctrlKey) {
+    if (e.key === "g" && !e.metaKey && !e.ctrlKey) {
         const handler = (e2: KeyboardEvent) => {
-            if (e2.key === 'a' && !e2.metaKey && !e2.ctrlKey) {
+            if (e2.key === "a" && !e2.metaKey && !e2.ctrlKey) {
                 e2.preventDefault();
-                router.visit(route('alerts.index'));
-                document.removeEventListener('keydown', handler);
-            } else if (e2.key !== 'g') {
-                document.removeEventListener('keydown', handler);
+                router.visit(route("alerts.index"));
+                document.removeEventListener("keydown", handler);
+            } else if (e2.key !== "g") {
+                document.removeEventListener("keydown", handler);
             }
         };
-        document.addEventListener('keydown', handler);
+        document.addEventListener("keydown", handler);
         return;
     }
 };
 
 onMounted(() => {
-    document.addEventListener('keydown', handleKeyboardShortcuts);
+    document.addEventListener("keydown", handleKeyboardShortcuts);
 });
 
 onUnmounted(() => {
-    document.removeEventListener('keydown', handleKeyboardShortcuts);
+    document.removeEventListener("keydown", handleKeyboardShortcuts);
 });
 </script>
 
@@ -165,7 +165,11 @@ onUnmounted(() => {
                 <Link
                     v-for="item in navigation"
                     :key="item.name"
-                    :href="item.routeName ? route(item.routeName) : item.href ?? '#'"
+                    :href="
+                        item.routeName
+                            ? route(item.routeName)
+                            : (item.href ?? '#')
+                    "
                     class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
                     :class="
                         isCurrent(item)
@@ -185,7 +189,7 @@ onUnmounted(() => {
                 >
                     <SunIcon v-if="isDark" class="h-5 w-5" />
                     <MoonIcon v-else class="h-5 w-5" />
-                    <span>{{ isDark ? 'Light Mode' : 'Dark Mode' }}</span>
+                    <span>{{ isDark ? "Light Mode" : "Dark Mode" }}</span>
                 </button>
                 <Link
                     :href="route('settings.index')"
@@ -252,13 +256,14 @@ onUnmounted(() => {
 
                 <div class="ml-4 flex items-center gap-2 sm:gap-3">
                     <!-- Notification Bell Dropdown - Using Alpine.js for lightweight interaction -->
+                    <!-- eslint-disable vue/valid-v-on -->
                     <div
                         x-data="{ open: false }"
                         x-on:click.away="open = false"
                         class="relative"
                     >
                         <button
-                            @click="open = !open"
+                            x-on:click="open = !open"
                             class="relative rounded-lg p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white"
                         >
                             <BellIcon class="h-6 w-6" />
@@ -280,7 +285,9 @@ onUnmounted(() => {
                             style="display: none"
                         >
                             <div class="p-4">
-                                <h3 class="mb-3 text-sm font-semibold text-white">
+                                <h3
+                                    class="mb-3 text-sm font-semibold text-white"
+                                >
                                     Notifications
                                 </h3>
                                 <div class="space-y-2">
@@ -325,9 +332,7 @@ onUnmounted(() => {
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-lg font-bold text-white">DashPilot</p>
-                        <p class="text-xs text-gray-400">
-                            Operations Hub
-                        </p>
+                        <p class="text-xs text-gray-400">Operations Hub</p>
                     </div>
                     <button
                         class="rounded-lg border border-gray-800 p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white"
@@ -358,7 +363,7 @@ onUnmounted(() => {
                         :href="
                             item.routeName
                                 ? route(item.routeName)
-                                : item.href ?? '#'
+                                : (item.href ?? '#')
                         "
                         class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 transition hover:bg-gray-800 hover:text-white"
                         @click="closeMobileMenu"
@@ -377,4 +382,3 @@ onUnmounted(() => {
         />
     </div>
 </template>
-

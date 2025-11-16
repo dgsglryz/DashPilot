@@ -96,7 +96,7 @@ const props = withDefaults(
         chartData?: ChartData;
     }>(),
     {
-        chartData: () => undefined,
+        chartData: undefined,
         stats: () => ({
             totalSites: 0,
             activeSites: 0,
@@ -179,7 +179,9 @@ onMounted(() => {
             <div class="grid grid-cols-1 gap-6 xl:grid-cols-12">
                 <div class="space-y-6 xl:col-span-8">
                     <!-- Top Stats Cards (5 large cards) -->
-                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+                    <div
+                        class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3"
+                    >
                         <!-- Site Monitoring Card -->
                         <StatCard
                             title="Site Monitoring"
@@ -370,7 +372,10 @@ onMounted(() => {
 
                     <!-- Top Problematic Sites Table -->
                     <div
-                        v-if="chartData?.topProblematicSites && chartData.topProblematicSites.length > 0"
+                        v-if="
+                            chartData?.topProblematicSites &&
+                            chartData.topProblematicSites.length > 0
+                        "
                         class="rounded-xl border border-gray-700 bg-gray-800 p-6"
                     >
                         <div class="mb-4">
@@ -385,16 +390,24 @@ onMounted(() => {
                             <table class="w-full">
                                 <thead>
                                     <tr class="border-b border-gray-700">
-                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-400">
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-400"
+                                        >
                                             Site
                                         </th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-400">
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-400"
+                                        >
                                             Status
                                         </th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-400">
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-400"
+                                        >
                                             Health Score
                                         </th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-400">
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-400"
+                                        >
                                             Alerts
                                         </th>
                                     </tr>
@@ -407,7 +420,9 @@ onMounted(() => {
                                     >
                                         <td class="px-4 py-3">
                                             <Link
-                                                :href="route('sites.show', site.id)"
+                                                :href="
+                                                    route('sites.show', site.id)
+                                                "
                                                 class="font-medium text-white hover:text-blue-400 transition-colors"
                                             >
                                                 {{ site.name }}
@@ -420,10 +435,18 @@ onMounted(() => {
                                             <span
                                                 class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
                                                 :class="{
-                                                    'bg-green-500/10 text-green-400': site.status === 'healthy',
-                                                    'bg-yellow-500/10 text-yellow-400': site.status === 'warning',
-                                                    'bg-red-500/10 text-red-400': site.status === 'critical',
-                                                    'bg-gray-500/10 text-gray-400': site.status === 'offline',
+                                                    'bg-green-500/10 text-green-400':
+                                                        site.status ===
+                                                        'healthy',
+                                                    'bg-yellow-500/10 text-yellow-400':
+                                                        site.status ===
+                                                        'warning',
+                                                    'bg-red-500/10 text-red-400':
+                                                        site.status ===
+                                                        'critical',
+                                                    'bg-gray-500/10 text-gray-400':
+                                                        site.status ===
+                                                        'offline',
                                                 }"
                                             >
                                                 {{ site.status }}
@@ -433,9 +456,14 @@ onMounted(() => {
                                             <span
                                                 class="font-semibold"
                                                 :class="{
-                                                    'text-green-400': site.healthScore >= 80,
-                                                    'text-yellow-400': site.healthScore >= 60 && site.healthScore < 80,
-                                                    'text-red-400': site.healthScore < 60,
+                                                    'text-green-400':
+                                                        site.healthScore >= 80,
+                                                    'text-yellow-400':
+                                                        site.healthScore >=
+                                                            60 &&
+                                                        site.healthScore < 80,
+                                                    'text-red-400':
+                                                        site.healthScore < 60,
                                                 }"
                                             >
                                                 {{ site.healthScore }}/100
@@ -630,9 +658,7 @@ onMounted(() => {
                                     class="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-blue-400"
                                 ></div>
                                 <div class="flex-1 min-w-0">
-                                    <p
-                                        class="text-sm font-semibold text-white"
-                                    >
+                                    <p class="text-sm font-semibold text-white">
                                         {{ activity.action }}
                                     </p>
                                     <p class="text-sm text-gray-400">
@@ -668,11 +694,16 @@ onMounted(() => {
 
             <!-- Featured Sites Carousel -->
             <section class="space-y-4">
-                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div
+                    class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+                >
                     <div>
-                        <h2 class="text-xl font-semibold text-white">Featured sites</h2>
+                        <h2 class="text-xl font-semibold text-white">
+                            Featured sites
+                        </h2>
                         <p class="text-sm text-gray-400">
-                            Tap any card to jump directly into the site workspace.
+                            Tap any card to jump directly into the site
+                            workspace.
                         </p>
                     </div>
                     <Link
@@ -695,11 +726,15 @@ onMounted(() => {
                             :alt="site.name"
                             class="h-40 w-full object-cover transition duration-500 group-hover:scale-105"
                         />
-                        <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/70 to-transparent" />
+                        <div
+                            class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/70 to-transparent"
+                        />
 
                         <div class="relative flex flex-col gap-3 p-5">
                             <div class="flex items-center gap-3">
-                                <div class="h-12 w-12 rounded-xl bg-gray-900/70 p-1 shadow-lg">
+                                <div
+                                    class="h-12 w-12 rounded-xl bg-gray-900/70 p-1 shadow-lg"
+                                >
                                     <img
                                         :src="site.logo"
                                         :alt="`${site.name} logo`"
@@ -710,27 +745,39 @@ onMounted(() => {
                                     <p class="font-semibold text-white">
                                         {{ site.name }}
                                     </p>
-                                    <p class="text-xs uppercase tracking-wide text-gray-400">
+                                    <p
+                                        class="text-xs uppercase tracking-wide text-gray-400"
+                                    >
                                         {{ site.region ?? "Global" }}
                                     </p>
                                 </div>
                             </div>
 
-                            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase">
+                            <div
+                                class="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase"
+                            >
                                 <span
                                     class="rounded-full px-2 py-0.5"
                                     :class="{
-                                        'bg-green-500/15 text-green-400': site.status === 'healthy',
-                                        'bg-yellow-500/15 text-yellow-400': site.status === 'warning',
-                                        'bg-red-500/15 text-red-400': site.status === 'critical',
+                                        'bg-green-500/15 text-green-400':
+                                            site.status === 'healthy',
+                                        'bg-yellow-500/15 text-yellow-400':
+                                            site.status === 'warning',
+                                        'bg-red-500/15 text-red-400':
+                                            site.status === 'critical',
                                     }"
                                 >
                                     {{ site.status }}
                                 </span>
-                                <span class="rounded-full bg-blue-500/10 px-2 py-0.5 text-blue-300">
+                                <span
+                                    class="rounded-full bg-blue-500/10 px-2 py-0.5 text-blue-300"
+                                >
                                     {{ site.platform }}
                                 </span>
-                                <span v-if="site.uptime" class="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-300">
+                                <span
+                                    v-if="site.uptime"
+                                    class="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-300"
+                                >
                                     {{ site.uptime }}% uptime
                                 </span>
                             </div>

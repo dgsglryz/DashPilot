@@ -5,8 +5,20 @@ import PerformanceChart from '../PerformanceChart.vue'
 describe('PerformanceChart', () => {
   const mockSeries = {
     labels: ['Jan', 'Feb', 'Mar'],
-    uptime: [99.5, 99.8, 99.2],
-    response: [120, 115, 130],
+    datasets: [
+      {
+        label: 'Uptime %',
+        data: [99.5, 99.8, 99.2],
+        borderColor: 'rgb(16, 185, 129)',
+        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+      },
+      {
+        label: 'Response (ms)',
+        data: [120, 115, 130],
+        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+      },
+    ],
   }
 
   it('renders chart with provided data', () => {
@@ -24,8 +36,7 @@ describe('PerformanceChart', () => {
       props: {
         series: {
           labels: [],
-          uptime: [],
-          response: [],
+          datasets: [],
         },
       },
     })

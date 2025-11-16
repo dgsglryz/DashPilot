@@ -2,7 +2,7 @@
 /**
  * QuickActionsDropdown provides contextual actions for table rows.
  */
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import {
     EllipsisVerticalIcon,

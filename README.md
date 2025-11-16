@@ -4,6 +4,20 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 
 ## Latest Updates
 
+- **Nov 16** – **MAJOR UPDATE**: Complete UX overhaul with modern features:
+  - ✅ Command Palette (Cmd+K) - Global search with autocomplete and keyboard navigation
+  - ✅ Toast Notifications - Beautiful, non-intrusive feedback system
+  - ✅ Skeleton Loaders - Professional loading states
+  - ✅ Empty States - Beautiful empty state components
+  - ✅ Activity Log Enhancements - User avatars, CSV export, real-time feed (30s polling)
+  - ✅ Dashboard Charts - Doughnut chart (sites by status), Bar chart (alert frequency), Top 5 problematic sites table
+  - ✅ Keyboard Shortcuts - Cmd+K, Cmd+/, G+D, G+S, G+A
+  - ✅ Export Features - CSV/Excel export for Sites and Alerts
+  - ✅ Health Score Modal - Detailed score breakdown
+  - ✅ Quick Actions Dropdown - Contextual actions for sites table
+  - ✅ Favorites/Pinned Sites - Star icon and favorites system
+  - ✅ Breadcrumbs Navigation - Page navigation trail
+  - ✅ Enhanced Progress Bar - Better visual feedback
 - **Nov 16** – Dashboard overview now showcases featured site cards plus revamped site detail pages (hero imagery, logos, SEO/alert/timeline panels) with global search suggestions.
 - **Nov 16** – Demo seeder now loads **125 production-like sites** (unique industries, thumbnails, alerts, tasks, reports) for instant dashboard testing.
 - **Nov 15** – WordPress health integration added (`WordPressService` + `CheckSiteHealth` job + Redis caching).

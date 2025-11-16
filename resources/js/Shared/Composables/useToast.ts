@@ -3,7 +3,11 @@
  * to show success, error, info, and warning notifications throughout the app.
  */
 import { useToast as useVueToast } from 'vue-toastification';
-import type { ToastOptions } from 'vue-toastification';
+
+type ToastOptions = {
+    timeout?: number;
+    [key: string]: unknown;
+};
 
 /**
  * Toast notification composable
