@@ -23,7 +23,27 @@
               type="text" 
               placeholder="Search sites..."
               class="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+              @keyup.enter="refreshSite"
+              @focus="onSearchFocus"
+              @blur="onSearchBlur"
             />
+            <div
+              v-if="suggestionOpen && suggestionResults.length > 0"
+              class="absolute left-0 right-0 top-full z-10 mt-2 rounded-xl border border-gray-700/80 bg-gray-900/95 shadow-2xl"
+            >
+              <button
+                v-for="suggestion in suggestionResults"
+                :key="suggestion.id"
+                class="flex w-full items-center justify-between gap-3 px-4 py-2 text-left text-sm text-gray-200 hover:bg-gray-800"
+                @mousedown.prevent="goToSite(suggestion.id)"
+              >
+                <div>
+                  <p class="font-medium text-white">{{ suggestion.name }}</p>
+                  <p class="text-xs text-gray-500">{{ suggestion.url }}</p>
+                </div>
+                <span class="text-xs text-gray-500">Enter ↵</span>
+              </button>
+            </div>
           </div>
           
           <div class="flex gap-2">
@@ -31,6 +51,7 @@
               <option value="all">All Platforms</option>
               <option value="wordpress">WordPress</option>
               <option value="shopify">Shopify</option>
+              <option value="custom">Custom</option>
             </select>
             
             <select v-model="filterStatus" class="px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
@@ -110,10 +131,13 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-700/50">
-              <tr v-for="site in filteredSites" :key="site.id" class="hover:bg-gray-700/20 transition-colors">
+              <tr v-for="site in filteredSites" :key="site.id" class="hover:bg-gray-700/20 transition-colors cursor-pointer" @click="goToSite(site.id)">
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
-                    <img :src="site.favicon" :alt="site.name" class="w-8 h-8 rounded" />
+                    <div class="relative">
+                      <img :src="site.thumbnail" :alt="site.name" class="h-12 w-12 rounded-xl object-cover" />
+                      <img :src="site.logo" :alt="`${site.name} logo`" class="absolute -bottom-1 -right-1 h-6 w-6 rounded-full border border-gray-900 bg-gray-900 object-cover" />
+                    </div>
                     <div>
                       <p class="font-medium text-white">{{ site.name }}</p>
                       <p class="text-sm text-gray-400">{{ site.url }}</p>
@@ -161,15 +185,15 @@
                 <td class="px-6 py-4">
                   <span class="text-gray-400 text-sm">{{ formatRelativeTime(site.lastChecked) }}</span>
                 </td>
-                <td class="px-6 py-4">
+                <td class="px-6 py-4" @click.stop>
                   <div class="flex items-center justify-end gap-2">
-                    <Link :href="`/sites/${site.id}`" class="p-2 hover:bg-gray-700 rounded-lg transition-colors">
+                    <Link :href="route('sites.show', site.id)" class="p-2 hover:bg-gray-700 rounded-lg transition-colors" @click.stop>
                       <EyeIcon class="w-4 h-4 text-gray-400" />
                     </Link>
-                    <button @click="refreshSite(site.id)" class="p-2 hover:bg-gray-700 rounded-lg transition-colors">
+                    <button @click.stop="refreshSite" class="p-2 hover:bg-gray-700 rounded-lg transition-colors">
                       <ArrowPathIcon class="w-4 h-4 text-gray-400" />
                     </button>
-                    <button class="p-2 hover:bg-gray-700 rounded-lg transition-colors">
+                    <button @click.stop class="p-2 hover:bg-gray-700 rounded-lg transition-colors">
                       <EllipsisVerticalIcon class="w-4 h-4 text-gray-400" />
                     </button>
                   </div>
@@ -185,8 +209,8 @@
 
 <script setup lang="ts">
 // @ts-nocheck
-import { ref, computed } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { ref, computed, watch } from 'vue'
+import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Shared/Layouts/AppLayout.vue'
 import { 
   MagnifyingGlassIcon, 
@@ -213,6 +237,14 @@ const props = defineProps({
   stats: {
     type: Object,
     required: true
+  },
+  filters: {
+    type: Object,
+    default: () => ({
+      query: '',
+      platform: 'all',
+      status: 'all'
+    })
   }
 })
 
@@ -223,6 +255,7 @@ const searchQuery = ref(props.filters?.query ?? '')
 const filterPlatform = ref(props.filters?.platform ?? 'all')
 const filterStatus = ref(props.filters?.status ?? 'all')
 const showAddSiteModal = ref(false)
+const suggestionOpen = ref(false)
 
 /**
  * Computed filtered sites based on search and filters
@@ -266,12 +299,44 @@ const formatRelativeTime = (timestamp) => {
  */
 const refreshSite = () => {
   router.get(route('sites.index'), {
-    query: searchQuery.value,
-    platform: filterPlatform.value,
-    status: filterStatus.value,
+    query: searchQuery.value || undefined,
+    platform: filterPlatform.value === 'all' ? undefined : filterPlatform.value,
+    status: filterStatus.value === 'all' ? undefined : filterStatus.value,
   }, {
     preserveState: true,
+    preserveScroll: true,
     replace: true,
   })
 }
+
+const suggestionResults = computed(() => {
+  if (!searchQuery.value) {
+    return []
+  }
+
+  const needle = searchQuery.value.toLowerCase()
+
+  return props.sites
+    .filter(site => site.name.toLowerCase().includes(needle) || site.url.toLowerCase().includes(needle))
+    .slice(0, 6)
+})
+
+const goToSite = (id) => {
+  suggestionOpen.value = false
+  router.visit(route('sites.show', id))
+}
+
+const onSearchFocus = () => {
+  suggestionOpen.value = true
+}
+
+const onSearchBlur = () => {
+  window.setTimeout(() => {
+    suggestionOpen.value = false
+  }, 120)
+}
+
+watch([filterPlatform, filterStatus], () => {
+  refreshSite()
+})
 </script>

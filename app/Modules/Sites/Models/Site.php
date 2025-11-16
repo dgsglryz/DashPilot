@@ -33,6 +33,7 @@ class Site extends Model
         'industry',
         'region',
         'thumbnail_url',
+        'logo_url',
         'health_score',
         'last_checked_at',
         'uptime_percentage',

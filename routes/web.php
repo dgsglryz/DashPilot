@@ -1,10 +1,12 @@
 <?php
 declare(strict_types=1);
 
+use App\Modules\Activity\Controllers\ActivityController;
 use App\Modules\Alerts\Controllers\AlertsController;
 use App\Modules\Dashboard\Controllers\DashboardController;
 use App\Modules\Metrics\Controllers\MetricsController;
 use App\Modules\Reports\Controllers\ReportsController;
+use App\Modules\Revenue\Controllers\RevenueController;
 use App\Modules\Settings\Controllers\SettingsController;
 use App\Modules\Shopify\Controllers\LiquidEditorController;
 use App\Modules\Sites\Controllers\SitesController;
@@ -27,6 +29,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('/metrics', [MetricsController::class, 'index'])->name('metrics.index');
+
+    Route::get('/activity', [ActivityController::class, 'index'])->name('activity.index');
+
+    Route::get('/revenue', [RevenueController::class, 'index'])->name('revenue.index');
 
     Route::get('/alerts', [AlertsController::class, 'index'])->name('alerts.index');
     Route::post('/alerts/mark-all-read', [AlertsController::class, 'markAllRead'])->name('alerts.markAllRead');

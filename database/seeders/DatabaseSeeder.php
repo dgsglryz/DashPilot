@@ -319,6 +319,8 @@ class DatabaseSeeder extends Seeder
         ];
 
         $regions = ['North America', 'Europe', 'Asia-Pacific', 'Latin America', 'Middle East & Africa'];
+        $gallery = $this->galleryImages();
+        $logos = $this->logoPalette();
         $prefixes = ['Aurora', 'Atlas', 'Zenith', 'Harbor', 'Evergreen', 'Solstice', 'Nimbus', 'Summit', 'Catalyst', 'Blue Oak', 'Vertex', 'Riverstone', 'Silverline', 'Monarch', 'Driftwood', 'Solaris', 'Foxglove', 'Lumen', 'Coastal', 'Granite'];
         $statusWeights = ['healthy' => 70, 'warning' => 20, 'critical' => 10];
         $usedNames = [];
@@ -336,7 +338,8 @@ class DatabaseSeeder extends Seeder
                 'type' => Arr::random($industry['platforms']),
                 'industry' => $industry['label'],
                 'region' => Arr::random($regions),
-                'thumbnail_url' => "https://picsum.photos/seed/{$slug}/640/360",
+                'thumbnail_url' => $this->featuredImage($gallery, $slug, $index),
+                'logo_url' => $this->featuredLogo($logos, $slug, $index),
                 'status' => $status,
                 'health_score' => $this->healthScoreForStatus($status),
                 'uptime_percentage' => $this->uptimeForStatus($status),
@@ -421,5 +424,65 @@ class DatabaseSeeder extends Seeder
             'warning' => 'warning',
             default => 'fail',
         };
+    }
+
+    /**
+     * Curated set of hero images so the dashboard mirrors the Home.png aesthetic.
+     *
+     * @return array<int, string>
+     */
+    private function galleryImages(): array
+    {
+        return [
+            'https://images.unsplash.com/photo-1506765515384-028b60a970df?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1517430816045-df4b7de11d1d?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1474403078171-7f199e9d1336?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1522199786352-3f7b4e60a6ab?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80',
+        ];
+    }
+
+    /**
+     * Logo palette guarantees at least a dozen recognisable marks for cards.
+     *
+     * @return array<int, string>
+     */
+    private function logoPalette(): array
+    {
+        return [
+            'https://logo.clearbit.com/shopify.com',
+            'https://logo.clearbit.com/wordpress.org',
+            'https://logo.clearbit.com/stripe.com',
+            'https://logo.clearbit.com/slack.com',
+            'https://logo.clearbit.com/figma.com',
+            'https://logo.clearbit.com/asana.com',
+            'https://logo.clearbit.com/airbnb.com',
+            'https://logo.clearbit.com/notion.so',
+            'https://logo.clearbit.com/linear.app',
+            'https://logo.clearbit.com/loom.com',
+            'https://logo.clearbit.com/monday.com',
+            'https://logo.clearbit.com/hubspot.com',
+        ];
+    }
+
+    private function featuredImage(array $gallery, string $slug, int $index): string
+    {
+        $image = $gallery[$index % count($gallery)];
+
+        return "{$image}&sig=".crc32($slug.$index);
+    }
+
+    private function featuredLogo(array $logos, string $slug, int $index): string
+    {
+        $logo = $logos[$index % count($logos)];
+
+        return "{$logo}?size=80&greyscale=false&sig=".crc32($slug.$index);
     }
 }

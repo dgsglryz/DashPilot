@@ -16,7 +16,7 @@ import {
     Title,
     Tooltip,
 } from 'chart.js';
-import type { ChartOptions } from 'chart.js';
+import type { ChartData, ChartOptions } from 'chart.js';
 
 ChartJS.register(
     CategoryScale,
@@ -29,7 +29,11 @@ ChartJS.register(
     Filler,
 );
 
-const chartData = computed(() => ({
+const props = defineProps<{
+    series?: ChartData<'line'>;
+}>();
+
+const defaultSeries: ChartData<'line'> = {
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     datasets: [
         {
@@ -49,7 +53,9 @@ const chartData = computed(() => ({
             tension: 0.4,
         },
     ],
-}));
+};
+
+const chartData = computed<ChartData<'line'>>(() => props.series ?? defaultSeries);
 
 const chartOptions = computed<ChartOptions<'line'>>(() => ({
     responsive: true,

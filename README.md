@@ -4,6 +4,7 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 
 ## Latest Updates
 
+- **Nov 16** – Dashboard overview now showcases featured site cards plus revamped site detail pages (hero imagery, logos, SEO/alert/timeline panels) with global search suggestions.
 - **Nov 16** – Demo seeder now loads **125 production-like sites** (unique industries, thumbnails, alerts, tasks, reports) for instant dashboard testing.
 - **Nov 15** – WordPress health integration added (`WordPressService` + `CheckSiteHealth` job + Redis caching).
 - **Nov 15** – Shopify REST + GraphQL services provide cached store metrics for dashboard cards.
@@ -51,7 +52,7 @@ Key environment variables:
 ## Demo Data (125 Sites)
 
 - `database/seeders/DatabaseSeeder` now generates 125 sites across ecommerce, hospitality, healthcare, finance, education, media, and SaaS verticals.
-- Every site gets a unique `picsum.photos` thumbnail, uptime/load metrics, SiteChecks, alerts, tasks, reports, and recent activity so the dashboard/alerts/metrics pages feel real.
+- Every site now receives curated Unsplash hero images plus branded logos (DiceBear/Clearbit) alongside uptime/load metrics, SiteChecks, alerts, tasks, reports, and recent activity so the dashboard/alerts/metrics pages feel real at a glance.
 - Run **any time** to refresh data:
 
 ```bash

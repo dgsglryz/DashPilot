@@ -3,6 +3,8 @@
  * StatCard Component mirroring v0.dev design. Displays hero metric tiles
  * with background imagery and supporting metrics.
  */
+import { ref, computed } from 'vue';
+
 type Metric = {
     label: string;
     value: string;
@@ -36,6 +38,36 @@ const props = withDefaults(
         href: null,
     },
 );
+
+const imageError = ref(false);
+
+/**
+ * Generate Unsplash image URL based on query
+ */
+const imageUrl = computed(() => {
+    if (imageError.value) {
+        return '/placeholder.svg?height=160&width=400';
+    }
+    
+    // Map queries to Unsplash image IDs for consistent, relevant images
+    const imageMap: Record<string, string> = {
+        'person working on laptop with multiple website dashboards': '1521791055366-0d553872125f',
+        'smiling professional woman in red sweater': '1494790108375-be55c52b42c6',
+        'financial charts and analytics on laptop screen': '1460925891237-14d9a24401e9',
+        'multiple website dashboards and analytics screens': '1551288049-bebda4e38f71',
+    };
+    
+    const imageId = imageMap[props.imageQuery] || '1521791055366-0d553872125f';
+    
+    return `https://images.unsplash.com/photo-${imageId}?auto=format&fit=crop&w=800&q=80`;
+});
+
+/**
+ * Handle image load errors
+ */
+const onImageError = () => {
+    imageError.value = true;
+};
 </script>
 
 <template>
@@ -46,9 +78,10 @@ const props = withDefaults(
     >
         <div class="relative h-40 overflow-hidden bg-gray-900">
             <img
-                :src="`/placeholder.svg?height=160&width=400&query=${props.imageQuery}`"
+                :src="imageUrl"
                 :alt="title"
                 class="h-full w-full object-cover opacity-50 transition-opacity group-hover:opacity-60"
+                @error="onImageError"
             />
             <div class="absolute inset-0 bg-gradient-to-t from-gray-800 via-gray-800/50 to-transparent"></div>
             <div class="absolute inset-x-0 bottom-0 p-4">
