@@ -17,6 +17,7 @@ import {
     HomeIcon,
     MagnifyingGlassIcon,
     UsersIcon,
+    UserGroupIcon,
 } from '@heroicons/vue/24/outline';
 
 type NavigationItem = {
@@ -32,6 +33,8 @@ const navigation: NavigationItem[] = [
         icon: HomeIcon,
         routeName: 'dashboard',
     },
+    { name: 'Sites', icon: ChartBarIcon, routeName: 'sites.index' },
+    { name: 'Clients', icon: UserGroupIcon, routeName: 'clients.index' },
     { name: 'Metrics', icon: ChartBarIcon, routeName: 'metrics.index' },
     { name: 'Alerts', icon: BellIcon, routeName: 'alerts.index' },
     { name: 'Team', icon: UsersIcon, routeName: 'team.index' },

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 use App\Modules\Activity\Controllers\ActivityController;
 use App\Modules\Alerts\Controllers\AlertsController;
+use App\Modules\Clients\Controllers\ClientsController;
 use App\Modules\Dashboard\Controllers\DashboardController;
 use App\Modules\Metrics\Controllers\MetricsController;
 use App\Modules\Reports\Controllers\ReportsController;
@@ -10,6 +11,7 @@ use App\Modules\Revenue\Controllers\RevenueController;
 use App\Modules\Settings\Controllers\SettingsController;
 use App\Modules\Shopify\Controllers\LiquidEditorController;
 use App\Modules\Sites\Controllers\SitesController;
+use App\Modules\Tasks\Controllers\TasksController;
 use App\Modules\Team\Controllers\TeamController;
 use App\Modules\Users\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -50,6 +52,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/sites', [SitesController::class, 'index'])->name('sites.index');
     Route::get('/sites/{site}', [SitesController::class, 'show'])->name('sites.show');
+
+    Route::resource('clients', ClientsController::class);
+
+    Route::resource('tasks', TasksController::class);
+    Route::post('/tasks/{task}/status', [TasksController::class, 'updateStatus'])->name('tasks.status');
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile');
