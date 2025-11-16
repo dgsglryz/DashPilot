@@ -30,6 +30,7 @@ class Site extends Model
         'url',
         'type',
         'status',
+        'is_favorited',
         'industry',
         'region',
         'thumbnail_url',

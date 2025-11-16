@@ -2,10 +2,41 @@
   <AppLayout>
     <div class="space-y-6">
       <!-- Header -->
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 class="text-3xl font-bold text-white">Recent Activities</h1>
           <p class="text-gray-400 mt-1">Monitor all activity logs across your managed sites</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            @click="exportCsv"
+            :disabled="isExporting"
+            class="inline-flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
+          >
+            <ArrowDownTrayIcon class="h-4 w-4" />
+            {{ isExporting ? 'Exporting...' : 'Export CSV' }}
+          </button>
+          <button
+            @click="toggleRealTime"
+            :class="[
+              'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors',
+              isRealTime
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700',
+            ]"
+          >
+            <div class="relative">
+              <div
+                class="h-2 w-2 rounded-full"
+                :class="isRealTime ? 'bg-white' : 'bg-gray-500'"
+              ></div>
+              <div
+                v-if="isRealTime"
+                class="absolute inset-0 h-2 w-2 rounded-full bg-white animate-ping"
+              ></div>
+            </div>
+            {{ isRealTime ? 'Live' : 'Paused' }}
+          </button>
         </div>
       </div>
 
@@ -62,31 +93,55 @@
 
       <!-- Filters -->
       <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
-        <div class="flex flex-col lg:flex-row gap-4">
-          <div class="flex-1 relative">
-            <MagnifyingGlassIcon class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              v-model="searchQuery"
-              type="text" 
-              placeholder="Search activities..."
-              class="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-            />
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col lg:flex-row gap-4">
+            <div class="flex-1 relative">
+              <MagnifyingGlassIcon class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input 
+                v-model="searchQuery"
+                type="text" 
+                placeholder="Search activities..."
+                class="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            
+            <div class="flex gap-2">
+              <select v-model="filterSite" class="px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                <option value="">All Sites</option>
+                <option v-for="site in sites" :key="site.id" :value="site.id">{{ site.name }}</option>
+              </select>
+              
+              <select v-model="filterAction" class="px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                <option value="">All Actions</option>
+                <option value="Updated">Updated</option>
+                <option value="Synced">Synced</option>
+                <option value="Optimised">Optimised</option>
+                <option value="Cleared">Cleared</option>
+                <option value="Checked">Checked</option>
+              </select>
+            </div>
           </div>
           
+          <!-- Date Range Filter -->
           <div class="flex gap-2">
-            <select v-model="filterSite" class="px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
-              <option value="">All Sites</option>
-              <option v-for="site in sites" :key="site.id" :value="site.id">{{ site.name }}</option>
-            </select>
-            
-            <select v-model="filterAction" class="px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
-              <option value="">All Actions</option>
-              <option value="Updated">Updated</option>
-              <option value="Synced">Synced</option>
-              <option value="Optimised">Optimised</option>
-              <option value="Cleared">Cleared</option>
-              <option value="Checked">Checked</option>
-            </select>
+            <input
+              v-model="dateFrom"
+              type="date"
+              class="px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+            />
+            <span class="flex items-center text-gray-400">to</span>
+            <input
+              v-model="dateTo"
+              type="date"
+              class="px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+            />
+            <button
+              v-if="dateFrom || dateTo"
+              @click="clearDateFilter"
+              class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              Clear
+            </button>
           </div>
         </div>
       </div>
@@ -99,8 +154,20 @@
           class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 p-5 hover:border-gray-600 transition-colors"
         >
           <div class="flex items-start gap-4">
-            <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-              <BoltIcon class="w-5 h-5 text-blue-400" />
+            <!-- User Avatar -->
+            <div class="flex-shrink-0">
+              <img
+                v-if="activity.user?.avatar"
+                :src="activity.user.avatar"
+                :alt="activity.user.name"
+                class="h-10 w-10 rounded-full border-2 border-gray-700"
+              />
+              <div
+                v-else
+                class="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center border-2 border-gray-700"
+              >
+                <BoltIcon class="w-5 h-5 text-blue-400" />
+              </div>
             </div>
             
             <div class="flex-1 min-w-0">
@@ -128,11 +195,12 @@
           </div>
         </div>
 
-        <div v-if="filteredActivities.length === 0" class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 p-12 text-center">
-          <BoltSlashIcon class="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <p class="text-gray-400 text-lg">No activities found</p>
-          <p class="text-gray-500 text-sm mt-1">Try adjusting your filters</p>
-        </div>
+        <EmptyState
+          v-if="filteredActivities.length === 0"
+          type="search"
+          title="No activities found"
+          description="Try adjusting your filters or search terms"
+        />
       </div>
 
       <!-- Pagination -->
@@ -159,9 +227,12 @@
 
 <script setup lang="ts">
 // @ts-nocheck
-import { ref, computed } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { Link, router } from '@inertiajs/vue3'
+import { useIntervalFn } from '@vueuse/core'
+import { useToast } from '@/Shared/Composables/useToast'
 import AppLayout from '@/Shared/Layouts/AppLayout.vue'
+import EmptyState from '@/Shared/Components/EmptyState.vue'
 import { 
   MagnifyingGlassIcon,
   ClockIcon,
@@ -169,9 +240,9 @@ import {
   ChartBarIcon,
   CalendarDaysIcon,
   BoltIcon,
-  BoltSlashIcon,
   GlobeAltIcon,
-  UserIcon
+  UserIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/vue/24/outline'
 
 /**
@@ -196,12 +267,19 @@ const props = defineProps({
   }
 })
 
+const toast = useToast()
+
 /**
  * Local reactive state
  */
 const searchQuery = ref('')
 const filterSite = ref(props.filters?.site_id || '')
 const filterAction = ref(props.filters?.action || '')
+const dateFrom = ref(props.filters?.date_from || '')
+const dateTo = ref(props.filters?.date_to || '')
+const isRealTime = ref(true)
+const isExporting = ref(false)
+const lastActivityId = ref(props.activities.data?.[0]?.id || 0)
 
 /**
  * Computed filtered activities
@@ -240,5 +318,79 @@ const formatRelativeTime = (timestamp) => {
   
   return new Date(timestamp).toLocaleDateString()
 }
+
+/**
+ * Export activities as CSV
+ */
+const exportCsv = () => {
+  isExporting.value = true
+  const params = new URLSearchParams()
+  if (filterSite.value) params.append('site_id', filterSite.value)
+  if (filterAction.value) params.append('action', filterAction.value)
+  if (dateFrom.value) params.append('date_from', dateFrom.value)
+  if (dateTo.value) params.append('date_to', dateTo.value)
+  
+  window.location.href = route('activity.export') + '?' + params.toString()
+  
+  setTimeout(() => {
+    isExporting.value = false
+    toast.success('Activity log exported successfully')
+  }, 1000)
+}
+
+/**
+ * Toggle real-time updates
+ */
+const toggleRealTime = () => {
+  isRealTime.value = !isRealTime.value
+}
+
+/**
+ * Clear date filter
+ */
+const clearDateFilter = () => {
+  dateFrom.value = ''
+  dateTo.value = ''
+}
+
+/**
+ * Real-time activity feed polling
+ */
+const checkNewActivities = async () => {
+  if (!isRealTime.value) return
+  
+  try {
+    const response = await fetch(route('activity.index') + '?limit=1')
+    const data = await response.json()
+    if (data.data?.[0]?.id && data.data[0].id > lastActivityId.value) {
+      // New activity detected, refresh page
+      router.reload({ only: ['activities'] })
+      lastActivityId.value = data.data[0].id
+    }
+  } catch (error) {
+    console.error('Failed to check new activities:', error)
+  }
+}
+
+// Poll every 30 seconds for new activities
+const { pause, resume } = useIntervalFn(checkNewActivities, 30000)
+
+watch(isRealTime, (enabled) => {
+  if (enabled) {
+    resume()
+  } else {
+    pause()
+  }
+})
+
+onMounted(() => {
+  if (isRealTime.value) {
+    resume()
+  }
+})
+
+onUnmounted(() => {
+  pause()
+})
 </script>
 

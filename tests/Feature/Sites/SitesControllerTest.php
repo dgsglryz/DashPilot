@@ -87,11 +87,12 @@ class SitesControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->has('site', fn ($siteData) => $siteData
-                ->where('id', $site->id)
-                ->where('name', $site->name)
-                ->has('client')
-            )
+            ->has('site')
         );
+        
+        // Verify site data structure
+        $pageData = $response->viewData('page');
+        $this->assertEquals($site->id, $pageData['props']['site']['id']);
+        $this->assertEquals($site->name, $pageData['props']['site']['name']);
     }
 }

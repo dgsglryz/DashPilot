@@ -4,8 +4,8 @@
  * global search, and quick actions. Every operations page is rendered
  * inside this layout to keep the UI consistent with the v0.dev design.
  */
-import { ref } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { Link, router } from '@inertiajs/vue3';
 import {
     ArrowRightOnRectangleIcon,
     BellIcon,
@@ -23,6 +23,7 @@ import {
     UserGroupIcon,
 } from '@heroicons/vue/24/outline';
 import { useDarkMode } from '@/Shared/Composables/useDarkMode';
+import CommandPalette from '@/Shared/Components/CommandPalette.vue';
 
 type NavigationItem = {
     name: string;
@@ -47,6 +48,7 @@ const navigation: NavigationItem[] = [
 ];
 
 const isMobileMenuOpen = ref(false);
+const isCommandPaletteOpen = ref(false);
 const { isDark, toggleDarkMode } = useDarkMode();
 
 const toggleMobileMenu = (): void => {
@@ -64,6 +66,78 @@ const isCurrent = (item: NavigationItem): boolean => {
 
     return route().current(item.routeName);
 };
+
+/**
+ * Keyboard shortcuts handler
+ */
+const handleKeyboardShortcuts = (e: KeyboardEvent): void => {
+    // Cmd+K or Ctrl+K - Open command palette
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        isCommandPaletteOpen.value = true;
+        return;
+    }
+
+    // Cmd+/ or Ctrl+/ - Show shortcuts modal (coming soon)
+    if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+        e.preventDefault();
+        // TODO: Show shortcuts modal
+        return;
+    }
+
+    // G + D - Go to Dashboard
+    if (e.key === 'g' && !e.metaKey && !e.ctrlKey) {
+        const handler = (e2: KeyboardEvent) => {
+            if (e2.key === 'd' && !e2.metaKey && !e2.ctrlKey) {
+                e2.preventDefault();
+                router.visit(route('dashboard'));
+                document.removeEventListener('keydown', handler);
+            } else if (e2.key !== 'g') {
+                document.removeEventListener('keydown', handler);
+            }
+        };
+        document.addEventListener('keydown', handler);
+        return;
+    }
+
+    // G + S - Go to Sites
+    if (e.key === 'g' && !e.metaKey && !e.ctrlKey) {
+        const handler = (e2: KeyboardEvent) => {
+            if (e2.key === 's' && !e2.metaKey && !e2.ctrlKey) {
+                e2.preventDefault();
+                router.visit(route('sites.index'));
+                document.removeEventListener('keydown', handler);
+            } else if (e2.key !== 'g') {
+                document.removeEventListener('keydown', handler);
+            }
+        };
+        document.addEventListener('keydown', handler);
+        return;
+    }
+
+    // G + A - Go to Alerts
+    if (e.key === 'g' && !e.metaKey && !e.ctrlKey) {
+        const handler = (e2: KeyboardEvent) => {
+            if (e2.key === 'a' && !e2.metaKey && !e2.ctrlKey) {
+                e2.preventDefault();
+                router.visit(route('alerts.index'));
+                document.removeEventListener('keydown', handler);
+            } else if (e2.key !== 'g') {
+                document.removeEventListener('keydown', handler);
+            }
+        };
+        document.addEventListener('keydown', handler);
+        return;
+    }
+};
+
+onMounted(() => {
+    document.addEventListener('keydown', handleKeyboardShortcuts);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('keydown', handleKeyboardShortcuts);
+});
 </script>
 
 <template>
@@ -164,22 +238,59 @@ const isCurrent = (item: NavigationItem): boolean => {
                         />
                         <input
                             type="text"
-                            placeholder="Search sites, alerts, reports..."
-                            class="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-4 text-sm text-white placeholder:text-gray-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Search sites, alerts, reports... (Cmd+K)"
+                            @focus="isCommandPaletteOpen = true"
+                            class="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-20 text-sm text-white placeholder:text-gray-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                        <kbd
+                            class="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-gray-600 bg-gray-700 px-2 py-0.5 text-xs text-gray-400"
+                        >
+                            ⌘K
+                        </kbd>
                     </div>
                 </div>
 
                 <div class="ml-4 flex items-center gap-2 sm:gap-3">
-                    <button
-                        class="relative rounded-lg p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white"
+                    <!-- Notification Bell Dropdown - Using Alpine.js for lightweight interaction -->
+                    <div
+                        x-data="{ open: false }"
+                        x-on:click.away="open = false"
+                        class="relative"
                     >
-                        <BellIcon class="h-6 w-6" />
-                        <span
-                            class="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500"
-                        ></span>
-                        <span class="sr-only">Notifications</span>
-                    </button>
+                        <button
+                            @click="open = !open"
+                            class="relative rounded-lg p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white"
+                        >
+                            <BellIcon class="h-6 w-6" />
+                            <span
+                                class="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500"
+                            ></span>
+                            <span class="sr-only">Notifications</span>
+                        </button>
+
+                        <div
+                            x-show="open"
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="transform opacity-0 scale-95"
+                            x-transition:enter-end="transform opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-75"
+                            x-transition:leave-start="transform opacity-100 scale-100"
+                            x-transition:leave-end="transform opacity-0 scale-95"
+                            class="absolute right-0 z-50 mt-2 w-80 rounded-lg border border-gray-700 bg-gray-800 shadow-xl"
+                            style="display: none"
+                        >
+                            <div class="p-4">
+                                <h3 class="mb-3 text-sm font-semibold text-white">
+                                    Notifications
+                                </h3>
+                                <div class="space-y-2">
+                                    <p class="text-sm text-gray-400">
+                                        No new notifications
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <button
                         class="rounded-lg p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white"
                     >
@@ -258,6 +369,12 @@ const isCurrent = (item: NavigationItem): boolean => {
                 </nav>
             </aside>
         </div>
+
+        <!-- Command Palette -->
+        <CommandPalette
+            :is-open="isCommandPaletteOpen"
+            @close="isCommandPaletteOpen = false"
+        />
     </div>
 </template>
 

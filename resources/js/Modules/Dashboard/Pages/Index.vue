@@ -20,6 +20,8 @@ import MetricCard from "@/Shared/Components/MetricCard.vue";
 import AlertCard from "@/Shared/Components/AlertCard.vue";
 import CalendarWidget from "@/Modules/Dashboard/Components/CalendarWidget.vue";
 import PerformanceChart from "@/Shared/Components/PerformanceChart.vue";
+import DoughnutChart from "@/Shared/Components/DoughnutChart.vue";
+import BarChart from "@/Shared/Components/BarChart.vue";
 import { useIntervalFn } from "@vueuse/core";
 
 type DashboardStats = {
@@ -59,6 +61,21 @@ type FeaturedSite = {
     uptime?: string | null;
 };
 
+type ChartData = {
+    sitesByStatus: Record<string, number>;
+    alertFrequency: Array<{ date: string; count: number }>;
+    uptimeTrend: Array<{ date: string; uptime: number }>;
+    topProblematicSites: Array<{
+        id: number;
+        name: string;
+        url: string;
+        status: string;
+        platform: string;
+        healthScore: number;
+        alertCount: number;
+    }>;
+};
+
 type ActivityItem = {
     id: number;
     action: string;
@@ -76,8 +93,10 @@ const props = withDefaults(
         scheduledChecks: ScheduledCheck[];
         featuredSites: FeaturedSite[];
         activities?: ActivityItem[];
+        chartData?: ChartData;
     }>(),
     {
+        chartData: () => undefined,
         stats: () => ({
             totalSites: 0,
             activeSites: 0,
@@ -306,6 +325,131 @@ onMounted(() => {
                             >
                         </div>
                         <PerformanceChart />
+                    </div>
+
+                    <!-- New Charts Row -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Sites by Status Doughnut Chart -->
+                        <div
+                            class="rounded-xl border border-gray-700 bg-gray-800 p-6"
+                        >
+                            <div class="mb-4">
+                                <h3 class="text-lg font-semibold text-white">
+                                    Sites by Status
+                                </h3>
+                                <p class="text-sm text-gray-400">
+                                    Distribution across all monitored sites
+                                </p>
+                            </div>
+                            <DoughnutChart
+                                v-if="chartData?.sitesByStatus"
+                                :data="chartData.sitesByStatus"
+                            />
+                        </div>
+
+                        <!-- Alert Frequency Bar Chart -->
+                        <div
+                            class="rounded-xl border border-gray-700 bg-gray-800 p-6"
+                        >
+                            <div class="mb-4">
+                                <h3 class="text-lg font-semibold text-white">
+                                    Alert Frequency
+                                </h3>
+                                <p class="text-sm text-gray-400">
+                                    Last 30 days
+                                </p>
+                            </div>
+                            <BarChart
+                                v-if="chartData?.alertFrequency"
+                                :data="chartData.alertFrequency"
+                                label="Alerts"
+                                color="rgb(239, 68, 68)"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Top Problematic Sites Table -->
+                    <div
+                        v-if="chartData?.topProblematicSites && chartData.topProblematicSites.length > 0"
+                        class="rounded-xl border border-gray-700 bg-gray-800 p-6"
+                    >
+                        <div class="mb-4">
+                            <h3 class="text-lg font-semibold text-white">
+                                Top 5 Problematic Sites
+                            </h3>
+                            <p class="text-sm text-gray-400">
+                                Sites requiring immediate attention
+                            </p>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-700">
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-400">
+                                            Site
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-400">
+                                            Status
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-400">
+                                            Health Score
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-400">
+                                            Alerts
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr
+                                        v-for="site in chartData.topProblematicSites"
+                                        :key="site.id"
+                                        class="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors"
+                                    >
+                                        <td class="px-4 py-3">
+                                            <Link
+                                                :href="route('sites.show', site.id)"
+                                                class="font-medium text-white hover:text-blue-400 transition-colors"
+                                            >
+                                                {{ site.name }}
+                                            </Link>
+                                            <p class="text-xs text-gray-500">
+                                                {{ site.platform }}
+                                            </p>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span
+                                                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+                                                :class="{
+                                                    'bg-green-500/10 text-green-400': site.status === 'healthy',
+                                                    'bg-yellow-500/10 text-yellow-400': site.status === 'warning',
+                                                    'bg-red-500/10 text-red-400': site.status === 'critical',
+                                                    'bg-gray-500/10 text-gray-400': site.status === 'offline',
+                                                }"
+                                            >
+                                                {{ site.status }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span
+                                                class="font-semibold"
+                                                :class="{
+                                                    'text-green-400': site.healthScore >= 80,
+                                                    'text-yellow-400': site.healthScore >= 60 && site.healthScore < 80,
+                                                    'text-red-400': site.healthScore < 60,
+                                                }"
+                                            >
+                                                {{ site.healthScore }}/100
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="text-white">
+                                                {{ site.alertCount }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 

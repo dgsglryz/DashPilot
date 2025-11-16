@@ -57,7 +57,8 @@ class WebhookServiceTest extends TestCase
         $service = new WebhookService();
         $service->triggerAlertEvent('alert_created', $alert);
 
-        Queue::assertNothingPushed();
+        // Only check that DeliverWebhook was not pushed (AlertObserver may push SendEmailNotification)
+        Queue::assertNotPushed(DeliverWebhook::class);
     }
 
     public function test_trigger_alert_event_filters_by_event_type(): void

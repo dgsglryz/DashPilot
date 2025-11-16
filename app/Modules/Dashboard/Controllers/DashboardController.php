@@ -51,6 +51,12 @@ class DashboardController extends Controller
             'scheduledChecks' => $this->scheduledChecks(),
             'featuredSites' => $this->featuredSites(),
             'activities' => $this->activities(),
+            'chartData' => [
+                'sitesByStatus' => $this->sitesByStatus(),
+                'alertFrequency' => $this->alertFrequency(),
+                'uptimeTrend' => $this->uptimeTrend(),
+                'topProblematicSites' => $this->topProblematicSites(),
+            ],
         ]);
     }
 
@@ -176,6 +182,88 @@ class DashboardController extends Controller
         $seed = Str::slug($name);
 
         return "https://api.dicebear.com/7.x/initials/svg?seed={$seed}&backgroundColor=111827,1c1f2b&fontSize=60";
+    }
+
+    /**
+     * Get sites grouped by status for doughnut chart.
+     *
+     * @return array<string, int>
+     */
+    private function sitesByStatus(): array
+    {
+        return [
+            'healthy' => Site::where('status', 'healthy')->count(),
+            'warning' => Site::where('status', 'warning')->count(),
+            'critical' => Site::where('status', 'critical')->count(),
+            'offline' => Site::where('status', 'offline')->count(),
+        ];
+    }
+
+    /**
+     * Get alert frequency data for bar chart (last 30 days).
+     *
+     * @return array<int, array<string, string|int>>
+     */
+    private function alertFrequency(): array
+    {
+        $days = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i);
+            $days[] = [
+                'date' => $date->format('M d'),
+                'count' => Alert::whereDate('created_at', $date->toDateString())->count(),
+            ];
+        }
+
+        return $days;
+    }
+
+    /**
+     * Get uptime trend data for line chart (last 30 days).
+     *
+     * @return array<int, array<string, string|float>>
+     */
+    private function uptimeTrend(): array
+    {
+        $days = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i);
+            $avgUptime = (float) (Report::whereDate('created_at', $date->toDateString())
+                ->avg('uptime_percentage') ?? 99.2);
+            $days[] = [
+                'date' => $date->format('M d'),
+                'uptime' => round($avgUptime, 2),
+            ];
+        }
+
+        return $days;
+    }
+
+    /**
+     * Get top 5 problematic sites (lowest health scores or most alerts).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function topProblematicSites(): array
+    {
+        return Site::query()
+            ->withCount('alerts')
+            ->orderBy('health_score')
+            ->orderByDesc('alerts_count')
+            ->limit(5)
+            ->get(['id', 'name', 'status', 'health_score', 'url', 'type'])
+            ->map(function (Site $site): array {
+                return [
+                    'id' => $site->id,
+                    'name' => $site->name,
+                    'url' => $site->url,
+                    'status' => $site->status,
+                    'platform' => $site->type,
+                    'healthScore' => $site->health_score ?? 0,
+                    'alertCount' => $site->alerts_count ?? 0,
+                ];
+            })
+            ->all();
     }
 
     /**

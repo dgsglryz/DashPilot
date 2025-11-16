@@ -33,10 +33,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/metrics', [MetricsController::class, 'index'])->name('metrics.index');
 
     Route::get('/activity', [ActivityController::class, 'index'])->name('activity.index');
+    Route::get('/activity/export', [ActivityController::class, 'export'])->name('activity.export');
 
     Route::get('/revenue', [RevenueController::class, 'index'])->name('revenue.index');
 
     Route::get('/alerts', [AlertsController::class, 'index'])->name('alerts.index');
+    Route::get('/alerts/export', [AlertsController::class, 'export'])->name('alerts.export');
     Route::post('/alerts/mark-all-read', [AlertsController::class, 'markAllRead'])->name('alerts.markAllRead');
     Route::post('/alerts/{alert}/acknowledge', [AlertsController::class, 'acknowledge'])->name('alerts.acknowledge');
     Route::post('/alerts/{alert}/resolve', [AlertsController::class, 'resolve'])->name('alerts.resolve');
@@ -50,8 +52,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/team/invite', [TeamController::class, 'invite'])->name('team.invite');
     Route::delete('/team/{user}', [TeamController::class, 'destroy'])->name('team.destroy');
 
-    Route::get('/sites', [SitesController::class, 'index'])->name('sites.index');
-    Route::get('/sites/{site}', [SitesController::class, 'show'])->name('sites.show');
+    Route::get('/sites/export', [SitesController::class, 'export'])->name('sites.export');
+    Route::post('/sites/{site}/toggle-favorite', [SitesController::class, 'toggleFavorite'])->name('sites.toggle-favorite');
+    Route::resource('sites', SitesController::class);
     Route::post('/sites/{site}/health-check', [SitesController::class, 'runHealthCheck'])->name('sites.health-check');
 
     Route::resource('clients', ClientsController::class);

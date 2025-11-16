@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('url')->unique();
             $table->enum('type', ['wordpress', 'shopify', 'woocommerce', 'custom'])->default('wordpress');
             $table->enum('status', ['healthy', 'warning', 'critical', 'offline'])->default('healthy');
+            $table->string('industry')->nullable();
+            $table->string('region')->nullable();
             $table->unsignedTinyInteger('health_score')->default(100);
             $table->timestamp('last_checked_at')->nullable();
             $table->decimal('uptime_percentage', 5, 2)->nullable();

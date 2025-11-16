@@ -6,10 +6,13 @@ namespace App\Modules\Sites\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Activity\Models\ActivityLog;
 use App\Modules\Alerts\Models\Alert;
+use App\Modules\Clients\Models\Client;
 use App\Modules\Monitoring\Models\SiteCheck;
 use App\Modules\Reports\Models\Report;
 use App\Modules\Sites\Jobs\CheckSiteHealth;
 use App\Modules\Sites\Models\Site;
+use App\Modules\Sites\Requests\StoreSiteRequest;
+use App\Modules\Sites\Requests\UpdateSiteRequest;
 use App\Modules\Tasks\Models\Task;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -18,6 +21,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * SitesController exposes the list and detail views for monitored sites.
@@ -287,6 +292,141 @@ class SitesController extends Controller
     }
 
     /**
+     * Show the form for creating a new site.
+     *
+     * @return Response
+     */
+    public function create(): Response
+    {
+        $clients = Client::query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'company'])
+            ->map(fn (Client $client) => [
+                'id' => $client->id,
+                'name' => $client->name,
+                'company' => $client->company,
+            ]);
+
+        return Inertia::render('Sites/Pages/Create', [
+            'clients' => $clients,
+        ]);
+    }
+
+    /**
+     * Store a newly created site in storage.
+     *
+     * @param StoreSiteRequest $request
+     *
+     * @return RedirectResponse
+     */
+    public function store(StoreSiteRequest $request): RedirectResponse
+    {
+        $site = Site::create($request->validated());
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'site_id' => $site->id,
+            'action' => 'site_created',
+            'description' => "Created new site: {$site->name}",
+        ]);
+
+        return redirect()
+            ->route('sites.show', $site)
+            ->with('success', 'Site created successfully.');
+    }
+
+    /**
+     * Show the form for editing the specified site.
+     *
+     * @param Site $site
+     *
+     * @return Response
+     */
+    public function edit(Site $site): Response
+    {
+        $site->load('client:id,name,company');
+
+        $clients = Client::query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'company'])
+            ->map(fn (Client $client) => [
+                'id' => $client->id,
+                'name' => $client->name,
+                'company' => $client->company,
+            ]);
+
+        return Inertia::render('Sites/Pages/Edit', [
+            'site' => [
+                'id' => $site->id,
+                'client_id' => $site->client_id,
+                'name' => $site->name,
+                'url' => $site->url,
+                'type' => $site->type,
+                'status' => $site->status,
+                'industry' => $site->industry,
+                'region' => $site->region,
+                'wp_api_url' => $site->wp_api_url,
+                'wp_api_key' => $site->wp_api_key,
+                'shopify_store_url' => $site->shopify_store_url,
+                'shopify_api_key' => $site->shopify_api_key,
+                'shopify_access_token' => $site->shopify_access_token,
+            ],
+            'clients' => $clients,
+        ]);
+    }
+
+    /**
+     * Update the specified site in storage.
+     *
+     * @param UpdateSiteRequest $request
+     * @param Site $site
+     *
+     * @return RedirectResponse
+     */
+    public function update(UpdateSiteRequest $request, Site $site): RedirectResponse
+    {
+        $site->update($request->validated());
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'site_id' => $site->id,
+            'action' => 'site_updated',
+            'description' => "Updated site: {$site->name}",
+        ]);
+
+        return redirect()
+            ->route('sites.show', $site)
+            ->with('success', 'Site updated successfully.');
+    }
+
+    /**
+     * Remove the specified site from storage.
+     *
+     * @param Request $request
+     * @param Site $site
+     *
+     * @return RedirectResponse
+     */
+    public function destroy(Request $request, Site $site): RedirectResponse
+    {
+        $siteName = $site->name;
+        $siteId = $site->id;
+
+        $site->delete();
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'site_id' => $siteId,
+            'action' => 'site_deleted',
+            'description' => "Deleted site: {$siteName}",
+        ]);
+
+        return redirect()
+            ->route('sites.index')
+            ->with('success', 'Site deleted successfully.');
+    }
+
+    /**
      * Manually trigger a health check for the specified site.
      *
      * @param Request $request
@@ -306,6 +446,113 @@ class SitesController extends Controller
         ]);
 
         return back()->with('success', 'Health check queued successfully. Results will be available shortly.');
+    }
+
+    /**
+     * Toggle favorite status for a site.
+     *
+     * @param Request $request
+     * @param Site $site
+     *
+     * @return RedirectResponse
+     */
+    public function toggleFavorite(Request $request, Site $site): RedirectResponse
+    {
+        $site->update(['is_favorited' => !$site->is_favorited]);
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'site_id' => $site->id,
+            'action' => $site->is_favorited ? 'site_favorited' : 'site_unfavorited',
+            'description' => ($site->is_favorited ? 'Added' : 'Removed')." {$site->name} from favorites",
+        ]);
+
+        return back();
+    }
+
+    /**
+     * Export sites as CSV or Excel.
+     *
+     * @param Request $request
+     *
+     * @return StreamedResponse
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        $query = Site::query()->with('client:id,name');
+
+        // Apply same filters as index
+        if ($request->filled('platform') && $request->string('platform')->toString() !== 'all') {
+            $query->where('type', $request->string('platform')->toString());
+        }
+
+        if ($request->filled('status') && $request->string('status')->toString() !== 'all') {
+            $query->where('status', $request->string('status')->toString());
+        }
+
+        if ($request->filled('query')) {
+            $search = $request->string('query')->toString();
+            $query->where(function ($inner) use ($search): void {
+                $inner->where('name', 'like', "%{$search}%")
+                    ->orWhere('url', 'like', "%{$search}%");
+            });
+        }
+
+        $format = $request->string('format', 'csv')->toString();
+        $filename = 'sites_'.now()->format('Y-m-d_His').'.'.$format;
+
+        if ($format === 'xlsx') {
+            // Excel export using Laravel Excel
+            $data = $query->get()->map(function (Site $site) {
+                return [
+                    'ID' => $site->id,
+                    'Name' => $site->name,
+                    'URL' => $site->url,
+                    'Platform' => $site->type,
+                    'Status' => $site->status,
+                    'Client' => $site->client?->name ?? 'N/A',
+                    'Health Score' => $site->health_score ?? 0,
+                    'Uptime %' => $site->uptime_percentage ?? 0,
+                    'Region' => $site->region ?? 'N/A',
+                    'Created At' => $site->created_at?->format('Y-m-d H:i:s') ?? 'N/A',
+                ];
+            })->toArray();
+
+            return Excel::download(
+                new \App\Modules\Sites\Exports\SitesExport($data),
+                $filename
+            );
+        }
+
+        // CSV export
+        return response()->streamDownload(function () use ($query) {
+            $handle = fopen('php://output', 'w');
+
+            // CSV Headers
+            fputcsv($handle, ['ID', 'Name', 'URL', 'Platform', 'Status', 'Client', 'Health Score', 'Uptime %', 'Region', 'Created At']);
+
+            $query->chunk(100, function ($sites) use ($handle) {
+                foreach ($sites as $site) {
+                    fputcsv($handle, [
+                        $site->id,
+                        $site->name,
+                        $site->url,
+                        $site->type,
+                        $site->status,
+                        $site->client?->name ?? 'N/A',
+                        $site->health_score ?? 0,
+                        $site->uptime_percentage ?? 0,
+                        $site->region ?? 'N/A',
+                        $site->created_at?->format('Y-m-d H:i:s') ?? 'N/A',
+                    ]);
+                }
+            });
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"',
+        ]);
     }
 }
 

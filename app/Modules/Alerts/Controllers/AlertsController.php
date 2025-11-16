@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * AlertsController exposes the alert inbox, acknowledgement, and resolve actions.
@@ -105,6 +106,49 @@ class AlertsController extends Controller
             'medium' => 'warning',
             default => 'info',
         };
+    }
+
+    /**
+     * Export alerts as CSV (last 30 days).
+     *
+     * @param Request $request
+     *
+     * @return StreamedResponse
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        $query = Alert::with('site:id,name')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->latest('created_at');
+
+        $filename = 'alerts_'.now()->format('Y-m-d_His').'.csv';
+
+        return response()->streamDownload(function () use ($query) {
+            $handle = fopen('php://output', 'w');
+
+            // CSV Headers
+            fputcsv($handle, ['ID', 'Type', 'Severity', 'Message', 'Site', 'Status', 'Created At', 'Resolved At']);
+
+            $query->chunk(100, function ($alerts) use ($handle) {
+                foreach ($alerts as $alert) {
+                    fputcsv($handle, [
+                        $alert->id,
+                        $alert->type ?? 'N/A',
+                        $alert->severity ?? 'N/A',
+                        $alert->message,
+                        $alert->site?->name ?? 'N/A',
+                        $alert->is_resolved ? 'Resolved' : 'Active',
+                        $alert->created_at?->format('Y-m-d H:i:s') ?? 'N/A',
+                        $alert->resolved_at?->format('Y-m-d H:i:s') ?? 'N/A',
+                    ]);
+                }
+            });
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"',
+        ]);
     }
 
     /**
