@@ -52,6 +52,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/sites', [SitesController::class, 'index'])->name('sites.index');
     Route::get('/sites/{site}', [SitesController::class, 'show'])->name('sites.show');
+    Route::post('/sites/{site}/health-check', [SitesController::class, 'runHealthCheck'])->name('sites.health-check');
 
     Route::resource('clients', ClientsController::class);
 

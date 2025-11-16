@@ -45,10 +45,12 @@ class DashboardController extends Controller
                 'totalRevenue' => $this->estimateRevenue($totalSites, $avgUptime),
                 'avgSeoScore' => $averageSeo,
                 'activitiesToday' => $activitiesToday,
+                'warningSites' => Site::where('status', 'warning')->count(),
             ],
             'recentAlerts' => $this->recentAlerts(),
             'scheduledChecks' => $this->scheduledChecks(),
             'featuredSites' => $this->featuredSites(),
+            'activities' => $this->activities(),
         ]);
     }
 
@@ -174,6 +176,32 @@ class DashboardController extends Controller
         $seed = Str::slug($name);
 
         return "https://api.dicebear.com/7.x/initials/svg?seed={$seed}&backgroundColor=111827,1c1f2b&fontSize=60";
+    }
+
+    /**
+     * Build activity feed for the dashboard sidebar.
+     *
+     * @return array<int, array<string, string|int|null>>
+     */
+    private function activities(): array
+    {
+        return ActivityLog::query()
+            ->latest('created_at')
+            ->take(10)
+            ->with(['user:id,name', 'site:id,name'])
+            ->get()
+            ->map(function (ActivityLog $log): array {
+                return [
+                    'id' => $log->id,
+                    'action' => $log->action,
+                    'description' => $log->description,
+                    'user' => $log->user?->name ?? 'System',
+                    'site' => $log->site?->name ?? null,
+                    'time' => $log->created_at?->diffForHumans() ?? 'Just now',
+                    'timestamp' => $log->created_at?->toIso8601String(),
+                ];
+            })
+            ->all();
     }
 }
 

@@ -8,9 +8,11 @@ use App\Modules\Activity\Models\ActivityLog;
 use App\Modules\Alerts\Models\Alert;
 use App\Modules\Monitoring\Models\SiteCheck;
 use App\Modules\Reports\Models\Report;
+use App\Modules\Sites\Jobs\CheckSiteHealth;
 use App\Modules\Sites\Models\Site;
 use App\Modules\Tasks\Models\Task;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -282,6 +284,28 @@ class SitesController extends Controller
         $seed = Str::slug($name);
 
         return "https://api.dicebear.com/7.x/initials/svg?seed={$seed}&backgroundColor=111827,1c1f2b&fontSize=60";
+    }
+
+    /**
+     * Manually trigger a health check for the specified site.
+     *
+     * @param Request $request
+     * @param Site $site
+     *
+     * @return RedirectResponse
+     */
+    public function runHealthCheck(Request $request, Site $site): RedirectResponse
+    {
+        CheckSiteHealth::dispatch($site);
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'site_id' => $site->id,
+            'action' => 'health_check_triggered',
+            'description' => "Manually triggered health check for {$site->name}",
+        ]);
+
+        return back()->with('success', 'Health check queued successfully. Results will be available shortly.');
     }
 }
 

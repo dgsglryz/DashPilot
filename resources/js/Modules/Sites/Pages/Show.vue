@@ -34,6 +34,15 @@
               {{ site.status }}
             </span>
             <Link
+              :href="route('sites.health-check', site.id)"
+              method="post"
+              as="button"
+              class="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-4 py-1.5 text-white transition hover:bg-blue-700"
+            >
+              <PlayIcon class="h-4 w-4" />
+              Run Health Check
+            </Link>
+            <Link
               :href="route('sites.index')"
               class="inline-flex items-center justify-center gap-2 rounded-full border border-gray-600/60 px-4 py-1.5 text-gray-200 transition hover:border-white/60 hover:text-white"
             >
@@ -211,7 +220,7 @@ import { Link } from '@inertiajs/vue3'
 import AppLayout from '@/Shared/Layouts/AppLayout.vue'
 import PerformanceChart from '@/Shared/Components/PerformanceChart.vue'
 import SEOScoreCard from '@/Modules/Sites/Components/SEOScoreCard.vue'
-import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
+import { ArrowLeftIcon, PlayIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
   site: {

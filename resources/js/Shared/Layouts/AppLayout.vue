@@ -17,9 +17,12 @@ import {
     EnvelopeIcon,
     HomeIcon,
     MagnifyingGlassIcon,
+    MoonIcon,
+    SunIcon,
     UsersIcon,
     UserGroupIcon,
 } from '@heroicons/vue/24/outline';
+import { useDarkMode } from '@/Shared/Composables/useDarkMode';
 
 type NavigationItem = {
     name: string;
@@ -44,6 +47,7 @@ const navigation: NavigationItem[] = [
 ];
 
 const isMobileMenuOpen = ref(false);
+const { isDark, toggleDarkMode } = useDarkMode();
 
 const toggleMobileMenu = (): void => {
     isMobileMenuOpen.value = !isMobileMenuOpen.value;
@@ -101,6 +105,14 @@ const isCurrent = (item: NavigationItem): boolean => {
             </nav>
 
             <div class="space-y-1 border-t border-gray-800 px-4 py-4">
+                <button
+                    @click="toggleDarkMode"
+                    class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                >
+                    <SunIcon v-if="isDark" class="h-5 w-5" />
+                    <MoonIcon v-else class="h-5 w-5" />
+                    <span>{{ isDark ? 'Light Mode' : 'Dark Mode' }}</span>
+                </button>
                 <Link
                     :href="route('settings.index')"
                     class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"

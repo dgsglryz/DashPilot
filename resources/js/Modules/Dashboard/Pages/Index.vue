@@ -59,12 +59,23 @@ type FeaturedSite = {
     uptime?: string | null;
 };
 
+type ActivityItem = {
+    id: number;
+    action: string;
+    description: string;
+    user: string;
+    site: string | null;
+    time: string;
+    timestamp: string | null;
+};
+
 const props = withDefaults(
     defineProps<{
-        stats: DashboardStats;
+        stats: DashboardStats & { warningSites?: number };
         recentAlerts: DashboardAlert[];
         scheduledChecks: ScheduledCheck[];
         featuredSites: FeaturedSite[];
+        activities?: ActivityItem[];
     }>(),
     {
         stats: () => ({
@@ -76,10 +87,12 @@ const props = withDefaults(
             totalRevenue: 0,
             avgSeoScore: 0,
             activitiesToday: 0,
+            warningSites: 0,
         }),
         recentAlerts: () => [],
         scheduledChecks: () => [],
         featuredSites: () => [],
+        activities: () => [],
     },
 );
 
@@ -146,8 +159,8 @@ onMounted(() => {
 
             <div class="grid grid-cols-1 gap-6 xl:grid-cols-12">
                 <div class="space-y-6 xl:col-span-8">
-                    <!-- Top Stats Cards (4 large cards) -->
-                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <!-- Top Stats Cards (5 large cards) -->
+                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
                         <!-- Site Monitoring Card -->
                         <StatCard
                             title="Site Monitoring"
@@ -238,6 +251,35 @@ onMounted(() => {
                             ]"
                             image-query="multiple website dashboards and analytics screens"
                             :href="route('activity.index')"
+                        />
+
+                        <!-- System Health Card (5th card) -->
+                        <StatCard
+                            title="System Health"
+                            subtitle="Warning sites monitor"
+                            :value="stats.warningSites ?? 0"
+                            label="sites need attention"
+                            status="warning"
+                            :metrics="[
+                                {
+                                    label: 'Healthy',
+                                    value: `${stats.healthySites}/${stats.totalSites}`,
+                                    variant: 'success',
+                                },
+                                {
+                                    label: 'Status',
+                                    value:
+                                        stats.warningSites === 0
+                                            ? 'All good'
+                                            : 'Needs review',
+                                    variant:
+                                        stats.warningSites === 0
+                                            ? 'success'
+                                            : 'warning',
+                                },
+                            ]"
+                            image-query="server room with network equipment and monitors"
+                            :href="route('sites.index', { status: 'warning' })"
                         />
                     </div>
 
@@ -414,6 +456,66 @@ onMounted(() => {
                                 class="text-center text-sm text-gray-500"
                             >
                                 No alerts in the queue. All systems are nominal.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Activity Feed -->
+                    <div
+                        class="rounded-xl border border-gray-700 bg-gray-800 p-6"
+                    >
+                        <div class="mb-4 flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-white">
+                                Activity Feed
+                            </h3>
+                            <Link
+                                :href="route('activity.index')"
+                                class="text-sm font-semibold text-blue-400 transition hover:text-blue-300"
+                            >
+                                View all →
+                            </Link>
+                        </div>
+
+                        <div class="space-y-3">
+                            <article
+                                v-for="activity in activities.slice(0, 6)"
+                                :key="activity.id"
+                                class="flex items-start gap-3 rounded-lg border border-gray-800 bg-gray-950 p-3 transition hover:border-gray-700"
+                            >
+                                <div
+                                    class="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-blue-400"
+                                ></div>
+                                <div class="flex-1 min-w-0">
+                                    <p
+                                        class="text-sm font-semibold text-white"
+                                    >
+                                        {{ activity.action }}
+                                    </p>
+                                    <p class="text-sm text-gray-400">
+                                        {{ activity.description }}
+                                    </p>
+                                    <div
+                                        class="mt-1 flex items-center gap-2 text-xs text-gray-500"
+                                    >
+                                        <span>{{ activity.user }}</span>
+                                        <span v-if="activity.site">•</span>
+                                        <span
+                                            v-if="activity.site"
+                                            class="truncate"
+                                        >
+                                            {{ activity.site }}
+                                        </span>
+                                        <span>•</span>
+                                        <span>{{ activity.time }}</span>
+                                    </div>
+                                </div>
+                            </article>
+
+                            <p
+                                v-if="activities.length === 0"
+                                class="rounded-lg border border-dashed border-gray-700/70 p-6 text-center text-sm text-gray-500"
+                            >
+                                No recent activity logged.
                             </p>
                         </div>
                     </div>
