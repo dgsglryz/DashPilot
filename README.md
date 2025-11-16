@@ -162,10 +162,74 @@ docker-compose exec app php artisan migrate:fresh --seed
 
 ## Testing & Linting
 
+### Backend Tests
 ```bash
 docker-compose exec app php artisan test   # 25+ feature/unit tests
+```
+
+### Frontend Linting
+```bash
 npm run lint                               # ESLint (Vue 3 + TS)
 ```
+
+### E2E Tests (Playwright)
+Comprehensive end-to-end testing with Playwright covering all admin workflows:
+
+```bash
+# Install Playwright browsers (first time only)
+npx playwright install chromium
+
+# Run all E2E tests
+npm run test:e2e
+
+# Run with UI mode (interactive)
+npm run test:e2e:ui
+
+# Run in headed mode (see browser)
+npm run test:e2e:headed
+
+# Debug mode (step through tests)
+npm run test:e2e:debug
+
+# View test report
+npm run test:e2e:report
+```
+
+**Test Coverage:**
+- ✅ Authentication (login, logout, session persistence)
+- ✅ Dashboard (stats cards, charts, navigation)
+- ✅ Sites Management (CRUD, search, filters, health checks)
+- ✅ Alerts (view, filter, resolve, acknowledge)
+- ✅ Clients (CRUD, reports)
+- ✅ Tasks (Kanban board, create, move, edit, delete)
+- ✅ Settings (profile, email, webhooks, password)
+
+**Test Files:**
+- `tests/e2e/auth.spec.js` - Authentication flows
+- `tests/e2e/dashboard.spec.js` - Dashboard functionality
+- `tests/e2e/sites.spec.js` - Sites management
+- `tests/e2e/alerts.spec.js` - Alerts management
+- `tests/e2e/clients.spec.js` - Clients management
+- `tests/e2e/tasks.spec.js` - Tasks management
+- `tests/e2e/settings.spec.js` - Settings management
+
+**Test Helpers:**
+- `tests/e2e/helpers/auth.js` - Login/logout utilities
+- `tests/e2e/helpers/navigation.js` - Navigation helpers
+- `tests/e2e/helpers/wait.js` - Wait utilities for UI elements
+
+**Configuration:**
+- `playwright.config.js` - Playwright configuration
+- Base URL: `http://localhost:8000` (configurable via `APP_URL` env)
+- Default test timeout: 30 seconds
+- Screenshots/videos on failure
+- HTML reporter with detailed results
+
+**Prerequisites:**
+1. Docker containers running (`docker-compose up -d`)
+2. Database seeded (`php artisan migrate:fresh --seed`)
+3. Test user created (default: `admin@test.com` / `password`)
+4. Laravel server running on port 8000
 
 CI runs both commands plus Vite build; failing lint/tests block the pipeline.
 

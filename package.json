@@ -8,11 +8,17 @@
         "lint": "eslint \"resources/js/**/*.{ts,vue}\" --max-warnings=0",
         "test:unit": "vitest",
         "test:unit:ui": "vitest --ui",
-        "test:unit:coverage": "vitest --coverage"
+        "test:unit:coverage": "vitest --coverage",
+        "test:e2e": "playwright test",
+        "test:e2e:ui": "playwright test --ui",
+        "test:e2e:headed": "playwright test --headed",
+        "test:e2e:debug": "playwright test --debug",
+        "test:e2e:report": "playwright show-report"
     },
     "devDependencies": {
         "@heroicons/vue": "^2.1.1",
         "@inertiajs/vue3": "^2.0.0",
+        "@playwright/test": "^1.56.1",
         "@tailwindcss/forms": "^0.5.3",
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-vue": "^6.0.1",

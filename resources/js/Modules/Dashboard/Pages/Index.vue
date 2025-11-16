@@ -13,7 +13,7 @@
  * @component
  */
 import { ref, onMounted } from "vue";
-import { Head, Link, router } from "@inertiajs/vue3";
+import { Head, Link } from "@inertiajs/vue3";
 import AppLayout from "@/Shared/Layouts/AppLayout.vue";
 import StatCard from "@/Shared/Components/StatCard.vue";
 import MetricCard from "@/Shared/Components/MetricCard.vue";
@@ -187,9 +187,11 @@ onMounted(() => {
                     <!-- Top Stats Cards (6 cards - 2 rows of 3) -->
                     <div
                         class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3"
+                        data-testid="dashboard-stats"
                     >
                         <!-- Site Monitoring Card -->
                         <StatCard
+                            data-testid="stats-card"
                             title="Site Monitoring"
                             subtitle="Track site performance"
                             :value="stats.activeSites"
@@ -215,6 +217,7 @@ onMounted(() => {
 
                         <!-- SEO Performance Card -->
                         <StatCard
+                            data-testid="stats-card"
                             title="SEO Performance"
                             subtitle="Check SEO scores now"
                             :value="stats.avgSeoScore"
@@ -237,6 +240,7 @@ onMounted(() => {
 
                         <!-- Revenue Overview Card (Shopify) -->
                         <StatCard
+                            data-testid="stats-card"
                             title="Revenue Overview"
                             subtitle="Shopify earnings this month"
                             :value="stats.totalRevenue.toLocaleString()"
@@ -268,6 +272,7 @@ onMounted(() => {
                     <!-- Performance Chart -->
                     <div
                         class="rounded-xl border border-gray-700 bg-gray-800 p-6"
+                        data-testid="performance-chart"
                     >
                         <div
                             class="mb-4 flex flex-wrap items-center justify-between gap-4"

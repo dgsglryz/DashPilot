@@ -50,18 +50,18 @@ const navigation: NavigationItem[] = [
 const isMobileMenuOpen = ref(false);
 const isCommandPaletteOpen = ref(false);
 const searchQuery = ref("");
-const searchResults = ref<
-    Array<{
-        type: string;
-        id?: number;
-        label: string;
-        subtitle?: string;
-        route: string;
-        params?: Record<string, any>;
-        icon?: string;
-        badge?: string;
-    }>
->([]);
+type SearchResult = {
+    type: string;
+    id?: number;
+    label: string;
+    subtitle?: string;
+    route: string;
+    params?: Record<string, string | number>;
+    icon?: string;
+    badge?: string;
+};
+
+const searchResults = ref<SearchResult[]>([]);
 const isSearching = ref(false);
 
 /**
@@ -230,7 +230,7 @@ const handleSearch = (): void => {
  */
 const selectSuggestion = (suggestion: {
     route: string;
-    params?: Record<string, any>;
+    params?: Record<string, string | number>;
 }): void => {
     if (suggestion.params && Object.keys(suggestion.params).length > 0) {
         router.visit(route(suggestion.route, suggestion.params), {
@@ -259,8 +259,8 @@ const handleSearchBlur = (): void => {
 /**
  * Get icon component by name
  */
-const getIconComponent = (iconName: string) => {
-    const iconMap: Record<string, any> = {
+const getIconComponent = (iconName: string): typeof GlobeAltIcon => {
+    const iconMap: Record<string, typeof GlobeAltIcon> = {
         GlobeAltIcon: GlobeAltIcon,
         BellIcon: BellIcon,
         DocumentTextIcon: DocumentTextIcon,

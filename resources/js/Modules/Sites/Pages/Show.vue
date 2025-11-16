@@ -71,6 +71,7 @@
                             :href="route('sites.health-check', site.id)"
                             method="post"
                             as="button"
+                            data-testid="run-health-check"
                             class="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-4 py-1.5 text-white transition hover:bg-blue-700"
                         >
                             <PlayIcon class="h-4 w-4" />

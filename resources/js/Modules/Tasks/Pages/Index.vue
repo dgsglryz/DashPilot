@@ -48,11 +48,40 @@ type TasksByStatus = {
     cancelled: Task[];
 };
 
+type PaginationLink = {
+    url: string | null;
+    label: string;
+    active: boolean;
+};
+
+type PaginatedTask = {
+    id: number;
+    title: string;
+    description: string;
+    status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+    priority: 'low' | 'medium' | 'high' | 'urgent';
+    dueDate: string | null;
+    completedAt: string | null;
+    assignee: {
+        id: number;
+        name: string | null;
+        email: string | null;
+    };
+    site: {
+        id: number;
+        name: string;
+    } | null;
+    client: {
+        id: number;
+        name: string;
+    } | null;
+};
+
 const props = defineProps<{
     tasks: TasksByStatus;
     tasksPaginated?: {
-        data: any[];
-        links: any[];
+        data: PaginatedTask[];
+        links: PaginationLink[];
         from: number | null;
         to: number | null;
         total: number;

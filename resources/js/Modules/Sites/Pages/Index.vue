@@ -28,6 +28,7 @@
                     </button>
                     <Link
                         :href="route('sites.create')"
+                        data-testid="add-site-button"
                         class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
                     >
                         <PlusIcon class="w-5 h-5" />
@@ -49,6 +50,7 @@
                             v-model="searchQuery"
                             type="text"
                             placeholder="Search sites..."
+                            data-testid="search-input"
                             class="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
                             @keyup.enter="refreshSite"
                             @focus="onSearchFocus"
@@ -185,6 +187,7 @@
             <!-- Sites Table -->
             <div
                 class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden"
+                data-testid="sites-table"
             >
                 <!-- Batch Actions Bar -->
                 <div
@@ -273,6 +276,7 @@
                             <tr
                                 v-for="site in filteredSites"
                                 :key="site.id"
+                                data-testid="site-row"
                                 @click="router.visit(route('sites.show', site.id))"
                                 class="cursor-pointer hover:bg-gray-700/20 transition-colors"
                                 :class="{
@@ -503,7 +507,6 @@ const props = defineProps({
 const searchQuery = ref(props.filters?.query ?? "");
 const filterPlatform = ref(props.filters?.platform ?? "all");
 const filterStatus = ref(props.filters?.status ?? "all");
-const showAddSiteModal = ref(false);
 const suggestionOpen = ref(false);
 const selectedSites = ref<number[]>([]);
 const isExporting = ref(false);

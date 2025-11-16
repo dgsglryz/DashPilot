@@ -34,7 +34,6 @@
                         v-for="(link, index) in links"
                         :key="index"
                         :href="link.url ?? '#'"
-                        v-html="link.label"
                         :class="[
                             'relative inline-flex items-center px-4 py-2 text-sm font-semibold',
                             index === 0 ? 'rounded-l-md' : '',
@@ -44,7 +43,9 @@
                                 : 'bg-gray-800 text-gray-300 ring-1 ring-inset ring-gray-700 hover:bg-gray-700 focus:z-20 focus:outline-offset-0',
                             !link.url ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
                         ]"
-                    />
+                    >
+                        {{ stripHtml(link.label) }}
+                    </Link>
                 </nav>
             </div>
         </div>
@@ -64,5 +65,15 @@ defineProps<{
     to?: number;
     total?: number;
 }>();
+
+/**
+ * Strip HTML tags from label for safe rendering
+ * Laravel pagination returns HTML like "&laquo; Previous" which we render as plain text
+ */
+const stripHtml = (html: string): string => {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+};
 </script>
 
