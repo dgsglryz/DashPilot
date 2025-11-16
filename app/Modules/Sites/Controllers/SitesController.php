@@ -31,6 +31,10 @@ class SitesController extends Controller
 {
     /**
      * Display the sites list with stats summary.
+     *
+     * @param Request $request
+     *
+     * @return Response
      */
     public function index(Request $request): Response
     {

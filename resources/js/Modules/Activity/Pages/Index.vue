@@ -367,8 +367,9 @@ const checkNewActivities = async () => {
       router.reload({ only: ['activities'] })
       lastActivityId.value = data.data[0].id
     }
-  } catch (error) {
-    console.error('Failed to check new activities:', error)
+  } catch {
+    // Silently fail - real-time updates are non-critical
+    // In production, consider logging to error tracking service
   }
 }
 

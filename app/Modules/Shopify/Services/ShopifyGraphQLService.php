@@ -5,6 +5,7 @@ namespace App\Modules\Shopify\Services;
 
 use App\Modules\Shopify\Exceptions\ShopifyApiException;
 use App\Modules\Sites\Models\Site;
+use App\Shared\Services\LoggingService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -104,29 +105,57 @@ class ShopifyGraphQLService
     {
         $endpoint = rtrim($site->shopify_store_url, '/').'/admin/api/2024-10/graphql.json';
 
-        $response = Http::timeout((int) config('services.shopify.timeout', 10))
-            ->withHeaders([
-                'X-Shopify-Access-Token' => $site->shopify_access_token,
-                'Accept' => 'application/json',
-            ])
-            ->post($endpoint, [
-                'query' => self::ANALYTICS_QUERY,
+        $logger = app(LoggingService::class);
+        $logger->logServiceMethod(ShopifyGraphQLService::class, 'requestAnalytics', [
+            'site_id' => $site->id,
+            'endpoint' => $endpoint,
+        ]);
+
+        $logger->logApiRequest('Shopify GraphQL', $endpoint, [
+            'site_id' => $site->id,
+            'query_length' => strlen(self::ANALYTICS_QUERY),
+        ]);
+
+        $startTime = microtime(true);
+
+        try {
+            $response = Http::timeout((int) config('services.shopify.timeout', 10))
+                ->withHeaders([
+                    'X-Shopify-Access-Token' => $site->shopify_access_token,
+                    'Accept' => 'application/json',
+                ])
+                ->post($endpoint, [
+                    'query' => self::ANALYTICS_QUERY,
+                ]);
+
+            $duration = (microtime(true) - $startTime) * 1000;
+            $logger->logApiResponse('Shopify GraphQL', $endpoint, $response->status(), [
+                'site_id' => $site->id,
+                'duration_ms' => round($duration, 2),
             ]);
 
-        if ($response->failed()) {
-            throw new ShopifyApiException(
-                sprintf('Shopify GraphQL request failed: %s', $response->status()),
-                $response->status()
-            );
+            if ($response->failed()) {
+                throw new ShopifyApiException(
+                    sprintf('Shopify GraphQL request failed: %s', $response->status()),
+                    $response->status()
+                );
+            }
+
+            $payload = $response->json();
+
+            if (!is_array($payload) || !isset($payload['data'])) {
+                throw new ShopifyApiException('Unexpected Shopify GraphQL payload.');
+            }
+
+            return $payload['data'];
+        } catch (\Throwable $e) {
+            $logger->logException($e, [
+                'endpoint' => $endpoint,
+                'service' => 'Shopify GraphQL',
+                'site_id' => $site->id,
+            ]);
+            throw $e;
         }
-
-        $payload = $response->json();
-
-        if (!is_array($payload) || !isset($payload['data'])) {
-            throw new ShopifyApiException('Unexpected Shopify GraphQL payload.');
-        }
-
-        return $payload['data'];
     }
 }
 

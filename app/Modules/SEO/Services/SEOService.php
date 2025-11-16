@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Modules\SEO\Services;
 
 use App\Modules\Sites\Models\Site;
+use App\Shared\Services\LoggingService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -23,12 +24,18 @@ class SEOService
      */
     public function analyze(Site $site): array
     {
+        $logger = app(LoggingService::class);
+        $logger->logServiceMethod(SEOService::class, 'analyze', [
+            'site_id' => $site->id,
+            'url' => $site->url,
+        ]);
+
         $cacheKey = sprintf('seo.%d.score', $site->id);
 
         return Cache::remember(
             $cacheKey,
             self::CACHE_TTL_SECONDS,
-            fn () => $this->evaluate($site->url),
+            fn () => $this->evaluate($site->url, $logger),
         );
     }
 
@@ -36,12 +43,24 @@ class SEOService
      * Execute the checks using a mocked HTTP request (placeholder for real crawler).
      *
      * @param string $url
+     * @param LoggingService|null $logger
      *
      * @return array{score:int, issues:array<int, string>, details:array<string, mixed>}
      */
-    private function evaluate(string $url): array
+    private function evaluate(string $url, ?LoggingService $logger = null): array
     {
-        $response = Http::timeout(10)->get(config('services.seo.mock_endpoint').'?url='.urlencode($url));
+        $logger = $logger ?? app(LoggingService::class);
+        $endpoint = config('services.seo.mock_endpoint').'?url='.urlencode($url);
+
+        $logger->logApiRequest('SEO', $endpoint, ['url' => $url]);
+
+        $startTime = microtime(true);
+        $response = Http::timeout(10)->get($endpoint);
+        $duration = (microtime(true) - $startTime) * 1000;
+
+        $logger->logApiResponse('SEO', $endpoint, $response->status(), [
+            'duration_ms' => round($duration, 2),
+        ]);
 
         if ($response->failed()) {
             return [

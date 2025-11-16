@@ -22,6 +22,7 @@ import CalendarWidget from "@/Modules/Dashboard/Components/CalendarWidget.vue";
 import PerformanceChart from "@/Shared/Components/PerformanceChart.vue";
 import DoughnutChart from "@/Shared/Components/DoughnutChart.vue";
 import BarChart from "@/Shared/Components/BarChart.vue";
+import Breadcrumbs from "@/Shared/Components/Breadcrumbs.vue";
 import { useIntervalFn } from "@vueuse/core";
 
 type DashboardStats = {
@@ -137,7 +138,7 @@ const updateLiveData = () => {
 useIntervalFn(updateLiveData, 30000);
 
 onMounted(() => {
-    console.log("[DashPilot] Dashboard mounted with stats:", props.stats);
+    // Dashboard initialized with stats
 });
 </script>
 

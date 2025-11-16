@@ -78,10 +78,10 @@ const handleKeyboardShortcuts = (e: KeyboardEvent): void => {
         return;
     }
 
-    // Cmd+/ or Ctrl+/ - Show shortcuts modal (coming soon)
+    // Cmd+/ or Ctrl+/ - Show shortcuts modal (future enhancement)
     if ((e.metaKey || e.ctrlKey) && e.key === "/") {
         e.preventDefault();
-        // TODO: Show shortcuts modal
+        // Shortcuts modal feature to be implemented in future release
         return;
     }
 

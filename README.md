@@ -4,6 +4,17 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 
 ## Latest Updates
 
+- **Nov 16** – **DEBUGGING & LOGGING SYSTEM**: Comprehensive logging infrastructure:
+  - ✅ **Laravel Telescope** - Full request/query/job/exception tracking with web UI (`/telescope`)
+  - ✅ **LoggingService** - Structured logging for API calls, jobs, services, controllers, exceptions
+  - ✅ **Exception Logging** - All exceptions automatically logged with full context (file, line, trace, user, IP)
+  - ✅ **API Request/Response Logging** - WordPress, Shopify, SEO API calls with duration tracking
+  - ✅ **Job Execution Logging** - All queued jobs (CheckSiteHealth, SendEmailNotification, DeliverWebhook) logged
+  - ✅ **Email Notification Logging** - Email send attempts logged with success/failure status
+  - ✅ **Webhook Delivery Logging** - Webhook attempts with retry tracking and duration
+  - ✅ **Controller Action Logging** - All controller actions logged (when debug mode enabled)
+  - ✅ **Service Method Logging** - Service method calls tracked for debugging
+  - ✅ **Slow Query Detection** - Queries >100ms automatically logged
 - **Nov 16** – **MAJOR UPDATE**: Complete UX overhaul with modern features:
   - ✅ Command Palette (Cmd+K) - Global search with autocomplete and keyboard navigation
   - ✅ Toast Notifications - Beautiful, non-intrusive feedback system
@@ -61,7 +72,54 @@ Key environment variables:
 - `docker-compose up -d` – spins up PHP-FPM, MySQL, Redis, MailHog, phpMyAdmin.
 - `docker-compose exec app php artisan serve --host=0.0.0.0 --port=8000` (or use `php artisan serve` locally) – serves Inertia SPA.
 - `docker-compose exec app php artisan queue:work --queue=health-checks,default` – processes queued jobs such as `CheckSiteHealth`.
+- **Telescope UI**: Visit `http://localhost:8000/telescope` to view requests, queries, jobs, exceptions, and logs in real-time.
 - Demo login: `demo@dashpilot.test / Password123`
+
+## Debugging & Logging
+
+### Laravel Telescope
+Telescope provides a beautiful debugging interface for your application:
+- **Access**: `http://localhost:8000/telescope`
+- **Features**: 
+  - Request/Response tracking
+  - Database queries with bindings
+  - Queued jobs execution
+  - Exceptions with stack traces
+  - Log entries
+  - Cache operations
+  - Mail sent/received
+  - Events dispatched
+
+### LoggingService
+Custom structured logging service (`app/Shared/Services/LoggingService.php`) provides:
+- **API Request/Response Logging**: All WordPress, Shopify, SEO API calls logged with duration
+- **Job Execution Logging**: All queued jobs logged (started, completed, failed)
+- **Email Notification Logging**: Email send attempts with success/failure
+- **Webhook Delivery Logging**: Webhook attempts with retry tracking
+- **Exception Logging**: All exceptions logged with full context (file, line, trace, user, IP, URL)
+- **Controller Action Logging**: All controller actions logged (when `APP_DEBUG=true` or `LOG_CONTROLLER_ACTIONS=true`)
+- **Service Method Logging**: Service method calls tracked
+- **Slow Query Detection**: Queries >100ms automatically logged
+
+### Log Files
+- **Location**: `storage/logs/laravel.log`
+- **Daily Rotation**: Logs rotate daily (keeps 14 days by default)
+- **Log Levels**: `debug`, `info`, `warning`, `error`, `critical`
+
+### Environment Variables
+```env
+# Enable Telescope (default: true)
+TELESCOPE_ENABLED=true
+
+# Telescope path (default: telescope)
+TELESCOPE_PATH=telescope
+
+# Log level (default: debug)
+LOG_LEVEL=debug
+
+# Enable controller action logging
+LOG_CONTROLLER_ACTIONS=false
+```
 
 ## Demo Data (125 Sites)
 
