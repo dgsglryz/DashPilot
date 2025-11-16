@@ -147,6 +147,11 @@ onMounted(() => {
 
     <AppLayout>
         <section class="space-y-8">
+            <Breadcrumbs
+                :items="[
+                    { label: 'Dashboard', href: route('dashboard') },
+                ]"
+            />
             <div
                 class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
             >

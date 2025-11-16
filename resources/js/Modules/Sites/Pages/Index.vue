@@ -1,6 +1,12 @@
 <template>
     <AppLayout>
         <div class="space-y-6">
+            <Breadcrumbs
+                :items="[
+                    { label: 'Dashboard', href: route('dashboard') },
+                    { label: 'Sites' },
+                ]"
+            />
             <!-- Header -->
             <div
                 class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
@@ -453,6 +459,7 @@ import {
     StarIcon,
 } from "@heroicons/vue/24/outline";
 import QuickActionsDropdown from "@/Shared/Components/QuickActionsDropdown.vue";
+import Breadcrumbs from "@/Shared/Components/Breadcrumbs.vue";
 import { useToast } from "@/Shared/Composables/useToast";
 
 /**
