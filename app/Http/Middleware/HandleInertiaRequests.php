@@ -3,8 +3,10 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Shared\Services\LoggingService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Inertia\Inertia;
 
 class HandleInertiaRequests extends Middleware
 {

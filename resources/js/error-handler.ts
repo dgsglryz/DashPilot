@@ -64,11 +64,19 @@ function handleUnhandledRejection(event: PromiseRejectionEvent): void {
  * Vue error handler.
  */
 export function handleVueError(err: Error, instance: unknown, info: string): void {
+    // Type-safe component name extraction
+    const componentName = (instance && typeof instance === 'object' && '$options' in instance)
+        ? ((instance as { $options?: { name?: string; __name?: string } }).$options?.name 
+            || (instance as { $options?: { __name?: string } }).$options?.__name)
+        : 'Unknown Component';
+
     const payload: ErrorLogPayload = {
         message: err.message || 'Unknown Vue error',
         stack: err.stack,
-        component: instance?.$options?.name || instance?.$options?.__name || 'Unknown Component',
-        props: instance?.$props,
+        component: componentName || 'Unknown Component',
+        props: (instance && typeof instance === 'object' && '$props' in instance)
+            ? (instance as { $props?: Record<string, unknown> }).$props as Record<string, unknown>
+            : undefined,
         url: window.location.href,
         userAgent: navigator.userAgent,
         timestamp: new Date().toISOString(),

@@ -93,6 +93,7 @@ const props = withDefaults(
         recentAlerts: DashboardAlert[];
         scheduledChecks: ScheduledCheck[];
         featuredSites: FeaturedSite[];
+        favoritedSites?: FeaturedSite[];
         activities?: ActivityItem[];
         chartData?: ChartData;
     }>(),
@@ -112,6 +113,7 @@ const props = withDefaults(
         recentAlerts: () => [],
         scheduledChecks: () => [],
         featuredSites: () => [],
+        favoritedSites: () => [],
         activities: () => [],
     },
 );
