@@ -700,6 +700,97 @@ onMounted(() => {
                 </div>
             </div>
 
+            <!-- Pinned/Favorited Sites -->
+            <section v-if="favoritedSites && favoritedSites.length > 0" class="space-y-4">
+                <div
+                    class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+                >
+                    <div>
+                        <h2 class="text-xl font-semibold text-white">
+                            ⭐ Pinned Sites
+                        </h2>
+                        <p class="text-sm text-gray-400">
+                            Your favorite sites for quick access
+                        </p>
+                    </div>
+                    <Link
+                        :href="route('sites.index')"
+                        class="text-sm font-semibold text-blue-400 transition hover:text-blue-300"
+                    >
+                        View all →
+                    </Link>
+                </div>
+
+                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <Link
+                        v-for="site in favoritedSites"
+                        :key="site.id"
+                        :href="route('sites.show', site.id)"
+                        class="group relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gray-900/40 shadow-xl transition hover:-translate-y-1 hover:border-yellow-500/60"
+                    >
+                        <img
+                            :src="site.thumbnail"
+                            :alt="site.name"
+                            class="h-40 w-full object-cover transition duration-500 group-hover:scale-105"
+                        />
+                        <div
+                            class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/70 to-transparent"
+                        />
+                        <div class="relative flex flex-col gap-3 p-5">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="h-12 w-12 rounded-xl bg-gray-900/70 p-1 shadow-lg"
+                                >
+                                    <img
+                                        :src="site.logo"
+                                        :alt="`${site.name} logo`"
+                                        class="h-full w-full rounded-lg object-cover"
+                                    />
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-white">
+                                        {{ site.name }}
+                                    </p>
+                                    <p
+                                        class="text-xs uppercase tracking-wide text-gray-400"
+                                    >
+                                        {{ site.region ?? "Global" }}
+                                    </p>
+                                </div>
+                            </div>
+                            <div
+                                class="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase"
+                            >
+                                <span
+                                    class="rounded-full px-2 py-0.5"
+                                    :class="{
+                                        'bg-green-500/15 text-green-400':
+                                            site.status === 'healthy',
+                                        'bg-yellow-500/15 text-yellow-400':
+                                            site.status === 'warning',
+                                        'bg-red-500/15 text-red-400':
+                                            site.status === 'critical',
+                                    }"
+                                >
+                                    {{ site.status }}
+                                </span>
+                                <span
+                                    class="rounded-full bg-blue-500/10 px-2 py-0.5 text-blue-300"
+                                >
+                                    {{ site.platform }}
+                                </span>
+                                <span
+                                    v-if="site.uptime"
+                                    class="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-300"
+                                >
+                                    {{ site.uptime }}% uptime
+                                </span>
+                            </div>
+                        </div>
+                    </Link>
+                </div>
+            </section>
+
             <!-- Featured Sites Carousel -->
             <section class="space-y-4">
                 <div

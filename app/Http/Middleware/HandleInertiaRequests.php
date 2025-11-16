@@ -39,4 +39,25 @@ class HandleInertiaRequests extends Middleware
             ],
         ];
     }
+
+    /**
+     * Handle Inertia errors.
+     *
+     * @param \Throwable $e
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function handleError(\Throwable $e, Request $request): \Symfony\Component\HttpFoundation\Response
+    {
+        // Log Inertia errors
+        if (app()->bound(LoggingService::class)) {
+            app(LoggingService::class)->logException($e, [
+                'inertia_error' => true,
+                'url' => $request->fullUrl(),
+                'component' => $request->header('X-Inertia-Partial-Component'),
+            ]);
+        }
+
+        return parent::handleError($e, $request);
+    }
 }

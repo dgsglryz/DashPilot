@@ -6,6 +6,7 @@ namespace App\Modules\Alerts\Observers;
 use App\Modules\Alerts\Models\Alert;
 use App\Modules\Notifications\Jobs\SendEmailNotification;
 use App\Modules\Notifications\Services\WebhookService;
+use App\Shared\Services\LoggingService;
 
 /**
  * AlertObserver handles email and webhook notifications when alerts are created or resolved.
