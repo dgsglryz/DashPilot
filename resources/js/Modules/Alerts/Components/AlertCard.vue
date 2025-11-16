@@ -1,6 +1,7 @@
 <template>
   <div 
     class="bg-gray-800/50 backdrop-blur-sm rounded-xl border transition-all hover:border-gray-600"
+    data-testid="alert-card"
     :class="[
       borderColor,
       alert.isRead ? 'opacity-60' : ''
@@ -62,6 +63,7 @@
             <button 
               v-if="alert.status === 'active'"
               @click="$emit('acknowledge', alert.id)"
+              data-testid="acknowledge-alert-button"
               class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
             >
               Acknowledge
@@ -69,6 +71,7 @@
             <button 
               v-if="alert.status !== 'resolved'"
               @click="$emit('resolve', alert.id)"
+              data-testid="resolve-alert-button"
               class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors"
             >
               Resolve

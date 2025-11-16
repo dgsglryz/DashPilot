@@ -10,9 +10,9 @@
  * @module tests/e2e/dashboard
  */
 
-const { test, expect } = require('@playwright/test');
-const { loginAsAdmin } = require('./helpers/auth');
-const { goToSites, goToAlerts, goToClients, goToTasks } = require('./helpers/navigation');
+import { test, expect } from '@playwright/test';
+import { loginAsAdmin } from './helpers/auth.js';
+import { goToSites, goToAlerts, goToClients, goToTasks } from './helpers/navigation.js';
 
 test.describe('Dashboard', () => {
   test.beforeEach(async ({ page }) => {

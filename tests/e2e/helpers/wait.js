@@ -110,7 +110,7 @@ async function waitForTableData(page, tableSelector = 'table', minRows = 1) {
   );
 }
 
-module.exports = {
+export {
   waitForToast,
   waitForSuccessMessage,
   waitForErrorMessage,

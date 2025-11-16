@@ -217,6 +217,7 @@ const columns = [
                 </div>
                 <Link
                     :href="route('tasks.create')"
+                    data-testid="add-task-button"
                     class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
                 >
                     <PlusIcon class="h-5 w-5" />
@@ -339,7 +340,7 @@ const columns = [
             </div>
 
             <!-- Kanban Board -->
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-4" data-testid="kanban-board">
                 <div
                     v-for="column in columns"
                     :key="column.key"
@@ -376,6 +377,7 @@ const columns = [
                         <div
                             v-for="task in tasks[column.key as keyof TasksByStatus]"
                             :key="task.id"
+                            data-testid="task-card"
                             class="group relative rounded-xl border border-gray-700/60 bg-gray-800/60 p-4 transition-all hover:border-blue-500/60 hover:shadow-lg"
                         >
                             <!-- Task Header -->

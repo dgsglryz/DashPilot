@@ -17,12 +17,17 @@
           <button
             @click="exportAlerts"
             :disabled="isExporting"
+            data-testid="export-alerts-button"
             class="inline-flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
           >
             <ArrowDownTrayIcon class="h-4 w-4" />
             {{ isExporting ? 'Exporting...' : 'Export' }}
           </button>
-          <button @click="markAllAsRead" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
+          <button 
+            @click="markAllAsRead" 
+            data-testid="mark-all-read-button"
+            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+          >
             Mark All as Read
           </button>
         </div>
@@ -88,6 +93,7 @@
               v-model="searchQuery"
               type="text" 
               placeholder="Search alerts..."
+              data-testid="alerts-search-input"
               class="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
             />
           </div>
@@ -119,11 +125,12 @@
       </div>
 
       <!-- Alerts List -->
-      <div class="space-y-3">
+      <div class="space-y-3" data-testid="alerts-list">
         <AlertCard 
           v-for="alert in filteredAlerts" 
           :key="alert.id"
           :alert="alert"
+          data-testid="alert-card"
           @acknowledge="acknowledgeAlert"
           @resolve="resolveAlert"
           @view-site="viewSite"

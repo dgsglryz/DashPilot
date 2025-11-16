@@ -11,10 +11,10 @@
  * @module tests/e2e/tasks
  */
 
-const { test, expect } = require('@playwright/test');
-const { loginAsAdmin } = require('./helpers/auth');
-const { goToTasks } = require('./helpers/navigation');
-const { waitForSuccessMessage } = require('./helpers/wait');
+import { test, expect } from '@playwright/test';
+import { loginAsAdmin } from './helpers/auth.js';
+import { goToTasks } from './helpers/navigation.js';
+import { waitForSuccessMessage } from './helpers/wait.js';
 
 test.describe('Tasks Management', () => {
   test.beforeEach(async ({ page }) => {

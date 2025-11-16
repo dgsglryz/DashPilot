@@ -280,6 +280,7 @@ onUnmounted(() => {
 </script>
 
 <template>
+    <div data-testid="command-palette">
     <Transition
         enter-active-class="transition ease-out duration-200"
         enter-from-class="opacity-0"
@@ -418,5 +419,6 @@ onUnmounted(() => {
             </div>
         </div>
     </Transition>
+    </div>
 </template>
 

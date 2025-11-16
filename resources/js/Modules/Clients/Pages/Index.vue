@@ -139,6 +139,7 @@ const stats = computed(() => {
                 </div>
                 <Link
                     :href="route('clients.create')"
+                    data-testid="add-client-button"
                     class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
                 >
                     <PlusIcon class="h-5 w-5" />
@@ -216,6 +217,7 @@ const stats = computed(() => {
                             v-model="searchQuery"
                             type="text"
                             placeholder="Search clients by name, company, or email..."
+                            data-testid="clients-search-input"
                             class="w-full rounded-lg border border-gray-700 bg-gray-900 py-2 pl-10 pr-4 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
                             @keyup.enter="applyFilters"
                         />
@@ -238,6 +240,7 @@ const stats = computed(() => {
             <!-- Clients Table -->
             <div
                 class="overflow-hidden rounded-xl border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm"
+                data-testid="clients-table"
             >
                 <div class="overflow-x-auto">
                     <table class="w-full">
@@ -279,6 +282,7 @@ const stats = computed(() => {
                             <tr
                                 v-for="client in filteredClients"
                                 :key="client.id"
+                                data-testid="client-row"
                                 @click="router.visit(route('clients.show', client.id))"
                                 class="cursor-pointer transition-colors hover:bg-gray-700/20"
                             >

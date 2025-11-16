@@ -69,7 +69,7 @@ async function isLoggedIn(page) {
   }
 }
 
-module.exports = {
+export {
   loginAsAdmin,
   logout,
   isLoggedIn,

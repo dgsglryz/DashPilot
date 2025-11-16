@@ -11,10 +11,10 @@
  * @module tests/e2e/clients
  */
 
-const { test, expect } = require('@playwright/test');
-const { loginAsAdmin } = require('./helpers/auth');
-const { goToClients } = require('./helpers/navigation');
-const { waitForSuccessMessage, waitForTableData } = require('./helpers/wait');
+import { test, expect } from '@playwright/test';
+import { loginAsAdmin } from './helpers/auth.js';
+import { goToClients } from './helpers/navigation.js';
+import { waitForSuccessMessage, waitForTableData } from './helpers/wait.js';
 
 test.describe('Clients Management', () => {
   test.beforeEach(async ({ page }) => {

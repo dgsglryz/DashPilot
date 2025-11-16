@@ -102,7 +102,7 @@ async function goToSettings(page) {
   await page.waitForURL('**/settings');
 }
 
-module.exports = {
+export {
   navigateTo,
   goToDashboard,
   goToSites,

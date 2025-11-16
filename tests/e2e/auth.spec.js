@@ -10,8 +10,8 @@
  * @module tests/e2e/auth
  */
 
-const { test, expect } = require('@playwright/test');
-const { loginAsAdmin, logout, isLoggedIn } = require('./helpers/auth');
+import { test, expect } from '@playwright/test';
+import { loginAsAdmin, logout, isLoggedIn } from './helpers/auth.js';
 
 test.describe('Authentication', () => {
   test.beforeEach(async ({ page }) => {

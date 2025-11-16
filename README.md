@@ -5,44 +5,44 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 ## Latest Updates
 
 - **Nov 16** – **DEBUGGING & LOGGING SYSTEM**: Comprehensive logging infrastructure:
-  - ✅ **Laravel Telescope** - Full request/query/job/exception tracking with web UI (`/telescope`)
-  - ✅ **LoggingService** - Structured logging for API calls, jobs, services, controllers, exceptions
-  - ✅ **Backend Logging**:
-    - Exception Logging - All exceptions automatically logged with full context (file, line, trace, user, IP)
-    - API Request/Response Logging - WordPress, Shopify REST, Shopify GraphQL, SEO API calls with duration tracking
-    - Job Execution Logging - All queued jobs (CheckSiteHealth, SendEmailNotification, DeliverWebhook) logged
-    - Email Notification Logging - Email send attempts logged with success/failure status
-    - Webhook Delivery Logging - Webhook attempts with retry tracking and duration
-    - Controller Action Logging - All controller actions logged (when debug mode enabled)
-    - Service Method Logging - Service method calls tracked for debugging
-    - Slow Query Detection - Queries >100ms automatically logged
-    - AlertObserver Logging - Alert creation/resolution events logged
-    - Inertia Error Logging - Inertia middleware errors logged
-  - ✅ **Frontend Logging**:
-    - JavaScript Error Handler - Global error handler for all JS errors
-    - Vue Error Handler - Vue component errors with component name and props
-    - Inertia Error Handler - Inertia page errors logged
-    - Unhandled Promise Rejections - Promise rejections automatically logged
-    - HTTP Error Interceptor - Axios interceptor logs 4xx/5xx errors (except 401/403)
-    - Frontend Error API - `/api/log-frontend-error` endpoint receives all frontend errors
+    - ✅ **Laravel Telescope** - Full request/query/job/exception tracking with web UI (`/telescope`)
+    - ✅ **LoggingService** - Structured logging for API calls, jobs, services, controllers, exceptions
+    - ✅ **Backend Logging**:
+        - Exception Logging - All exceptions automatically logged with full context (file, line, trace, user, IP)
+        - API Request/Response Logging - WordPress, Shopify REST, Shopify GraphQL, SEO API calls with duration tracking
+        - Job Execution Logging - All queued jobs (CheckSiteHealth, SendEmailNotification, DeliverWebhook) logged
+        - Email Notification Logging - Email send attempts logged with success/failure status
+        - Webhook Delivery Logging - Webhook attempts with retry tracking and duration
+        - Controller Action Logging - All controller actions logged (when debug mode enabled)
+        - Service Method Logging - Service method calls tracked for debugging
+        - Slow Query Detection - Queries >100ms automatically logged
+        - AlertObserver Logging - Alert creation/resolution events logged
+        - Inertia Error Logging - Inertia middleware errors logged
+    - ✅ **Frontend Logging**:
+        - JavaScript Error Handler - Global error handler for all JS errors
+        - Vue Error Handler - Vue component errors with component name and props
+        - Inertia Error Handler - Inertia page errors logged
+        - Unhandled Promise Rejections - Promise rejections automatically logged
+        - HTTP Error Interceptor - Axios interceptor logs 4xx/5xx errors (except 401/403)
+        - Frontend Error API - `/api/log-frontend-error` endpoint receives all frontend errors
 - **Nov 16** – **COMPLETE FEATURE SET**: All features fully integrated and production-ready:
-  - ✅ Command Palette (Cmd+K) - Global search with autocomplete and keyboard navigation
-  - ✅ Toast Notifications - Beautiful, non-intrusive feedback system
-  - ✅ Skeleton Loaders - Professional loading states
-  - ✅ Empty States - Beautiful empty state components
-  - ✅ Activity Log Enhancements - User avatars (DiceBear), CSV export, real-time feed (30s polling)
-  - ✅ Dashboard Charts - Doughnut chart (sites by status), Bar chart (alert frequency), Top 5 problematic sites table
-  - ✅ Keyboard Shortcuts - Cmd+K, Cmd+/, G+D, G+S, G+A
-  - ✅ Export Features - CSV/Excel export for Sites and Alerts with filters
-  - ✅ Health Score Modal - Detailed score breakdown with info icon
-  - ✅ Quick Actions Dropdown - Contextual actions for sites table (view, health check, copy URL, favorite)
-  - ✅ Favorites/Pinned Sites - Star icon toggle, Dashboard pinned section, backend support
-  - ✅ Breadcrumbs Navigation - Fully integrated on Dashboard, Sites, Alerts, Show pages
-  - ✅ Enhanced Progress Bar - Better visual feedback with Inertia Progress
-  - ✅ Batch Operations - Multi-select checkboxes, bulk health check, export selected
-  - ✅ Email Preview/Test - Settings page with template selector (alert-created, alert-resolved, daily-digest)
-  - ✅ Webhook Test Console - Settings page with payload editor, sample loader, response viewer
-  - ✅ Recent Viewed Items - Sidebar section with localStorage tracking (last 5 pages)
+    - ✅ Command Palette (Cmd+K) - Global search with autocomplete and keyboard navigation
+    - ✅ Toast Notifications - Beautiful, non-intrusive feedback system
+    - ✅ Skeleton Loaders - Professional loading states
+    - ✅ Empty States - Beautiful empty state components
+    - ✅ Activity Log Enhancements - User avatars (DiceBear), CSV export, real-time feed (30s polling)
+    - ✅ Dashboard Charts - Doughnut chart (sites by status), Bar chart (alert frequency), Top 5 problematic sites table
+    - ✅ Keyboard Shortcuts - Cmd+K, Cmd+/, G+D, G+S, G+A
+    - ✅ Export Features - CSV/Excel export for Sites and Alerts with filters
+    - ✅ Health Score Modal - Detailed score breakdown with info icon
+    - ✅ Quick Actions Dropdown - Contextual actions for sites table (view, health check, copy URL, favorite)
+    - ✅ Favorites/Pinned Sites - Star icon toggle, Dashboard pinned section, backend support
+    - ✅ Breadcrumbs Navigation - Fully integrated on Dashboard, Sites, Alerts, Show pages
+    - ✅ Enhanced Progress Bar - Better visual feedback with Inertia Progress
+    - ✅ Batch Operations - Multi-select checkboxes, bulk health check, export selected
+    - ✅ Email Preview/Test - Settings page with template selector (alert-created, alert-resolved, daily-digest)
+    - ✅ Webhook Test Console - Settings page with payload editor, sample loader, response viewer
+    - ✅ Recent Viewed Items - Sidebar section with localStorage tracking (last 5 pages)
 - **Nov 16** – Dashboard overview now showcases featured site cards plus revamped site detail pages (hero imagery, logos, SEO/alert/timeline panels) with global search suggestions.
 - **Nov 16** – Demo seeder now loads **125 production-like sites** (unique industries, thumbnails, alerts, tasks, reports) for instant dashboard testing.
 - **Nov 15** – WordPress health integration added (`WordPressService` + `CheckSiteHealth` job + Redis caching).
@@ -92,20 +92,24 @@ Key environment variables:
 ## Debugging & Logging
 
 ### Laravel Telescope
+
 Telescope provides a beautiful debugging interface for your application:
+
 - **Access**: `http://localhost:8000/telescope`
-- **Features**: 
-  - Request/Response tracking
-  - Database queries with bindings
-  - Queued jobs execution
-  - Exceptions with stack traces
-  - Log entries
-  - Cache operations
-  - Mail sent/received
-  - Events dispatched
+- **Features**:
+    - Request/Response tracking
+    - Database queries with bindings
+    - Queued jobs execution
+    - Exceptions with stack traces
+    - Log entries
+    - Cache operations
+    - Mail sent/received
+    - Events dispatched
 
 ### LoggingService
+
 Custom structured logging service (`app/Shared/Services/LoggingService.php`) provides:
+
 - **API Request/Response Logging**: All WordPress, Shopify REST, Shopify GraphQL, SEO API calls logged with duration
 - **Job Execution Logging**: All queued jobs logged (started, completed, failed)
 - **Email Notification Logging**: Email send attempts with success/failure
@@ -117,7 +121,9 @@ Custom structured logging service (`app/Shared/Services/LoggingService.php`) pro
 - **AlertObserver Logging**: Alert creation/resolution events logged
 
 ### Frontend Error Logging
+
 Frontend errors are automatically captured and sent to the backend:
+
 - **JavaScript Errors**: Global `error` event listener
 - **Vue Component Errors**: Vue error handler with component name and props
 - **Inertia Errors**: Inertia page errors logged
@@ -126,11 +132,13 @@ Frontend errors are automatically captured and sent to the backend:
 - **Error Endpoint**: `/api/log-frontend-error` receives all frontend errors and logs them via LoggingService
 
 ### Log Files
+
 - **Location**: `storage/logs/laravel.log`
 - **Daily Rotation**: Logs rotate daily (keeps 14 days by default)
 - **Log Levels**: `debug`, `info`, `warning`, `error`, `critical`
 
 ### Environment Variables
+
 ```env
 # Enable Telescope (default: true)
 TELESCOPE_ENABLED=true
@@ -163,16 +171,19 @@ docker-compose exec app php artisan migrate:fresh --seed
 ## Testing & Linting
 
 ### Backend Tests
+
 ```bash
 docker-compose exec app php artisan test   # 25+ feature/unit tests
 ```
 
 ### Frontend Linting
+
 ```bash
 npm run lint                               # ESLint (Vue 3 + TS)
 ```
 
 ### E2E Tests (Playwright)
+
 Comprehensive end-to-end testing with Playwright covering all admin workflows:
 
 ```bash
@@ -196,6 +207,7 @@ npm run test:e2e:report
 ```
 
 **Test Coverage:**
+
 - ✅ Authentication (login, logout, session persistence)
 - ✅ Dashboard (stats cards, charts, navigation)
 - ✅ Sites Management (CRUD, search, filters, health checks)
@@ -205,6 +217,7 @@ npm run test:e2e:report
 - ✅ Settings (profile, email, webhooks, password)
 
 **Test Files:**
+
 - `tests/e2e/auth.spec.js` - Authentication flows
 - `tests/e2e/dashboard.spec.js` - Dashboard functionality
 - `tests/e2e/sites.spec.js` - Sites management
@@ -214,11 +227,13 @@ npm run test:e2e:report
 - `tests/e2e/settings.spec.js` - Settings management
 
 **Test Helpers:**
+
 - `tests/e2e/helpers/auth.js` - Login/logout utilities
 - `tests/e2e/helpers/navigation.js` - Navigation helpers
 - `tests/e2e/helpers/wait.js` - Wait utilities for UI elements
 
 **Configuration:**
+
 - `playwright.config.js` - Playwright configuration
 - Base URL: `http://localhost:8000` (configurable via `APP_URL` env)
 - Default test timeout: 30 seconds
@@ -226,6 +241,7 @@ npm run test:e2e:report
 - HTML reporter with detailed results
 
 **Prerequisites:**
+
 1. Docker containers running (`docker-compose up -d`)
 2. Database seeded (`php artisan migrate:fresh --seed`)
 3. Test user created (default: `admin@test.com` / `password`)

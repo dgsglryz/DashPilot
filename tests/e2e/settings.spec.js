@@ -12,10 +12,10 @@
  * @module tests/e2e/settings
  */
 
-const { test, expect } = require('@playwright/test');
-const { loginAsAdmin } = require('./helpers/auth');
-const { goToSettings } = require('./helpers/navigation');
-const { waitForSuccessMessage } = require('./helpers/wait');
+import { test, expect } from '@playwright/test';
+import { loginAsAdmin } from './helpers/auth.js';
+import { goToSettings } from './helpers/navigation.js';
+import { waitForSuccessMessage } from './helpers/wait.js';
 
 test.describe('Settings', () => {
   test.beforeEach(async ({ page }) => {
