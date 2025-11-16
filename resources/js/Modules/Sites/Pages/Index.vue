@@ -459,7 +459,6 @@ import {
     StarIcon,
 } from "@heroicons/vue/24/outline";
 import QuickActionsDropdown from "@/Shared/Components/QuickActionsDropdown.vue";
-import Breadcrumbs from "@/Shared/Components/Breadcrumbs.vue";
 import { useToast } from "@/Shared/Composables/useToast";
 
 /**

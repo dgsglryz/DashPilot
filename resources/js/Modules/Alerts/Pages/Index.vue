@@ -1,6 +1,12 @@
 <template>
   <AppLayout>
     <div class="space-y-6">
+      <Breadcrumbs
+        :items="[
+          { label: 'Dashboard', href: route('dashboard') },
+          { label: 'Alerts' },
+        ]"
+      />
       <!-- Header -->
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -139,6 +145,7 @@ import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Shared/Layouts/AppLayout.vue'
 import AlertCard from '@/Modules/Alerts/Components/AlertCard.vue'
+import Breadcrumbs from '@/Shared/Components/Breadcrumbs.vue'
 import { ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
 import { 
   MagnifyingGlassIcon,

@@ -15,6 +15,9 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 const pages = import.meta.glob<DefineComponent>('./Modules/**/*.vue');
 
+// Initialize global error handlers (JavaScript errors, unhandled rejections)
+initializeErrorHandlers();
+
 // Configure Inertia Progress Bar
 InertiaProgress.init({
     color: '#3B82F6',
@@ -27,6 +30,11 @@ createInertiaApp({
     resolve: (name) => resolvePageComponent(resolveModulePath(name), pages),
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => h(App, props) });
+        
+        // Register Vue error handler
+        app.config.errorHandler = (err, instance, info) => {
+            handleVueError(err as Error, instance, info);
+        };
         
         // Register Toast notifications
         app.use(Toast, {
@@ -53,6 +61,9 @@ createInertiaApp({
     },
     progress: {
         color: '#3B82F6',
+    },
+    onError: (error, page) => {
+        handleInertiaError(error as Error, page);
     },
 });
 

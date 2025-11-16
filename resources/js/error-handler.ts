@@ -63,7 +63,7 @@ function handleUnhandledRejection(event: PromiseRejectionEvent): void {
 /**
  * Vue error handler.
  */
-export function handleVueError(err: Error, instance: any, info: string): void {
+export function handleVueError(err: Error, instance: unknown, info: string): void {
     const payload: ErrorLogPayload = {
         message: err.message || 'Unknown Vue error',
         stack: err.stack,
@@ -86,7 +86,7 @@ export function handleVueError(err: Error, instance: any, info: string): void {
 /**
  * Inertia error handler.
  */
-export function handleInertiaError(err: Error, page: any): void {
+export function handleInertiaError(err: Error, page: { component?: string; props?: Record<string, unknown> } | null): void {
     const payload: ErrorLogPayload = {
         message: err.message || 'Unknown Inertia error',
         stack: err.stack,

@@ -85,4 +85,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Frontend error logging endpoint (no auth required for error reporting)
+Route::post('/api/log-frontend-error', [\App\Http\Controllers\Api\FrontendErrorLogController::class, 'store'])->name('api.log-frontend-error');
+
 require __DIR__.'/auth.php';

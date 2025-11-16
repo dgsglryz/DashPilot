@@ -1,6 +1,13 @@
 <template>
     <AppLayout>
         <section class="space-y-8">
+            <Breadcrumbs
+                :items="[
+                    { label: 'Dashboard', href: route('dashboard') },
+                    { label: 'Sites', href: route('sites.index') },
+                    { label: site.name },
+                ]"
+            />
             <!-- Hero -->
             <div
                 class="relative overflow-hidden rounded-3xl border border-gray-700/70 bg-gray-900/60"
@@ -338,6 +345,7 @@ import { Link } from "@inertiajs/vue3";
 import AppLayout from "@/Shared/Layouts/AppLayout.vue";
 import PerformanceChart from "@/Shared/Components/PerformanceChart.vue";
 import SEOScoreCard from "@/Modules/Sites/Components/SEOScoreCard.vue";
+import Breadcrumbs from "@/Shared/Components/Breadcrumbs.vue";
 import { ArrowLeftIcon, PlayIcon } from "@heroicons/vue/24/outline";
 
 const props = defineProps({

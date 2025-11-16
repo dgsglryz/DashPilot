@@ -10,6 +10,7 @@ use App\Modules\Reports\Models\Report;
 use App\Modules\Sites\Models\Site;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -49,6 +50,7 @@ class DashboardController extends Controller
             'recentAlerts' => $this->recentAlerts(),
             'scheduledChecks' => $this->scheduledChecks(),
             'featuredSites' => $this->featuredSites(),
+            'favoritedSites' => $this->favoritedSites(),
             'activities' => $this->activities(),
             'chartData' => [
                 'sitesByStatus' => $this->sitesByStatus(),
