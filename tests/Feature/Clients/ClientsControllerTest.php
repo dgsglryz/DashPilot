@@ -90,7 +90,8 @@ class ClientsControllerTest extends TestCase
             'assigned_developer_id' => $developer->id,
         ]);
 
-        $response->assertRedirect(route('clients.index'));
+        $client = \App\Modules\Clients\Models\Client::where('email', 'client@example.com')->first();
+        $response->assertRedirect(route('clients.show', $client));
         $this->assertDatabaseHas('clients', [
             'name' => 'New Client',
             'company' => 'New Corp',

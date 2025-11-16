@@ -7,28 +7,42 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 - **Nov 16** – **DEBUGGING & LOGGING SYSTEM**: Comprehensive logging infrastructure:
   - ✅ **Laravel Telescope** - Full request/query/job/exception tracking with web UI (`/telescope`)
   - ✅ **LoggingService** - Structured logging for API calls, jobs, services, controllers, exceptions
-  - ✅ **Exception Logging** - All exceptions automatically logged with full context (file, line, trace, user, IP)
-  - ✅ **API Request/Response Logging** - WordPress, Shopify, SEO API calls with duration tracking
-  - ✅ **Job Execution Logging** - All queued jobs (CheckSiteHealth, SendEmailNotification, DeliverWebhook) logged
-  - ✅ **Email Notification Logging** - Email send attempts logged with success/failure status
-  - ✅ **Webhook Delivery Logging** - Webhook attempts with retry tracking and duration
-  - ✅ **Controller Action Logging** - All controller actions logged (when debug mode enabled)
-  - ✅ **Service Method Logging** - Service method calls tracked for debugging
-  - ✅ **Slow Query Detection** - Queries >100ms automatically logged
-- **Nov 16** – **MAJOR UPDATE**: Complete UX overhaul with modern features:
+  - ✅ **Backend Logging**:
+    - Exception Logging - All exceptions automatically logged with full context (file, line, trace, user, IP)
+    - API Request/Response Logging - WordPress, Shopify REST, Shopify GraphQL, SEO API calls with duration tracking
+    - Job Execution Logging - All queued jobs (CheckSiteHealth, SendEmailNotification, DeliverWebhook) logged
+    - Email Notification Logging - Email send attempts logged with success/failure status
+    - Webhook Delivery Logging - Webhook attempts with retry tracking and duration
+    - Controller Action Logging - All controller actions logged (when debug mode enabled)
+    - Service Method Logging - Service method calls tracked for debugging
+    - Slow Query Detection - Queries >100ms automatically logged
+    - AlertObserver Logging - Alert creation/resolution events logged
+    - Inertia Error Logging - Inertia middleware errors logged
+  - ✅ **Frontend Logging**:
+    - JavaScript Error Handler - Global error handler for all JS errors
+    - Vue Error Handler - Vue component errors with component name and props
+    - Inertia Error Handler - Inertia page errors logged
+    - Unhandled Promise Rejections - Promise rejections automatically logged
+    - HTTP Error Interceptor - Axios interceptor logs 4xx/5xx errors (except 401/403)
+    - Frontend Error API - `/api/log-frontend-error` endpoint receives all frontend errors
+- **Nov 16** – **COMPLETE FEATURE SET**: All features fully integrated and production-ready:
   - ✅ Command Palette (Cmd+K) - Global search with autocomplete and keyboard navigation
   - ✅ Toast Notifications - Beautiful, non-intrusive feedback system
   - ✅ Skeleton Loaders - Professional loading states
   - ✅ Empty States - Beautiful empty state components
-  - ✅ Activity Log Enhancements - User avatars, CSV export, real-time feed (30s polling)
+  - ✅ Activity Log Enhancements - User avatars (DiceBear), CSV export, real-time feed (30s polling)
   - ✅ Dashboard Charts - Doughnut chart (sites by status), Bar chart (alert frequency), Top 5 problematic sites table
   - ✅ Keyboard Shortcuts - Cmd+K, Cmd+/, G+D, G+S, G+A
-  - ✅ Export Features - CSV/Excel export for Sites and Alerts
-  - ✅ Health Score Modal - Detailed score breakdown
-  - ✅ Quick Actions Dropdown - Contextual actions for sites table
-  - ✅ Favorites/Pinned Sites - Star icon and favorites system
-  - ✅ Breadcrumbs Navigation - Page navigation trail
-  - ✅ Enhanced Progress Bar - Better visual feedback
+  - ✅ Export Features - CSV/Excel export for Sites and Alerts with filters
+  - ✅ Health Score Modal - Detailed score breakdown with info icon
+  - ✅ Quick Actions Dropdown - Contextual actions for sites table (view, health check, copy URL, favorite)
+  - ✅ Favorites/Pinned Sites - Star icon toggle, Dashboard pinned section, backend support
+  - ✅ Breadcrumbs Navigation - Fully integrated on Dashboard, Sites, Alerts, Show pages
+  - ✅ Enhanced Progress Bar - Better visual feedback with Inertia Progress
+  - ✅ Batch Operations - Multi-select checkboxes, bulk health check, export selected
+  - ✅ Email Preview/Test - Settings page with template selector (alert-created, alert-resolved, daily-digest)
+  - ✅ Webhook Test Console - Settings page with payload editor, sample loader, response viewer
+  - ✅ Recent Viewed Items - Sidebar section with localStorage tracking (last 5 pages)
 - **Nov 16** – Dashboard overview now showcases featured site cards plus revamped site detail pages (hero imagery, logos, SEO/alert/timeline panels) with global search suggestions.
 - **Nov 16** – Demo seeder now loads **125 production-like sites** (unique industries, thumbnails, alerts, tasks, reports) for instant dashboard testing.
 - **Nov 15** – WordPress health integration added (`WordPressService` + `CheckSiteHealth` job + Redis caching).
@@ -92,7 +106,7 @@ Telescope provides a beautiful debugging interface for your application:
 
 ### LoggingService
 Custom structured logging service (`app/Shared/Services/LoggingService.php`) provides:
-- **API Request/Response Logging**: All WordPress, Shopify, SEO API calls logged with duration
+- **API Request/Response Logging**: All WordPress, Shopify REST, Shopify GraphQL, SEO API calls logged with duration
 - **Job Execution Logging**: All queued jobs logged (started, completed, failed)
 - **Email Notification Logging**: Email send attempts with success/failure
 - **Webhook Delivery Logging**: Webhook attempts with retry tracking
@@ -100,6 +114,16 @@ Custom structured logging service (`app/Shared/Services/LoggingService.php`) pro
 - **Controller Action Logging**: All controller actions logged (when `APP_DEBUG=true` or `LOG_CONTROLLER_ACTIONS=true`)
 - **Service Method Logging**: Service method calls tracked
 - **Slow Query Detection**: Queries >100ms automatically logged
+- **AlertObserver Logging**: Alert creation/resolution events logged
+
+### Frontend Error Logging
+Frontend errors are automatically captured and sent to the backend:
+- **JavaScript Errors**: Global `error` event listener
+- **Vue Component Errors**: Vue error handler with component name and props
+- **Inertia Errors**: Inertia page errors logged
+- **Unhandled Promise Rejections**: Promise rejection handler
+- **HTTP Errors**: Axios interceptor logs 4xx/5xx errors (except auth errors 401/403)
+- **Error Endpoint**: `/api/log-frontend-error` receives all frontend errors and logs them via LoggingService
 
 ### Log Files
 - **Location**: `storage/logs/laravel.log`

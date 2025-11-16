@@ -31,16 +31,21 @@ class WebhookService
 
         $webhooks = $this->getActiveWebhooksForEvent($eventType);
 
-        $logger->debug("Found {$webhooks->count()} active webhooks for event: {$eventType}");
+        $logger->logServiceMethod(WebhookService::class, 'triggerAlertEvent', [
+            'event_type' => $eventType,
+            'webhook_count' => $webhooks->count(),
+        ]);
 
         foreach ($webhooks as $webhook) {
             $payload = $this->buildAlertPayload($eventType, $alert, $webhook);
 
             DeliverWebhook::dispatch($webhook, $eventType, $payload);
 
-            $logger->debug("Dispatched webhook job", [
+            $logger->logServiceMethod(WebhookService::class, 'triggerAlertEvent', [
+                'event_type' => $eventType,
                 'webhook_id' => $webhook->id,
                 'url' => $webhook->url,
+                'action' => 'webhook_dispatched',
             ]);
         }
     }

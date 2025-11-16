@@ -165,6 +165,7 @@ class TasksController extends Controller
         ]);
 
         return Inertia::render('Tasks/Pages/Create', [
+            'developers' => $users,
             'users' => $users,
             'sites' => $sites,
             'clients' => $clients,
@@ -196,6 +197,43 @@ class TasksController extends Controller
 
         return redirect()->route('tasks.index')
             ->with('success', 'Task created successfully.');
+    }
+
+    /**
+     * Display the specified task.
+     *
+     * @param Task $task
+     *
+     * @return Response
+     */
+    public function show(Task $task): Response
+    {
+        $task->load(['assignee:id,name,email', 'site:id,name', 'client:id,name']);
+
+        return Inertia::render('Tasks/Pages/Show', [
+            'task' => [
+                'id' => $task->id,
+                'title' => $task->title,
+                'description' => $task->description,
+                'status' => $task->status,
+                'priority' => $task->priority,
+                'dueDate' => $task->due_date?->toDateString(),
+                'completedAt' => $task->completed_at?->toIso8601String(),
+                'assignee' => [
+                    'id' => $task->assigned_to,
+                    'name' => $task->assignee?->name,
+                    'email' => $task->assignee?->email,
+                ],
+                'site' => $task->site ? [
+                    'id' => $task->site->id,
+                    'name' => $task->site->name,
+                ] : null,
+                'client' => $task->client ? [
+                    'id' => $task->client->id,
+                    'name' => $task->client->name,
+                ] : null,
+            ],
+        ]);
     }
 
     /**
@@ -240,6 +278,7 @@ class TasksController extends Controller
                 'status' => $task->status,
                 'due_date' => $task->due_date?->toDateString(),
             ],
+            'developers' => $users,
             'users' => $users,
             'sites' => $sites,
             'clients' => $clients,

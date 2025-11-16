@@ -132,6 +132,31 @@
                 description="Immediate notification when sites go down"
               />
             </div>
+            
+            <!-- Email Preview/Test -->
+            <div class="mt-6 border-t border-gray-700 pt-6">
+              <h4 class="text-sm font-semibold text-white mb-3">Test Email</h4>
+              <div class="flex items-center gap-3">
+                <select 
+                  v-model="testEmailTemplate"
+                  class="flex-1 px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                >
+                  <option value="alert-created">Alert Created</option>
+                  <option value="alert-resolved">Alert Resolved</option>
+                  <option value="daily-digest">Daily Digest</option>
+                </select>
+                <button 
+                  @click="sendTestEmail"
+                  :disabled="isSendingTestEmail"
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors text-sm"
+                >
+                  {{ isSendingTestEmail ? 'Sending...' : 'Send Test' }}
+                </button>
+              </div>
+              <p class="mt-2 text-xs text-gray-400">
+                Test email will be sent to {{ settings.email }}
+              </p>
+            </div>
           </SettingsCard>
 
           <SettingsCard title="Webhook Configuration">
@@ -199,6 +224,64 @@
                 >
                   Save Webhooks
                 </button>
+              </div>
+            </div>
+          </SettingsCard>
+
+          <!-- Webhook Test Console -->
+          <SettingsCard title="Webhook Test Console">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Select Webhook</label>
+                <select 
+                  v-model="selectedWebhookForTest"
+                  class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                >
+                  <option value="">Select a webhook...</option>
+                  <option v-for="(webhook, index) in webhooks" :key="index" :value="index">
+                    {{ webhook.url || `Webhook ${index + 1}` }}
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Test Payload</label>
+                <textarea 
+                  v-model="testWebhookPayload"
+                  rows="8"
+                  class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white text-sm font-mono focus:outline-none focus:border-blue-500"
+                  placeholder="{&quot;event&quot;: &quot;alert.created&quot;, &quot;site&quot;: &quot;example.com&quot;, &quot;message&quot;: &quot;Test alert&quot;}"
+                ></textarea>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <button 
+                  @click="testWebhook"
+                  :disabled="!selectedWebhookForTest || isTestingWebhook"
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm"
+                >
+                  {{ isTestingWebhook ? 'Testing...' : 'Test Webhook' }}
+                </button>
+                <button 
+                  @click="loadSamplePayload"
+                  class="px-4 py-2 border border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white rounded-lg transition-colors text-sm"
+                >
+                  Load Sample
+                </button>
+              </div>
+
+              <div v-if="webhookTestResult" class="mt-4 p-4 rounded-lg" :class="webhookTestResult.success ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'">
+                <div class="flex items-start gap-2">
+                  <CheckCircleIcon v-if="webhookTestResult.success" class="h-5 w-5 flex-shrink-0 mt-0.5 text-green-400" />
+                  <XCircleIcon v-else class="h-5 w-5 flex-shrink-0 mt-0.5 text-red-400" />
+                  <div class="flex-1">
+                    <p class="text-sm font-semibold" :class="webhookTestResult.success ? 'text-green-400' : 'text-red-400'">
+                      {{ webhookTestResult.success ? 'Success' : 'Failed' }}
+                    </p>
+                    <p class="text-xs text-gray-400 mt-1">{{ webhookTestResult.message }}</p>
+                    <pre v-if="webhookTestResult.response" class="mt-2 text-xs text-gray-300 bg-gray-900/50 p-2 rounded overflow-auto">{{ JSON.stringify(webhookTestResult.response, null, 2) }}</pre>
+                  </div>
+                </div>
               </div>
             </div>
           </SettingsCard>
@@ -383,8 +466,11 @@ import {
   ShieldCheckIcon,
   ChartBarIcon,
   TrashIcon,
-  ComputerDesktopIcon
+  ComputerDesktopIcon,
+  CheckCircleIcon,
+  XCircleIcon
 } from '@heroicons/vue/24/outline'
+import { useToast } from '@/Shared/Composables/useToast'
 
 /**
  * Component props from Inertia
@@ -437,6 +523,22 @@ const notificationSettings = reactive({
  * Webhooks
  */
 const webhooks = ref(props.settings.webhooks || [])
+
+/**
+ * Test email state
+ */
+const testEmailTemplate = ref('alert-created')
+const isSendingTestEmail = ref(false)
+
+/**
+ * Webhook test state
+ */
+const selectedWebhookForTest = ref('')
+const testWebhookPayload = ref('')
+const isTestingWebhook = ref(false)
+const webhookTestResult = ref<{ success: boolean; message: string; response?: unknown } | null>(null)
+
+const toast = useToast()
 
 /**
  * Password form
@@ -536,5 +638,110 @@ const saveMonitoring = () => {
  */
 const saveThresholds = () => {
   router.post('/settings/thresholds', monitoringSettings)
+}
+
+/**
+ * Send test email
+ */
+const sendTestEmail = async () => {
+  isSendingTestEmail.value = true
+  try {
+    await router.post('/settings/test-email', {
+      template: testEmailTemplate.value
+    }, {
+      onSuccess: () => {
+        toast.success('Test email sent successfully! Check MailHog at http://localhost:8025')
+      },
+      onError: () => {
+        toast.error('Failed to send test email')
+      }
+    })
+  } catch {
+    toast.error('Failed to send test email')
+  } finally {
+    isSendingTestEmail.value = false
+  }
+}
+
+/**
+ * Load sample webhook payload
+ */
+const loadSamplePayload = () => {
+  testWebhookPayload.value = JSON.stringify({
+    event: 'alert.created',
+    site: {
+      id: 1,
+      name: 'Example Site',
+      url: 'https://example.com'
+    },
+    alert: {
+      type: 'downtime',
+      severity: 'critical',
+      message: 'Site is down',
+      timestamp: new Date().toISOString()
+    }
+  }, null, 2)
+}
+
+/**
+ * Test webhook
+ */
+const testWebhook = async () => {
+  if (!selectedWebhookForTest.value || selectedWebhookForTest.value === '') return
+  
+  const webhook = webhooks.value[parseInt(selectedWebhookForTest.value)]
+  if (!webhook || !webhook.url) {
+    toast.error('Please select a valid webhook')
+    return
+  }
+
+  isTestingWebhook.value = true
+  webhookTestResult.value = null
+
+  try {
+    let payload
+    try {
+      payload = testWebhookPayload.value ? JSON.parse(testWebhookPayload.value) : {}
+    } catch {
+      toast.error('Invalid JSON payload')
+      isTestingWebhook.value = false
+      return
+    }
+
+    const response = await fetch('/settings/test-webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+      },
+      body: JSON.stringify({
+        webhook_url: webhook.url,
+        payload
+      })
+    })
+
+    const data = await response.json()
+    
+    webhookTestResult.value = {
+      success: response.ok,
+      message: data.message || (response.ok ? 'Webhook delivered successfully' : 'Webhook delivery failed'),
+      response: data
+    }
+
+    if (response.ok) {
+      toast.success('Webhook test successful!')
+    } else {
+      toast.error('Webhook test failed')
+    }
+  } catch (error) {
+    webhookTestResult.value = {
+      success: false,
+      message: 'Network error: ' + (error instanceof Error ? error.message : 'Unknown error'),
+      response: null
+    }
+    toast.error('Webhook test failed')
+  } finally {
+    isTestingWebhook.value = false
+  }
 }
 </script>

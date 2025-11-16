@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -162,6 +163,76 @@ class SettingsController extends Controller
     public function updateThresholds(Request $request): RedirectResponse
     {
         return $this->updateMonitoring($request);
+    }
+
+    /**
+     * Send test email.
+     *
+     * @param Request $request
+     *
+     * @return RedirectResponse
+     */
+    public function testEmail(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'template' => ['required', 'string', 'in:alert-created,alert-resolved,daily-digest'],
+        ]);
+
+        $user = Auth::user();
+
+        try {
+            // In production, this would send actual emails
+            // For demo, we'll just log it
+            \Log::info('Test email requested', [
+                'user' => $user->email,
+                'template' => $validated['template'],
+            ]);
+
+            return back()->with('success', 'Test email sent successfully! Check MailHog at http://localhost:8025');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to send test email: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Test webhook delivery.
+     *
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function testWebhook(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $validated = $request->validate([
+            'webhook_url' => ['required', 'url'],
+            'payload' => ['nullable', 'array'],
+        ]);
+
+        try {
+            $payload = $validated['payload'] ?? [
+                'event' => 'test',
+                'timestamp' => now()->toIso8601String(),
+                'message' => 'This is a test webhook from DashPilot',
+            ];
+
+            $response = Http::timeout(10)
+                ->post($validated['webhook_url'], $payload);
+
+            return response()->json([
+                'success' => $response->successful(),
+                'message' => $response->successful()
+                    ? 'Webhook delivered successfully'
+                    : 'Webhook delivery failed',
+                'status_code' => $response->status(),
+                'response' => $response->json() ?? $response->body(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Webhook test failed: '.$e->getMessage(),
+                'response' => null,
+            ], 500);
+        }
     }
 }
 

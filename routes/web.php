@@ -71,6 +71,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/settings/sessions/{session}', [SettingsController::class, 'revokeSession'])->name('settings.sessions.destroy');
     Route::post('/settings/monitoring', [SettingsController::class, 'updateMonitoring'])->name('settings.monitoring');
     Route::post('/settings/thresholds', [SettingsController::class, 'updateThresholds'])->name('settings.thresholds');
+    Route::post('/settings/test-email', [SettingsController::class, 'testEmail'])->name('settings.test-email');
+    Route::post('/settings/test-webhook', [SettingsController::class, 'testWebhook'])->name('settings.test-webhook');
 
     Route::get('/shopify/editor', [LiquidEditorController::class, 'index'])->name('shopify.editor');
     Route::get('/shopify/editor/{site}/files', [LiquidEditorController::class, 'files'])->name('shopify.editor.files');

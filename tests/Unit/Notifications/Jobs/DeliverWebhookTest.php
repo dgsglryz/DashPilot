@@ -30,7 +30,7 @@ class DeliverWebhookTest extends TestCase
 
         $payload = ['event' => 'test'];
         $job = new DeliverWebhook($webhook, 'test_event', $payload);
-        $job->handle(app(WebhookService::class));
+        $job->handle(app(WebhookService::class), app(\App\Shared\Services\LoggingService::class));
 
         Http::assertSent(function ($request) {
             return $request->url() === 'https://example.com/webhook' &&
@@ -58,7 +58,7 @@ class DeliverWebhookTest extends TestCase
 
         $payload = ['event' => 'test'];
         $job = new DeliverWebhook($webhook, 'test_event', $payload);
-        $job->handle(app(WebhookService::class));
+        $job->handle(app(WebhookService::class), app(\App\Shared\Services\LoggingService::class));
 
         Http::assertSent(function ($request) {
             $body = json_decode($request->body(), true);
@@ -82,7 +82,7 @@ class DeliverWebhookTest extends TestCase
         $job = new DeliverWebhook($webhook, 'test_event', $payload);
 
         try {
-            $job->handle(app(WebhookService::class));
+            $job->handle(app(WebhookService::class), app(\App\Shared\Services\LoggingService::class));
         } catch (\Exception $e) {
             // Expected to throw
         }

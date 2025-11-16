@@ -95,11 +95,19 @@ class WordPressService
                 'score' => $payload['score'] ?? null,
                 'plugins' => $payload['plugins'] ?? [],
                 'themes' => $payload['themes'] ?? [],
-            'php_version' => $payload['php_version'] ?? null,
-            'wp_version' => $payload['wp_version'] ?? null,
-            'last_backup' => $payload['last_backup'] ?? null,
-            'response_time' => $payload['response_time'] ?? null,
-        ];
+                'php_version' => $payload['php_version'] ?? null,
+                'wp_version' => $payload['wp_version'] ?? null,
+                'last_backup' => $payload['last_backup'] ?? null,
+                'response_time' => $payload['response_time'] ?? null,
+            ];
+        } catch (\Exception $e) {
+            $logger->logApiResponse('WordPress', $endpoint, 0, [
+                'site_id' => $site->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
     }
 }
 

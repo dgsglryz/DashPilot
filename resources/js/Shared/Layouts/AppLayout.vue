@@ -4,7 +4,7 @@
  * global search, and quick actions. Every operations page is rendered
  * inside this layout to keep the UI consistent with the v0.dev design.
  */
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { Link, router } from "@inertiajs/vue3";
 import {
     ArrowRightOnRectangleIcon,
@@ -21,6 +21,8 @@ import {
     SunIcon,
     UsersIcon,
     UserGroupIcon,
+    GlobeAltIcon,
+    ClockIcon,
 } from "@heroicons/vue/24/outline";
 import { useDarkMode } from "@/Shared/Composables/useDarkMode";
 import CommandPalette from "@/Shared/Components/CommandPalette.vue";
@@ -50,6 +52,84 @@ const navigation: NavigationItem[] = [
 const isMobileMenuOpen = ref(false);
 const isCommandPaletteOpen = ref(false);
 const { isDark, toggleDarkMode } = useDarkMode();
+
+/**
+ * Recent viewed items from localStorage
+ */
+interface RecentItem {
+    id: string;
+    label: string;
+    href: string;
+    icon: typeof GlobeAltIcon;
+    timestamp: number;
+}
+
+const recentItems = computed<RecentItem[]>(() => {
+    try {
+        const stored = localStorage.getItem('dashpilot_recent_items');
+        if (!stored) return [];
+        const items = JSON.parse(stored) as RecentItem[];
+        // Sort by timestamp, most recent first, limit to 5
+        return items
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .slice(0, 5);
+    } catch {
+        return [];
+    }
+});
+
+/**
+ * Track page views for recent items
+ */
+onMounted(() => {
+    const currentRoute = route().current();
+    if (currentRoute) {
+        const routeName = currentRoute;
+        let label = '';
+        let icon = ClockIcon;
+
+        // Map route names to labels and icons
+        if (routeName === 'dashboard') {
+            label = 'Dashboard';
+            icon = HomeIcon;
+        } else if (routeName === 'sites.index') {
+            label = 'Sites';
+            icon = GlobeAltIcon;
+        } else if (routeName === 'sites.show') {
+            label = 'Site Details';
+            icon = GlobeAltIcon;
+        } else if (routeName === 'alerts.index') {
+            label = 'Alerts';
+            icon = BellIcon;
+        } else if (routeName === 'settings.index') {
+            label = 'Settings';
+            icon = Cog6ToothIcon;
+        }
+
+        if (label) {
+            const item: RecentItem = {
+                id: `${routeName}_${Date.now()}`,
+                label,
+                href: window.location.pathname,
+                icon,
+                timestamp: Date.now(),
+            };
+
+            try {
+                const stored = localStorage.getItem('dashpilot_recent_items');
+                const items: RecentItem[] = stored ? JSON.parse(stored) : [];
+                // Remove duplicates for same href
+                const filtered = items.filter(i => i.href !== item.href);
+                filtered.unshift(item);
+                // Keep only last 10
+                const limited = filtered.slice(0, 10);
+                localStorage.setItem('dashpilot_recent_items', JSON.stringify(limited));
+            } catch {
+                // Ignore localStorage errors
+            }
+        }
+    }
+});
 
 const toggleMobileMenu = (): void => {
     isMobileMenuOpen.value = !isMobileMenuOpen.value;
@@ -161,7 +241,7 @@ onUnmounted(() => {
                 </Link>
             </div>
 
-            <nav class="flex-1 space-y-1 px-4 py-6">
+            <nav class="flex-1 space-y-1 px-4 py-6 overflow-y-auto">
                 <Link
                     v-for="item in navigation"
                     :key="item.name"
@@ -181,6 +261,24 @@ onUnmounted(() => {
                     <span>{{ item.name }}</span>
                 </Link>
             </nav>
+
+            <!-- Recent Viewed Items -->
+            <div v-if="recentItems.length > 0" class="border-t border-gray-800 px-4 py-4">
+                <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Recent
+                </h3>
+                <div class="space-y-1">
+                    <Link
+                        v-for="item in recentItems"
+                        :key="item.id"
+                        :href="item.href"
+                        class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                    >
+                        <component :is="item.icon" class="h-4 w-4" />
+                        <span class="truncate">{{ item.label }}</span>
+                    </Link>
+                </div>
+            </div>
 
             <div class="space-y-1 border-t border-gray-800 px-4 py-4">
                 <button

@@ -78,7 +78,9 @@ class WebhookServiceTest extends TestCase
         $service = new WebhookService();
         $service->triggerAlertEvent('alert_created', $alert);
 
-        Queue::assertNothingPushed();
+        // Only check that DeliverWebhook was not pushed
+        // (AlertObserver may push SendEmailNotification for critical alerts)
+        Queue::assertNotPushed(DeliverWebhook::class);
     }
 
     public function test_generate_signature_creates_hmac_sha256(): void

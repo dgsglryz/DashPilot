@@ -7,6 +7,7 @@ use App\Modules\Monitoring\Models\SiteCheck;
 use App\Modules\Sites\Jobs\CheckSiteHealth;
 use App\Modules\Sites\Models\Site;
 use App\Modules\Sites\Services\WordPressService;
+use App\Shared\Services\LoggingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -34,7 +35,7 @@ class CheckSiteHealthTest extends TestCase
         ]);
 
         $job = new CheckSiteHealth($site);
-        $job->handle(new WordPressService());
+        $job->handle(new WordPressService(), app(LoggingService::class));
 
         $this->assertDatabaseHas('site_checks', [
             'site_id' => $site->id,

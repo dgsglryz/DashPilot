@@ -9,6 +9,7 @@ use App\Modules\Notifications\Mail\AlertCreated;
 use App\Modules\Notifications\Mail\AlertResolved;
 use App\Modules\Sites\Models\Site;
 use App\Modules\Users\Models\User;
+use App\Shared\Services\LoggingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -28,7 +29,7 @@ class SendEmailNotificationTest extends TestCase
         ]);
 
         $job = new SendEmailNotification('alert_created', $alert);
-        $job->handle();
+        $job->handle(app(LoggingService::class));
 
         Mail::assertSent(AlertCreated::class);
     }
@@ -44,7 +45,7 @@ class SendEmailNotificationTest extends TestCase
         ]);
 
         $job = new SendEmailNotification('alert_created', $alert);
-        $job->handle();
+        $job->handle(app(LoggingService::class));
 
         Mail::assertNothingSent();
     }
@@ -61,7 +62,7 @@ class SendEmailNotificationTest extends TestCase
         ]);
 
         $job = new SendEmailNotification('alert_resolved', $alert);
-        $job->handle();
+        $job->handle(app(LoggingService::class));
 
         Mail::assertSent(AlertResolved::class);
     }
@@ -81,7 +82,7 @@ class SendEmailNotificationTest extends TestCase
         ]);
 
         $job = new SendEmailNotification('alert_created', $alert);
-        $job->handle();
+        $job->handle(app(LoggingService::class));
 
         Mail::assertNotSent(AlertCreated::class, function ($mail) use ($user) {
             return $mail->hasTo($user->email);

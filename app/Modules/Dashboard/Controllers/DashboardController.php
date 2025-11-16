@@ -178,6 +178,34 @@ class DashboardController extends Controller
         return "https://picsum.photos/seed/dashboard-{$siteId}/640/360";
     }
 
+    /**
+     * Get favorited/pinned sites for dashboard.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function favoritedSites(): array
+    {
+        return Site::query()
+            ->where('is_favorited', true)
+            ->orderByDesc('health_score')
+            ->limit(6)
+            ->get(['id', 'name', 'status', 'type', 'region', 'thumbnail_url', 'logo_url', 'uptime_percentage', 'health_score'])
+            ->map(function (Site $site): array {
+                return [
+                    'id' => $site->id,
+                    'name' => $site->name,
+                    'status' => $site->status,
+                    'platform' => $site->type,
+                    'region' => $site->region,
+                    'thumbnail' => $site->thumbnail_url ?? $this->fallbackThumbnail($site->id),
+                    'logo' => $site->logo_url ?? $this->fallbackLogo($site->name),
+                    'uptime' => $site->uptime_percentage ? number_format((float) $site->uptime_percentage, 2) : null,
+                    'healthScore' => $site->health_score,
+                ];
+            })
+            ->all();
+    }
+
     private function fallbackLogo(string $name): string
     {
         $seed = Str::slug($name);
