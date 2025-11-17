@@ -19,7 +19,7 @@ describe('MessagePopup', () => {
     const wrapper = mount(MessagePopup, {
       props: {
         isOpen: true,
-        recipient: null,
+        recipient: undefined,
       },
     })
 
@@ -30,7 +30,7 @@ describe('MessagePopup', () => {
     const wrapper = mount(MessagePopup, {
       props: {
         isOpen: false,
-        recipient: null,
+        recipient: undefined,
       },
     })
 
@@ -59,7 +59,7 @@ describe('MessagePopup', () => {
     const wrapper = mount(MessagePopup, {
       props: {
         isOpen: true,
-        recipient: null,
+        recipient: undefined,
       },
     })
 
@@ -103,7 +103,7 @@ describe('MessagePopup', () => {
     const wrapper = mount(MessagePopup, {
       props: {
         isOpen: true,
-        recipient: null,
+        recipient: undefined,
       },
     })
 

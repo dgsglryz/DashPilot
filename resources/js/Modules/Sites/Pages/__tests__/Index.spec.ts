@@ -87,7 +87,7 @@ describe('Sites Index', () => {
 
   it('renders page title', () => {
     const wrapper = mount(Index, {
-      props: defaultProps,
+      props: defaultProps as any,
       global: {
         stubs: {
           AppLayout: true,
@@ -104,7 +104,7 @@ describe('Sites Index', () => {
 
   it('displays site statistics', () => {
     const wrapper = mount(Index, {
-      props: defaultProps,
+      props: defaultProps as any,
       global: {
         stubs: {
           AppLayout: true,
@@ -124,7 +124,7 @@ describe('Sites Index', () => {
 
   it('renders sites table', () => {
     const wrapper = mount(Index, {
-      props: defaultProps,
+      props: defaultProps as any,
       global: {
         stubs: {
           AppLayout: true,
@@ -141,7 +141,7 @@ describe('Sites Index', () => {
 
   it('displays site name in table', () => {
     const wrapper = mount(Index, {
-      props: defaultProps,
+      props: defaultProps as any,
       global: {
         stubs: {
           AppLayout: true,
@@ -159,7 +159,7 @@ describe('Sites Index', () => {
 
   it('renders search input', () => {
     const wrapper = mount(Index, {
-      props: defaultProps,
+      props: defaultProps as any,
       global: {
         stubs: {
           AppLayout: true,
@@ -176,7 +176,7 @@ describe('Sites Index', () => {
 
   it('renders add site button', () => {
     const wrapper = mount(Index, {
-      props: defaultProps,
+      props: defaultProps as any,
       global: {
         stubs: {
           AppLayout: true,
