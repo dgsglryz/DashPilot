@@ -1,6 +1,6 @@
 # 🎯 DashPilot - WordPress/Shopify Operations Dashboard
 
-**Production-ready operations dashboard for web agencies managing 100+ client sites with real-time visibility, automated remediation, and multi-channel notifications.**
+**Production-ready operations dashboard for web agencies managing 100+ client sites with real-time visibility, automated monitoring, and multi-channel notifications.**
 
 ---
 
@@ -28,7 +28,7 @@ Built for boutique web agencies managing large WordPress and Shopify portfolios.
 - ✅ WordPress REST API + Shopify REST/GraphQL integrations
 - ✅ Real-time health monitoring with automated alerts
 - ✅ Email + Webhook notifications (Slack, Discord, custom)
-- ✅ Production-ready: 85%+ test coverage, CI/CD pipeline
+- ✅ Production-ready: comprehensive test suite, CI/CD pipeline
 
 ---
 
@@ -134,12 +134,14 @@ docker-compose exec app php artisan queue:work --queue=health-checks,emails,webh
 - **phpMyAdmin**: http://localhost:8080
 - **MailHog**: http://localhost:8025
 
-**Default Credentials:**
+**Default Credentials** (Development/Demo only - created by seeder):
 
 ```
 Email: demo@dashpilot.test
 Password: Password123
 ```
+
+> **Note:** These credentials are for local development only. Never use default credentials in production. The demo account is automatically created by the database seeder.
 
 ---
 
@@ -199,7 +201,7 @@ docker-compose exec app npm run lint
 npm run test:e2e
 ```
 
-**Test Coverage:** 85%+ backend + E2E tests covering Sites, Alerts, Notifications, SEO, Shopify modules.
+**Test Coverage:** Comprehensive test suite including unit tests for services, feature tests for controllers, and E2E tests covering Sites, Alerts, Notifications, SEO, and Shopify modules.
 
 ---
 
