@@ -135,8 +135,8 @@ async function waitForPageReady(page, timeout = 15000) {
     },
     { timeout: 10000 }
   ).catch(() => {
-    // If Inertia check fails, just wait a bit more for hydration
-    return page.waitForTimeout(500);
+    // If Inertia check fails, wait for DOM to be ready
+    return page.waitForLoadState('domcontentloaded');
   });
 }
 

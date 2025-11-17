@@ -71,7 +71,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       for (const route of routes) {
         await page.click(`nav a:has-text("${route.text}")`);
         await expect(page).toHaveURL(route.url);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
       }
     });
 
@@ -84,7 +84,8 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       // Type search query
       await searchInput.fill('test');
-      await page.waitForTimeout(500);
+      // Wait for debounce (if search is debounced)
+      await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       
       // Verify search suggestions appear (if any)
       const suggestions = page.locator('[role="listbox"], .suggestions, [data-testid="search-results"]');
@@ -96,7 +97,8 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       // Press Cmd+K (or Ctrl+K)
       await page.keyboard.press('Meta+k');
-      await page.waitForTimeout(300);
+      // Wait for command palette to appear (if implemented)
+      await page.waitForLoadState('domcontentloaded');
       
       // Verify command palette opens
       const commandPalette = page.locator('[data-testid="command-palette"], .command-palette, input[placeholder*="command"]');
@@ -112,7 +114,8 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       // Click notification bell
       await bell.click();
-      await page.waitForTimeout(500);
+      // Wait for dropdown to appear
+      await page.waitForLoadState('domcontentloaded');
       
       // Verify notification dropdown appears
       const notificationDropdown = page.locator('text=/Notification/i, [role="menu"]');
@@ -172,7 +175,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       if (await statCardLink.isVisible()) {
         await statCardLink.click();
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('domcontentloaded');
         // Should navigate somewhere
       }
     });
@@ -261,20 +264,20 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       // Test platform filter
       await page.selectOption('select:has-text("Platform")', 'wordpress');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       
       await page.selectOption('select:has-text("Platform")', 'shopify');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       
       await page.selectOption('select:has-text("Platform")', 'all');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       
       // Test status filter
       await page.selectOption('select:has-text("Status")', 'healthy');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       
       await page.selectOption('select:has-text("Status")', 'warning');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       
       await page.selectOption('select:has-text("Status")', 'all');
     });
@@ -286,15 +289,15 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       // Search by name
       await searchInput.fill('test');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       
       // Clear search
       await searchInput.clear();
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       
       // Search by URL
       await searchInput.fill('.com');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
     });
 
     test('should test site table row interactions', async ({ page }) => {
@@ -334,16 +337,16 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       if (await quickActions.isVisible()) {
         await quickActions.click();
-        await page.waitForTimeout(300);
+        await page.waitForLoadState('domcontentloaded');
         
         // Try to find dropdown menu
         const dropdown = page.locator('[role="menu"], .dropdown-menu');
-        if (await dropdown.isVisible()) {
+        if (await dropdown.isVisible({ timeout: 2000 })) {
           // Click an action
           const action = dropdown.locator('button, a').first();
           if (await action.isVisible()) {
             await action.click();
-            await page.waitForTimeout(1000);
+            await page.waitForLoadState('domcontentloaded');
           }
         }
       }
@@ -372,6 +375,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const clearButton = page.locator('button:has-text("Clear")');
       if (await clearButton.isVisible()) {
         await clearButton.click();
+        await page.waitForLoadState('domcontentloaded');
       }
     });
 
@@ -384,7 +388,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       if (await selectAll.isVisible()) {
         await selectAll.check();
-        await page.waitForTimeout(300);
+        await page.waitForLoadState('domcontentloaded');
         
         // Verify all rows selected
         const selectedRows = page.locator('[data-testid="site-row"] input[type="checkbox"]:checked');
@@ -403,7 +407,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const exportButton = page.locator('button:has-text("Export")');
       if (await exportButton.isVisible()) {
         await exportButton.click();
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('domcontentloaded');
       }
     });
 
@@ -528,16 +532,16 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
   test.describe('Alerts - All Features', () => {
     test('should test all alert filters', async ({ page }) => {
       await goToAlerts(page);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       
       // Test severity filter
       const severityFilter = page.locator('select:has-text("Severity")');
       if (await severityFilter.isVisible()) {
         await severityFilter.selectOption('critical');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
         
         await severityFilter.selectOption('warning');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
         
         await severityFilter.selectOption('all');
       }
@@ -546,28 +550,28 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const statusFilter = page.locator('select:has-text("Status")');
       if (await statusFilter.isVisible()) {
         await statusFilter.selectOption('active');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
         
         await statusFilter.selectOption('resolved');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       }
       
       // Test type filter
       const typeFilter = page.locator('select:has-text("Type")');
       if (await typeFilter.isVisible()) {
         await typeFilter.selectOption('downtime');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       }
     });
 
     test('should test alert search', async ({ page }) => {
       await goToAlerts(page);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       
       const searchInput = page.locator('input[placeholder*="Search alerts"]');
       if (await searchInput.isVisible()) {
         await searchInput.fill('test');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
         
         await searchInput.clear();
       }
@@ -575,7 +579,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
 
     test('should test mark all as read', async ({ page }) => {
       await goToAlerts(page);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       
       const markAllRead = page.locator('button:has-text("Mark All as Read"), button:has-text("Mark All Read")');
       if (await markAllRead.isVisible()) {
@@ -586,7 +590,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
 
     test('should test individual alert actions', async ({ page }) => {
       await goToAlerts(page);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       
       // Find first alert card
       const alertCard = page.locator('.alert-card, [data-testid="alert-card"], article').first();
@@ -610,19 +614,19 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
         const viewSiteBtn = alertCard.locator('button:has-text("View"), a:has-text("site")');
         if (await viewSiteBtn.isVisible()) {
           await viewSiteBtn.click();
-          await page.waitForTimeout(1000);
+          await page.waitForLoadState('domcontentloaded');
         }
       }
     });
 
     test('should test alert export', async ({ page }) => {
       await goToAlerts(page);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       
       const exportButton = page.locator('button:has-text("Export")');
       if (await exportButton.isVisible()) {
         await exportButton.click();
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('domcontentloaded');
       }
     });
 
@@ -640,13 +644,13 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
   test.describe('Clients - All Features', () => {
     test('should test client search and filters', async ({ page }) => {
       await goToClients(page);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       
       // Test search
       const searchInput = page.locator('input[placeholder*="Search clients"]');
       if (await searchInput.isVisible()) {
         await searchInput.fill('test');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
         await searchInput.clear();
       }
       
@@ -654,7 +658,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const statusFilter = page.locator('select:has-text("Status")');
       if (await statusFilter.isVisible()) {
         await statusFilter.selectOption('active');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
         await statusFilter.selectOption('all');
       }
     });
@@ -678,7 +682,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const viewButton = firstRow.locator('a[href*="/clients/"], button:has(svg)').first();
       if (await viewButton.isVisible()) {
         await viewButton.click({ force: true });
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('domcontentloaded');
       }
     });
 
@@ -732,47 +736,47 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
   test.describe('Tasks - All Features', () => {
     test('should test all task filters', async ({ page }) => {
       await goToTasks(page);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       
       // Test search
       const searchInput = page.locator('input[placeholder*="Search tasks"]');
       if (await searchInput.isVisible()) {
         await searchInput.fill('test');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       }
       
       // Test status filter
       const statusFilter = page.locator('select:has-text("Status")');
       if (await statusFilter.isVisible()) {
         await statusFilter.selectOption('pending');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       }
       
       // Test priority filter
       const priorityFilter = page.locator('select:has-text("Priority")');
       if (await priorityFilter.isVisible()) {
         await priorityFilter.selectOption('urgent');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       }
       
       // Test "My Tasks" checkbox
       const myTasksCheckbox = page.locator('input[type="checkbox"] + span:has-text("My Tasks")');
       if (await myTasksCheckbox.isVisible()) {
         await myTasksCheckbox.click();
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       }
       
       // Test "Urgent" checkbox
       const urgentCheckbox = page.locator('input[type="checkbox"] + span:has-text("Urgent")');
       if (await urgentCheckbox.isVisible()) {
         await urgentCheckbox.click();
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle', { timeout: 2000 }).catch(() => {});
       }
     });
 
     test('should test Kanban board columns', async ({ page }) => {
       await goToTasks(page);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       
       // Verify all columns exist
       const columns = ['Pending', 'In Progress', 'Completed', 'Cancelled'];
@@ -783,7 +787,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
 
     test('should test move task between columns', async ({ page }) => {
       await goToTasks(page);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       
       // Find first task card
       const taskCard = page.locator('.task-card, [data-testid="task-card"], .card').first();
@@ -802,20 +806,20 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
 
     test('should test task card actions', async ({ page }) => {
       await goToTasks(page);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       
       const taskCard = page.locator('.task-card, [data-testid="task-card"], .card').first();
       
       if (await taskCard.isVisible()) {
         // Hover to show actions
         await taskCard.hover();
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('domcontentloaded');
         
         // Test edit button
         const editButton = taskCard.locator('a[href*="/tasks/"], button:has(svg)').first();
         if (await editButton.isVisible()) {
           await editButton.click({ force: true });
-          await page.waitForTimeout(1000);
+          await page.waitForLoadState('domcontentloaded');
         }
       }
     });
@@ -856,7 +860,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
         const tabButton = page.locator(`button:has-text("${tab}")`);
         if (await tabButton.isVisible()) {
           await tabButton.click();
-          await page.waitForTimeout(500);
+          await page.waitForLoadState('domcontentloaded');
           
           // Verify tab content is visible
           await expect(page.locator(`text=/${tab}/i`)).toBeVisible();
@@ -871,7 +875,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const generalTab = page.locator('button:has-text("General")');
       if (await generalTab.isVisible()) {
         await generalTab.click();
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('domcontentloaded');
       }
       
       // Update name
@@ -896,7 +900,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const notificationsTab = page.locator('button:has-text("Notifications")');
       if (await notificationsTab.isVisible()) {
         await notificationsTab.click();
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('domcontentloaded');
         
         // Toggle email notifications
         const emailCheckboxes = page.locator('input[type="checkbox"][name*="email"]');
@@ -904,7 +908,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
         
         if (count > 0) {
           await emailCheckboxes.first().check();
-          await page.waitForTimeout(500);
+          await page.waitForLoadState('domcontentloaded');
           
           // Save if there's a save button
           const saveButton = page.locator('button:has-text("Save")');
@@ -922,7 +926,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const notificationsTab = page.locator('button:has-text("Notifications")');
       if (await notificationsTab.isVisible()) {
         await notificationsTab.click();
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('domcontentloaded');
         
         // Find test email section
         const testEmailTemplate = page.locator('select:has(option[value*="alert"])');
@@ -945,13 +949,13 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const webhooksTab = page.locator('button:has-text("Webhooks")');
       if (await webhooksTab.isVisible()) {
         await webhooksTab.click();
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('domcontentloaded');
         
         // Test add webhook
         const addWebhookButton = page.locator('button:has-text("Add Webhook"), a:has-text("Add Webhook")');
         if (await addWebhookButton.isVisible()) {
           await addWebhookButton.click();
-          await page.waitForTimeout(500);
+          await page.waitForLoadState('domcontentloaded');
           
           // Fill webhook form if modal/form appears
           const urlInput = page.locator('input[name="url"], input[placeholder*="webhook"]');
@@ -970,7 +974,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
         const testWebhookButton = page.locator('button:has-text("Test Webhook")');
         if (await testWebhookButton.isVisible()) {
           await testWebhookButton.first().click();
-          await page.waitForTimeout(2000);
+          await page.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
         }
       }
     });
@@ -982,7 +986,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const securityTab = page.locator('button:has-text("Security")');
       if (await securityTab.isVisible()) {
         await securityTab.click();
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('domcontentloaded');
         
         // Find password form
         const currentPasswordInput = page.locator('input[name="current_password"], input[name="password"]');
@@ -1001,7 +1005,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
   test.describe('Pagination - All Pages', () => {
     test('should test pagination on sites page', async ({ page }) => {
       await goToSites(page);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       
       // Find pagination
       const pagination = page.locator('.pagination, [data-testid="pagination"]');
@@ -1010,21 +1014,21 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
         const nextButton = pagination.locator('a:has-text("Next"), button:has-text("Next")');
         if (await nextButton.isVisible() && !(await nextButton.isDisabled())) {
           await nextButton.click();
-          await page.waitForLoadState('networkidle');
+          await page.waitForLoadState('domcontentloaded');
         }
       }
     });
 
     test('should test pagination on alerts page', async ({ page }) => {
       await goToAlerts(page);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       
       const pagination = page.locator('.pagination, [data-testid="pagination"]');
       if (await pagination.isVisible()) {
         const pageLink = pagination.locator('a').nth(1);
         if (await pageLink.isVisible()) {
           await pageLink.click();
-          await page.waitForLoadState('networkidle');
+          await page.waitForLoadState('domcontentloaded');
         }
       }
     });
@@ -1038,7 +1042,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       await goToDashboard(page);
       
       await page.keyboard.press('Meta+k');
-      await page.waitForTimeout(300);
+      await page.waitForLoadState('domcontentloaded');
       
       // Command palette should open (if implemented)
       const commandPalette = page.locator('input[placeholder*="command"], [data-testid="command-palette"]');
@@ -1050,9 +1054,9 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       // Test G+D for dashboard (if implemented)
       await page.keyboard.press('g');
-      await page.waitForTimeout(100);
+      await page.waitForLoadState('domcontentloaded');
       await page.keyboard.press('d');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
       
       // Should still be on dashboard
       await expect(page).toHaveURL(/\/dashboard/);

@@ -10,6 +10,7 @@ declare global {
 
     // Extend globalThis namespace to include axios
     namespace globalThis {
+        // eslint-disable-next-line no-var
         var axios: AxiosInstance;
     }
 

@@ -101,77 +101,129 @@
 </template>
 
 <script setup lang="ts">
-// @ts-nocheck
-import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { router } from '@inertiajs/vue3'
+/**
+ * MessagePopup Component
+ * 
+ * Displays a chat popup for team messaging functionality.
+ * Features:
+ * - Real-time message loading and polling
+ * - Send/receive messages with a team member
+ * - Auto-scroll to latest message
+ * - Error handling with user feedback
+ * - Loading states and disabled states during operations
+ * 
+ * @component
+ */
+import { ref, watch, nextTick, onMounted, onUnmounted, type Ref } from 'vue'
 import { XMarkIcon, PaperAirplaneIcon } from '@heroicons/vue/24/outline'
 
 /**
- * Component props
- * @property {boolean} isOpen - Popup visibility
- * @property {Object|null} recipient - Recipient user object
+ * Message interface
  */
-const props = defineProps({
-  isOpen: {
-    type: Boolean,
-    default: false
-  },
-  recipient: {
-    type: Object,
-    default: null
-  }
-})
+interface Message {
+    id: number
+    content: string
+    sender_id: number
+    recipient_id: number
+    is_sender: boolean
+    sender_name: string
+    created_at: string
+    is_read: boolean
+}
+
+/**
+ * Recipient user interface
+ */
+interface Recipient {
+    id: number
+    name: string
+    email: string
+}
+
+/**
+ * Component props
+ */
+const props = defineProps<{
+    /**
+     * Whether the popup is visible
+     */
+    isOpen: boolean
+    /**
+     * The recipient user object (null when no recipient selected)
+     */
+    recipient: Recipient | null
+}>()
 
 /**
  * Component emits
  */
-const emit = defineEmits(['close'])
+const emit = defineEmits<{
+    /**
+     * Emitted when popup should be closed
+     */
+    close: []
+}>()
 
 /**
- * Local state
+ * Local reactive state
  */
-const messages = ref([])
-const messageContent = ref('')
-const loading = ref(false)
-const sending = ref(false)
-const messagesContainer = ref(null)
-let pollInterval = null
+const messages: Ref<Message[]> = ref([])
+const messageContent: Ref<string> = ref('')
+const loading: Ref<boolean> = ref(false)
+const sending: Ref<boolean> = ref(false)
+const messagesContainer: Ref<HTMLElement | null> = ref(null)
+let pollInterval: ReturnType<typeof setInterval> | null = null
 
 /**
- * Get user initials
- * @param {string} name - Full name
- * @returns {string} Initials
+ * Get user initials from full name for avatar display.
+ * 
+ * @param {string} name - Full name of the user
+ * @returns {string} Uppercase initials (max 2 characters)
+ * 
+ * @example
+ * getInitials('John Doe') // Returns 'JD'
+ * getInitials('Alice') // Returns 'A'
  */
-const getInitials = (name) => {
-  if (!name) return ''
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
+const getInitials = (name: string): string => {
+    if (!name) return ''
+    return name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
 }
 
 /**
- * Format time for display
- * @param {string} timestamp - ISO timestamp
- * @returns {string} Formatted time
+ * Format timestamp for human-readable display.
+ * Shows relative time (e.g., "5m ago") or absolute time for older messages.
+ * 
+ * @param {string} timestamp - ISO 8601 timestamp string
+ * @returns {string} Formatted time string
+ * 
+ * @example
+ * formatTime('2024-11-17T10:30:00Z') // Returns 'Just now' or '5m ago' or 'Nov 17, 10:30 AM'
  */
-const formatTime = (timestamp) => {
-  if (!timestamp) return ''
-  
-  const date = new Date(timestamp)
-  const now = new Date()
-  const diffMs = now - date
-  const diffMins = Math.floor(diffMs / 60000)
-  
-  if (diffMins < 1) return 'Just now'
-  if (diffMins < 60) return `${diffMins}m ago`
-  
-  const diffHours = Math.floor(diffMins / 60)
-  if (diffHours < 24) return `${diffHours}h ago`
-  
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+const formatTime = (timestamp: string): string => {
+    if (!timestamp) return ''
+    
+    const date = new Date(timestamp)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    
+    const diffHours = Math.floor(diffMins / 60)
+    if (diffHours < 24) return `${diffHours}h ago`
+    
+    return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    })
 }
 
 /**

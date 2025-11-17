@@ -4,6 +4,14 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 
 ## Latest Updates
 
+- **Nov 16** – **BRANCH PROTECTION AUTOMATION**: Automated branch protection setup via GitHub Actions:
+    - ✅ **Setup Branch Protection Workflow** - Automatically configures branch protection rules for `main` branch
+    - ✅ **Required Status Checks** - Enforces CI/CD pipeline (`build-test`, `sonarcloud`) must pass before merging
+    - ✅ **Force Push Protection** - Prevents force pushes to protected branches
+    - ✅ **Deletion Protection** - Prevents accidental branch deletion
+    - ✅ **Admin Bypass Disabled** - Even admins must follow protection rules
+    - ✅ **Manual Trigger** - Run workflow via GitHub Actions UI or automatically on `main` branch updates
+    - 📝 **Usage**: Go to Actions → "Setup Branch Protection" → Run workflow (or push to `main` to auto-trigger)
 - **Nov 16** – **WHAT THE DIFF INTEGRATION**: Automated PR summaries and code change analysis:
     - ✅ **What The Diff GitHub App** - Automatically generates AI-powered summaries for pull requests
     - ✅ **Code Change Analysis** - Intelligent diff analysis and change explanations
@@ -73,7 +81,9 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 - **Node.js 20.19+** (required for Vite 7), npm 10+
 - Vue 3 (script setup), Inertia.js, TailwindCSS, Chart.js, Heroicons
 - Laravel Breeze auth, Laravel Scheduler/Queues, MailHog for SMTP testing
-- GitHub Actions (`.github/workflows/ci.yml`) runs composer/npm install, build, tests, SonarCloud scan, and optional webhook/email notifications
+- GitHub Actions workflows:
+    - `.github/workflows/ci.yml` - Runs composer/npm install, build, tests, SonarCloud scan, and optional webhook/email notifications
+    - `.github/workflows/setup-branch-protection.yml` - Automatically configures branch protection rules for `main` branch (requires admin permissions)
 - SonarCloud integration for code quality analysis and security hotspot detection
 
 ## Prerequisites
@@ -223,11 +233,13 @@ npm run lint                               # ESLint (Vue 3 + TS)
 3. Laravel server'ı başlatın: `docker-compose exec app php artisan serve --host=0.0.0.0 --port=8000`
 
 Ya da otomatik setup script'i kullanın:
+
 ```bash
 ./scripts/setup-e2e-tests.sh
 ```
 
 **Test Kullanıcısı:**
+
 - Email: `admin@test.com`
 - Password: `password`
 
@@ -324,45 +336,179 @@ DashPilot uses SonarCloud for automated code quality analysis, security hotspot 
 ### Setup
 
 1. **Create SonarCloud Account & Project:**
-   - Go to [sonarcloud.io](https://sonarcloud.io) and sign in with GitHub
-   - Create a new project for your repository
-   - Note your **Organization Key** and **Project Key**
+    - Go to [sonarcloud.io](https://sonarcloud.io) and sign in with GitHub
+    - Create a new project for your repository
+    - Note your **Organization Key** and **Project Key**
 
 2. **Configure GitHub Secrets:**
-   - Go to your GitHub repository → Settings → Secrets and variables → Actions
-   - Add `SONAR_TOKEN` secret with your SonarCloud token (found in SonarCloud → My Account → Security)
+    - Go to your GitHub repository → Settings → Secrets and variables → Actions
+    - Add `SONAR_TOKEN` secret with your SonarCloud token (found in SonarCloud → My Account → Security)
 
 3. **Update `sonar-project.properties`:**
-   - Update `sonar.organization` with your organization key
-   - Update `sonar.projectKey` if different from default
+    - Update `sonar.organization` with your organization key
+    - Update `sonar.projectKey` if different from default
 
 4. **CI Integration:**
-   - SonarCloud scan runs automatically on every push/PR via `.github/workflows/ci.yml`
-   - The scan job runs after tests complete (even if tests fail)
-   - Results are available in SonarCloud dashboard and as PR comments
+    - SonarCloud scan runs automatically on every push/PR via `.github/workflows/ci.yml`
+    - The scan job runs after tests complete (even if tests fail)
+    - Results are available in SonarCloud dashboard and as PR comments
 
 ### Viewing Results
 
 - **Dashboard**: Visit your SonarCloud project dashboard to see:
-  - Code quality metrics (maintainability, reliability, security)
-  - Security hotspots (potential vulnerabilities)
-  - Bugs (code defects)
-  - Code smells (maintainability issues)
-  - Coverage reports (if configured)
+    - Code quality metrics (maintainability, reliability, security)
+    - Security hotspots (potential vulnerabilities)
+    - Bugs (code defects)
+    - Code smells (maintainability issues)
+    - Coverage reports (if configured)
 
 - **PR Integration**: SonarCloud automatically comments on PRs with:
-  - New issues introduced
-  - Quality gate status
-  - Coverage changes
+    - New issues introduced
+    - Quality gate status
+    - Coverage changes
 
 ### Fixing Issues
 
 After the first scan, review the SonarCloud dashboard for:
+
 1. **Security Hotspots** - Potential security vulnerabilities (priority: high)
 2. **Bugs** - Code defects that could cause runtime errors (priority: high)
 3. **Code Smells** - Maintainability issues (priority: medium)
 
 Export issues from SonarCloud and provide them to Cursor AI for automated fixes.
+
+## Branch Protection
+
+DashPilot uses automated branch protection to enforce code quality and prevent accidental changes to the `main` branch.
+
+### Setup
+
+The branch protection workflow (`.github/workflows/setup-branch-protection.yml`) automatically configures protection rules for the `main` branch.
+
+**Option 1: Manual Trigger (Recommended for First Time)**
+
+1. Go to your GitHub repository → **Actions** tab
+2. Select **"Setup Branch Protection"** workflow
+3. Click **"Run workflow"** → Select branch (default: `main`) → **"Run workflow"**
+4. The workflow will configure protection rules automatically
+
+**Option 2: Automatic Trigger**
+
+The workflow automatically runs when:
+
+- You push changes to the `main` branch
+- The workflow file itself is updated
+
+### Protection Rules
+
+Once configured, the `main` branch will have:
+
+- ✅ **Required Status Checks**: CI/CD pipeline (`build-test`, `sonarcloud`) must pass before merging
+- ✅ **Up-to-date Branches**: PR branches must be up to date with `main` before merging
+- ✅ **Force Push Protection**: Force pushes are blocked
+- ✅ **Deletion Protection**: Branch deletion is blocked
+- ✅ **Admin Bypass Disabled**: Even repository admins must follow protection rules
+- ✅ **Pull Request Required**: All changes must go through pull requests (no direct commits)
+
+### Verifying Protection
+
+After running the workflow, verify protection is active:
+
+1. Go to repository → **Settings** → **Branches**
+2. You should see `main` listed under "Branch protection rules"
+3. Click on the rule to view all configured settings
+
+### Troubleshooting
+
+**Permission Errors:**
+
+- Ensure your GitHub token has admin permissions
+- Check that "Allow GitHub Actions to create and approve pull requests" is enabled in repository settings
+
+**Status Checks Not Found:**
+
+- The workflow requires the CI pipeline to run at least once to register status checks
+- Run the CI workflow first, then run the branch protection workflow
+
+**Workflow Fails:**
+
+- Check the workflow logs in the Actions tab
+- Common issues: insufficient permissions, branch doesn't exist, or GitHub API rate limits
+
+## What The Diff Integration
+
+What The Diff is a third-party GitHub App that automatically generates AI-powered summaries for pull requests.
+
+### Setup
+
+1. **Install What The Diff GitHub App:**
+   - Go to [whatthediff.ai](https://whatthediff.ai)
+   - Sign in with GitHub
+   - Click "Install GitHub App"
+   - Select your repository (DashPilot)
+   - Grant necessary permissions
+
+2. **Verify Installation:**
+   - Go to GitHub repository → **Settings** → **Integrations** → **Installed GitHub Apps**
+   - Find "What The Diff" in the list
+   - Click "Configure" to verify permissions
+
+3. **Required Permissions:**
+   - **Repository permissions:**
+     - Contents: Read
+     - Pull requests: Write
+     - Metadata: Read
+   - **Subscribe to events:**
+     - Pull requests (checked)
+
+### How It Works
+
+- What The Diff automatically comments on new pull requests
+- Comments appear within 1-2 minutes after PR creation
+- The comment includes:
+  - Summary of changes
+  - Code change analysis
+  - Intelligent diff explanations
+
+### Troubleshooting
+
+**No Comments Appearing on PRs:**
+
+1. **Check App Installation:**
+   - Go to GitHub → Settings → Integrations → Installed GitHub Apps
+   - Verify "What The Diff" is installed and configured
+   - If not installed, go to [whatthediff.ai](https://whatthediff.ai) and install
+
+2. **Verify Permissions:**
+   - Click "Configure" on What The Diff app
+   - Ensure "Pull requests: Write" permission is granted
+   - Ensure "Pull requests" event is subscribed
+
+3. **Check What The Diff Dashboard:**
+   - Go to [whatthediff.ai](https://whatthediff.ai) → Sign in
+   - Check "Repositories" section
+   - Verify DashPilot is listed and enabled
+
+4. **Manual Trigger for Existing PRs:**
+   - Push a new commit to the PR branch (triggers webhook)
+   - Or close and reopen the PR
+   - Or wait 1-2 minutes (first comment may be delayed)
+
+5. **Test with New PR:**
+   - Create a new pull request
+   - What The Diff should comment within 1-2 minutes
+   - If it doesn't work, the app may need to be reinstalled
+
+6. **Check GitHub Webhooks:**
+   - Go to Settings → Webhooks
+   - What The Diff should have a webhook configured
+   - Check recent deliveries for errors
+
+**Common Issues:**
+
+- **PR created before app installation:** What The Diff only comments on PRs created after installation. Push a new commit or close/reopen the PR.
+- **Free plan limitations:** Free plan may have rate limits. Check your plan status on whatthediff.ai.
+- **Private repository:** Ensure What The Diff has access to private repositories if your repo is private.
 
 ## Useful Commands
 
