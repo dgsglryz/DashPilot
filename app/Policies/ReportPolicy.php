@@ -15,7 +15,7 @@ class ReportPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $_user): bool
+    public function viewAny(): bool
     {
         // Users can view reports for sites they have access to
         return true;
@@ -37,7 +37,7 @@ class ReportPolicy
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $_user): bool
+    public function create(): bool
     {
         // Users can generate reports for sites they have access to
         return true;
@@ -46,7 +46,7 @@ class ReportPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $_user, Report $_report): bool
+    public function update(): bool
     {
         // Reports are typically not updated after creation
         return false;
@@ -64,9 +64,10 @@ class ReportPolicy
     /**
      * Determine whether the user can restore the model.
      */
-    public function restore(User $user, Report $report): bool
+    public function restore(): bool
     {
-        return $this->update($user, $report);
+        // Reports are typically not updated after creation, so restore is also not allowed
+        return false;
     }
 
     /**

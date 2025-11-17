@@ -15,7 +15,6 @@ use App\Modules\Sites\Requests\UpdateSiteRequest;
 use App\Modules\Sites\Services\SiteViewService;
 use App\Modules\Tasks\Models\Task;
 use App\Shared\Helpers\SiteMediaHelper;
-use App\Shared\Services\LookupService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -30,7 +29,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class SitesController extends Controller
 {
     public function __construct(
-        private readonly LookupService $lookupService,
         private readonly SiteViewService $siteViewService
     ) {
     }

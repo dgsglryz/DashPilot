@@ -15,7 +15,7 @@ class SitePolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $_user): bool
+    public function viewAny(): bool
     {
         // Users can view sites for clients they are assigned to
         return true;
@@ -33,7 +33,7 @@ class SitePolicy
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $_user): bool
+    public function create(): bool
     {
         // Users can create sites for clients they are assigned to
         return true;

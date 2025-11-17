@@ -15,7 +15,7 @@ class AlertPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $_user): bool
+    public function viewAny(): bool
     {
         // Users can view alerts for sites they have access to
         return true;
@@ -37,7 +37,7 @@ class AlertPolicy
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $_user): bool
+    public function create(): bool
     {
         // Alerts are typically created by the system, not users
         return false;
