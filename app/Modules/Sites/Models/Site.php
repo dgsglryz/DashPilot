@@ -9,10 +9,14 @@ use App\Modules\Clients\Models\Client;
 use App\Modules\Monitoring\Models\SiteCheck;
 use App\Modules\Reports\Models\Report;
 use App\Modules\Tasks\Models\Task;
+use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Site stores operational data for each managed property (WP, Shopify, etc.).
@@ -59,8 +63,6 @@ class Site extends Model
         'avg_load_time' => 'decimal:2',
         'last_backup_at' => 'datetime',
         'ssl_expires_at' => 'datetime',
-        'wp_api_key' => 'encrypted',
-        'shopify_access_token' => 'encrypted',
         'is_favorited' => 'boolean',
     ];
 
@@ -120,5 +122,64 @@ class Site extends Model
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class);
+    }
+
+    /**
+     * Provide lenient encryption handling for the WordPress API key.
+     */
+    protected function wpApiKey(): Attribute
+    {
+        return $this->lenientEncryptedAttribute('wp_api_key');
+    }
+
+    /**
+     * Provide lenient encryption handling for the Shopify access token.
+     */
+    protected function shopifyAccessToken(): Attribute
+    {
+        return $this->lenientEncryptedAttribute('shopify_access_token');
+    }
+
+    /**
+     * Build an attribute accessor/mutator that encrypts values while failing gracefully.
+     *
+     * @param string $column
+     *
+     * @return Attribute
+     */
+    private function lenientEncryptedAttribute(string $column): Attribute
+    {
+        return Attribute::make(
+            get: function (?string $value) use ($column): ?string {
+                if (empty($value)) {
+                    return null;
+                }
+
+                try {
+                    return Crypt::decryptString($value);
+                } catch (DecryptException $exception) {
+                    Log::warning('Failed to decrypt site credential.', [
+                        'column' => $column,
+                        'site_id' => $this->id,
+                        'message' => $exception->getMessage(),
+                    ]);
+
+                    return null;
+                }
+            },
+            set: function (?string $value): ?string {
+                if (empty($value)) {
+                    return null;
+                }
+
+                try {
+                    Crypt::decryptString($value);
+
+                    return $value;
+                } catch (DecryptException) {
+                    return Crypt::encryptString($value);
+                }
+            },
+        );
     }
 }
