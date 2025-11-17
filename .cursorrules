@@ -9,7 +9,7 @@ DashPilot is a full-stack operations dashboard for web development agencies mana
 
 **Development Timeline:** 3-day sprint (Friday evening → Monday 2PM demo)
 
-**Repository:** GitHub private repo with development branch workflow
+**Repository:** GitHub private repo with main branch workflow
 
 ## INFRASTRUCTURE STATUS
 ✅ **Docker:** Configured and running (app, db, redis, phpmyadmin, mailhog)
@@ -17,7 +17,7 @@ DashPilot is a full-stack operations dashboard for web development agencies mana
 ✅ **CI/CD:** GitHub Actions pipeline configured (testing, linting, deployment)
 ✅ **Notifications:** Email system (Laravel Mail + MailHog) ready
 ✅ **Webhooks:** Webhook delivery system configured (Slack, Discord, custom endpoints)
-✅ **Git Workflow:** Development branch created, all work happens there first
+✅ **Git Workflow:** All work committed and pushed directly to main branch
 
 ## ARCHITECTURE PHILOSOPHY
 
@@ -599,10 +599,10 @@ php artisan test --filter Sites     # Module tests
 
 ### Branch Strategy
 
-**Development Branch ONLY:**
-- ALL work on `development` branch
-- NEVER commit directly to `main`
-- Merge to `main` only when project complete
+**Main Branch ONLY:**
+- ALL work on `main` branch
+- Commit and push directly to `main`
+- No development branch workflow
 
 ### Commit Strategy
 
@@ -611,7 +611,7 @@ php artisan test --filter Sites     # Module tests
 2. Run tests - ALL MUST PASS
 3. Update README
 4. Commit with meaningful message
-5. Push to development
+5. Push to main
 
 **Commit Message Format:**
 ```
@@ -635,17 +635,8 @@ docs(readme): update Redis setup instructions
 ```bash
 git add .
 git commit -m "feat(module): description"
-git push origin development
+git push origin main
 ```
-
-### Merge to Main (Project Completion Only)
-
-**When ALL features complete:**
-1. All tests passing
-2. README fully updated
-3. Create PR: `development → main`
-4. Review changes
-5. Merge to main
 
 ## DEVELOPMENT WORKFLOW (STEP-BY-STEP)
 
@@ -683,7 +674,7 @@ git push origin development
 
 **7. Commit & Push**
 - Meaningful message
-- Push to development
+- Push to main
 - Verify GitHub Actions passes
 
 **8. Repeat**
@@ -815,7 +806,6 @@ docker-compose exec app php artisan queue:work # Start queue
 ❌ No separate REST API
 ❌ No inline styles
 ❌ No jQuery
-❌ No direct commits to main
 ❌ No Kafka (use Redis)
 ❌ No TypeScript (time constraint)
 ❌ No Pinia (use props/emits)
@@ -843,7 +833,7 @@ docker-compose exec app php artisan queue:work # Start queue
 4. ✅ README updated
 5. ✅ ESLint passing
 6. ✅ Committed meaningfully
-7. ✅ Pushed to development
+7. ✅ Pushed to main
 8. ✅ GitHub Actions green
 
 ### Project Complete:
@@ -883,7 +873,7 @@ docker-compose exec app php artisan queue:work # Start queue
 2. Run: `npm run lint`
 3. Update README
 4. Commit changes
-5. Push to development
+5. Push to main
 
 ## QUICK REFERENCE
 
@@ -899,7 +889,7 @@ npm run lint
 git status
 git add .
 git commit -m "feat(module): description"
-git push origin development
+git push origin main
 ```
 
 ### Redis
