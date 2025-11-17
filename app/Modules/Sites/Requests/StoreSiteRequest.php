@@ -3,21 +3,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Sites\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-
 /**
  * StoreSiteRequest validates the incoming data for creating a new site.
  */
-class StoreSiteRequest extends FormRequest
+class StoreSiteRequest extends BaseSiteRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -26,20 +16,7 @@ class StoreSiteRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'client_id' => ['required', 'exists:clients,id'],
-            'name' => ['required', 'string', 'max:255'],
-            'url' => ['required', 'string', 'url', 'max:255', 'unique:sites'],
-            'type' => ['required', 'string', Rule::in(['wordpress', 'shopify', 'woocommerce', 'custom'])],
-            'status' => ['required', 'string', Rule::in(['healthy', 'warning', 'critical', 'offline'])],
-            'industry' => ['nullable', 'string', 'max:255'],
-            'region' => ['nullable', 'string', 'max:255'],
-            'wp_api_url' => ['nullable', 'string', 'url', 'max:255'],
-            'wp_api_key' => ['nullable', 'string', 'max:255'],
-            'shopify_store_url' => ['nullable', 'string', 'url', 'max:255'],
-            'shopify_api_key' => ['nullable', 'string', 'max:255'],
-            'shopify_access_token' => ['nullable', 'string', 'max:255'],
-        ];
+        return $this->rulesWithUrl(['required', 'string', 'url', 'max:255', 'unique:sites']);
     }
 }
 
