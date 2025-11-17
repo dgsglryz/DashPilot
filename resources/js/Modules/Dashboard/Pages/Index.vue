@@ -151,8 +151,9 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Dashboard - DashPilot" />
-    <title>Dashboard - DashPilot</title>
+    <Head title="Dashboard - DashPilot">
+        <title>Dashboard - DashPilot</title>
+    </Head>
 
     <AppLayout>
         <section class="space-y-8">
