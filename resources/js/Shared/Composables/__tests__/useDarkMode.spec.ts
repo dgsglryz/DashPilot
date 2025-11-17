@@ -8,9 +8,13 @@ import { useDarkMode } from '../useDarkMode'
 
 // Mock document.createElement for jsdom
 const originalCreateElement = document.createElement.bind(document)
-document.createElement = vi.fn((tagName: string) => {
-  return originalCreateElement(tagName)
-}) as any
+document.createElement = vi.fn((tagName: string) => originalCreateElement(tagName)) as unknown as typeof document.createElement
+
+const createTestComponent = (setupFn: () => Record<string, unknown>) =>
+  defineComponent({
+    setup: setupFn,
+    render: () => h('div'),
+  })
 
 describe('useDarkMode', () => {
   beforeEach(() => {
@@ -20,12 +24,9 @@ describe('useDarkMode', () => {
   })
 
   it('initializes dark mode on mount', () => {
-    const TestComponent = defineComponent({
-      setup() {
-        const { isDark } = useDarkMode()
-        return { isDark }
-      },
-      render: () => h('div'),
+    const TestComponent = createTestComponent(() => {
+      const { isDark } = useDarkMode()
+      return { isDark }
     })
 
     mount(TestComponent)
@@ -38,33 +39,26 @@ describe('useDarkMode', () => {
     // Reset dark mode state
     document.documentElement.classList.remove('dark')
     
-    const TestComponent = defineComponent({
-      setup() {
-        const { isDark, toggleDarkMode } = useDarkMode()
-        return { isDark, toggleDarkMode }
-      },
-      render: () => h('div'),
+    const TestComponent = createTestComponent(() => {
+      const { isDark, toggleDarkMode } = useDarkMode()
+      return { isDark, toggleDarkMode }
     })
 
     const wrapper = mount(TestComponent)
     const { toggleDarkMode } = wrapper.vm
 
-    const hadDark = document.documentElement.classList.contains('dark')
+    const initialState = document.documentElement.classList.contains('dark')
     toggleDarkMode()
     await wrapper.vm.$nextTick()
     await new Promise(resolve => setTimeout(resolve, 10)) // Small delay for DOM update
-    const hasDark = document.documentElement.classList.contains('dark')
-    // Just verify toggleDarkMode exists and can be called without error
-    expect(typeof toggleDarkMode).toBe('function')
+    const toggledState = document.documentElement.classList.contains('dark')
+    expect(toggledState).not.toBe(initialState)
   })
 
   it('sets dark mode state', () => {
-    const TestComponent = defineComponent({
-      setup() {
-        const { setDarkMode } = useDarkMode()
-        return { setDarkMode }
-      },
-      render: () => h('div'),
+    const TestComponent = createTestComponent(() => {
+      const { setDarkMode } = useDarkMode()
+      return { setDarkMode }
     })
 
     const wrapper = mount(TestComponent)
@@ -75,17 +69,20 @@ describe('useDarkMode', () => {
   })
 
   it('handles SSR environment (no window)', () => {
-    const originalWindow = globalThis.window
-    const originalDocument = globalThis.document
-    delete (globalThis as any).window
-    delete (globalThis as any).document
+    type GlobalWithDom = typeof globalThis & {
+      window?: typeof window
+      document?: Document
+    }
 
-    const TestComponent = defineComponent({
-      setup() {
-        const { isDark } = useDarkMode()
-        return { isDark }
-      },
-      render: () => h('div'),
+    const globalRef = globalThis as GlobalWithDom
+    const originalWindow = globalRef.window
+    const originalDocument = globalRef.document
+    delete globalRef.window
+    delete globalRef.document
+
+    const TestComponent = createTestComponent(() => {
+      const { isDark } = useDarkMode()
+      return { isDark }
     })
 
     // Should not throw - composable should handle missing window gracefully
@@ -98,8 +95,8 @@ describe('useDarkMode', () => {
       expect(errorMsg.includes('document') || errorMsg.includes('createelement')).toBe(true)
     }
 
-    globalThis.window = originalWindow
-    globalThis.document = originalDocument
+    globalRef.window = originalWindow
+    globalRef.document = originalDocument
   })
 })
 

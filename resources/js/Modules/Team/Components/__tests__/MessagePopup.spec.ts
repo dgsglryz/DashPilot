@@ -2,13 +2,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import MessagePopup from "../MessagePopup.vue";
 
-// Mock fetch
-(globalThis as any).fetch = vi.fn(() =>
-    Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ messages: [] }),
-    } as Response),
-);
+const createMockFetch = () =>
+    vi.fn(() =>
+        Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ messages: [] }),
+        } as Response),
+    );
+
+globalThis.fetch = createMockFetch() as unknown as typeof fetch;
 
 describe("MessagePopup", () => {
     beforeEach(() => {
@@ -84,12 +86,7 @@ describe("MessagePopup", () => {
 
     it("shows empty state when no messages", async () => {
         // Mock fetch to return empty messages immediately
-        (globalThis as any).fetch = vi.fn(() =>
-            Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve({ messages: [] }),
-            } as Response),
-        );
+        globalThis.fetch = createMockFetch() as unknown as typeof fetch;
 
         const wrapper = mount(MessagePopup, {
             props: {

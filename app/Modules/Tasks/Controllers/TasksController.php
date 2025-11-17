@@ -5,15 +5,15 @@ namespace App\Modules\Tasks\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Activity\Models\ActivityLog;
-use App\Modules\Clients\Models\Client;
-use App\Modules\Sites\Models\Site;
 use App\Modules\Tasks\Models\Task;
 use App\Modules\Tasks\Requests\StoreTaskRequest;
 use App\Modules\Tasks\Requests\UpdateTaskRequest;
 use App\Modules\Users\Models\User;
+use App\Shared\Services\LookupService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,6 +22,13 @@ use Inertia\Response;
  */
 class TasksController extends Controller
 {
+    /**
+     * @param LookupService $lookupService
+     */
+    public function __construct(private readonly LookupService $lookupService)
+    {
+    }
+
     /**
      * Display a listing of all tasks with optional filters (Kanban board view).
      *
@@ -63,75 +70,25 @@ class TasksController extends Controller
         }
 
         $perPage = $request->integer('per_page', 20);
-        $tasks = $query->orderBy('created_at', 'desc')->paginate($perPage)->through(fn (Task $task) => [
-            'id' => $task->id,
-            'title' => $task->title,
-            'description' => $task->description,
-            'status' => $task->status,
-            'priority' => $task->priority,
-            'dueDate' => $task->due_date?->toDateString(),
-            'completedAt' => $task->completed_at?->toIso8601String(),
-            'assignee' => [
-                'id' => $task->assigned_to,
-                'name' => $task->assignee?->name,
-                'email' => $task->assignee?->email,
-            ],
-            'site' => $task->site ? [
-                'id' => $task->site->id,
-                'name' => $task->site->name,
-            ] : null,
-            'client' => $task->client ? [
-                'id' => $task->client->id,
-                'name' => $task->client->name,
-            ] : null,
-        ]);
+        $tasks = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->through(fn (Task $task): array => $this->taskResource($task));
+        $paginatedTasksCollection = collect($tasks->items());
 
         // Get all tasks for stats (before pagination)
         $allTasks = $query->get();
-        
-        // Group tasks by status for Kanban board
-        $tasksByStatus = [
-            'pending' => $tasks->where('status', 'pending')->values()->all(),
-            'in_progress' => $tasks->where('status', 'in_progress')->values()->all(),
-            'completed' => $tasks->where('status', 'completed')->values()->all(),
-            'cancelled' => $tasks->where('status', 'cancelled')->values()->all(),
-        ];
+        $tasksByStatus = $this->groupTasksByStatus($paginatedTasksCollection);
+        $stats = $this->buildTaskStats($allTasks, $paginatedTasksCollection);
 
-        $stats = [
-            'total' => $allTasks->count(),
-            'pending' => $allTasks->where('status', 'pending')->count(),
-            'in_progress' => $allTasks->where('status', 'in_progress')->count(),
-            'completed' => $allTasks->where('status', 'completed')->count(),
-            'cancelled' => $allTasks->where('status', 'cancelled')->count(),
-            'urgent' => $tasks->where('priority', 'urgent')->count(),
-        ];
-
-        $users = User::where('status', 'active')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email'])
-            ->map(fn (User $user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ]);
-
-        $sites = Site::orderBy('name')->get(['id', 'name'])->map(fn (Site $site) => [
-            'id' => $site->id,
-            'name' => $site->name,
-        ]);
-
-        $clients = Client::orderBy('name')->get(['id', 'name'])->map(fn (Client $client) => [
-            'id' => $client->id,
-            'name' => $client->name,
-        ]);
+        $lookups = $this->formLookups();
 
         return Inertia::render('Tasks/Pages/Index', [
             'tasks' => $tasksByStatus,
             'tasksPaginated' => $tasks,
             'stats' => $stats,
-            'users' => $users,
-            'sites' => $sites,
-            'clients' => $clients,
+            'users' => $lookups['users'],
+            'sites' => $lookups['sites'],
+            'clients' => $lookups['clients'],
             'filters' => [
                 'query' => $request->string('query')->toString(),
                 'status' => $request->string('status')->toString() ?: 'all',
@@ -149,30 +106,13 @@ class TasksController extends Controller
      */
     public function create(): Response
     {
-        $users = User::where('status', 'active')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email'])
-            ->map(fn (User $user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ]);
-
-        $sites = Site::orderBy('name')->get(['id', 'name'])->map(fn (Site $site) => [
-            'id' => $site->id,
-            'name' => $site->name,
-        ]);
-
-        $clients = Client::orderBy('name')->get(['id', 'name'])->map(fn (Client $client) => [
-            'id' => $client->id,
-            'name' => $client->name,
-        ]);
+        $lookups = $this->formLookups();
 
         return Inertia::render('Tasks/Pages/Create', [
-            'developers' => $users,
-            'users' => $users,
-            'sites' => $sites,
-            'clients' => $clients,
+            'developers' => $lookups['users'],
+            'users' => $lookups['users'],
+            'sites' => $lookups['sites'],
+            'clients' => $lookups['clients'],
         ]);
     }
 
@@ -215,28 +155,7 @@ class TasksController extends Controller
         $task->load(['assignee:id,name,email', 'site:id,name', 'client:id,name']);
 
         return Inertia::render('Tasks/Pages/Show', [
-            'task' => [
-                'id' => $task->id,
-                'title' => $task->title,
-                'description' => $task->description,
-                'status' => $task->status,
-                'priority' => $task->priority,
-                'dueDate' => $task->due_date?->toDateString(),
-                'completedAt' => $task->completed_at?->toIso8601String(),
-                'assignee' => [
-                    'id' => $task->assigned_to,
-                    'name' => $task->assignee?->name,
-                    'email' => $task->assignee?->email,
-                ],
-                'site' => $task->site ? [
-                    'id' => $task->site->id,
-                    'name' => $task->site->name,
-                ] : null,
-                'client' => $task->client ? [
-                    'id' => $task->client->id,
-                    'name' => $task->client->name,
-                ] : null,
-            ],
+            'task' => $this->taskResource($task),
         ]);
     }
 
@@ -251,24 +170,7 @@ class TasksController extends Controller
     {
         $task->load(['assignee:id,name,email', 'site:id,name', 'client:id,name']);
 
-        $users = User::where('status', 'active')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email'])
-            ->map(fn (User $user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ]);
-
-        $sites = Site::orderBy('name')->get(['id', 'name'])->map(fn (Site $site) => [
-            'id' => $site->id,
-            'name' => $site->name,
-        ]);
-
-        $clients = Client::orderBy('name')->get(['id', 'name'])->map(fn (Client $client) => [
-            'id' => $client->id,
-            'name' => $client->name,
-        ]);
+        $lookups = $this->formLookups();
 
         return Inertia::render('Tasks/Pages/Edit', [
             'task' => [
@@ -282,10 +184,10 @@ class TasksController extends Controller
                 'status' => $task->status,
                 'due_date' => $task->due_date?->toDateString(),
             ],
-            'developers' => $users,
-            'users' => $users,
-            'sites' => $sites,
-            'clients' => $clients,
+            'developers' => $lookups['users'],
+            'users' => $lookups['users'],
+            'sites' => $lookups['sites'],
+            'clients' => $lookups['clients'],
         ]);
     }
 
@@ -388,35 +290,13 @@ class TasksController extends Controller
      */
     public function getUserTasks(User $user): \Illuminate\Http\JsonResponse
     {
-        $tasks = Task::where('assigned_to', $user->id)
+        $taskCollection = Task::where('assigned_to', $user->id)
             ->with(['site:id,name', 'client:id,name'])
             ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(fn (Task $task) => [
-                'id' => $task->id,
-                'title' => $task->title,
-                'description' => $task->description,
-                'status' => $task->status,
-                'priority' => $task->priority,
-                'dueDate' => $task->due_date?->toDateString(),
-                'completedAt' => $task->completed_at?->toIso8601String(),
-                'site' => $task->site ? [
-                    'id' => $task->site->id,
-                    'name' => $task->site->name,
-                ] : null,
-                'client' => $task->client ? [
-                    'id' => $task->client->id,
-                    'name' => $task->client->name,
-                ] : null,
-            ]);
+            ->get();
 
-        $stats = [
-            'total' => $tasks->count(),
-            'pending' => $tasks->where('status', 'pending')->count(),
-            'in_progress' => $tasks->where('status', 'in_progress')->count(),
-            'completed' => $tasks->where('status', 'completed')->count(),
-            'urgent' => $tasks->where('priority', 'urgent')->count(),
-        ];
+        $tasks = $taskCollection->map(fn (Task $task): array => $this->taskResource($task));
+        $stats = $this->buildTaskStats($taskCollection);
 
         return response()->json([
             'tasks' => $tasks,
@@ -427,6 +307,98 @@ class TasksController extends Controller
                 'email' => $user->email,
             ],
         ]);
+    }
+
+    /**
+     * Build a reusable task representation for API/SSR responses.
+     *
+     * @param Task $task
+     *
+     * @return array<string, mixed>
+     */
+    private function taskResource(Task $task): array
+    {
+        return [
+            'id' => $task->id,
+            'title' => $task->title,
+            'description' => $task->description,
+            'status' => $task->status,
+            'priority' => $task->priority,
+            'dueDate' => $task->due_date?->toDateString(),
+            'completedAt' => $task->completed_at?->toIso8601String(),
+            'assignee' => [
+                'id' => $task->assigned_to,
+                'name' => $task->assignee?->name,
+                'email' => $task->assignee?->email,
+            ],
+            'site' => $task->site ? [
+                'id' => $task->site->id,
+                'name' => $task->site->name,
+            ] : null,
+            'client' => $task->client ? [
+                'id' => $task->client->id,
+                'name' => $task->client->name,
+            ] : null,
+        ];
+    }
+
+    /**
+     * Build stats from the provided task collections.
+     *
+     * @param Collection<int, Task|array<string, mixed>> $allTasks
+     * @param Collection<int, array<string, mixed>>|null $paginatedTasks
+     *
+     * @return array<string, int>
+     */
+    private function buildTaskStats(Collection $allTasks, ?Collection $paginatedTasks = null): array
+    {
+        $paginatedTasks ??= collect();
+
+        return [
+            'total' => $allTasks->count(),
+            'pending' => $allTasks->where('status', 'pending')->count(),
+            'in_progress' => $allTasks->where('status', 'in_progress')->count(),
+            'completed' => $allTasks->where('status', 'completed')->count(),
+            'cancelled' => $allTasks->where('status', 'cancelled')->count(),
+            'urgent' => $paginatedTasks->where('priority', 'urgent')->count(),
+        ];
+    }
+
+    /**
+     * Group tasks by status for Kanban board.
+     *
+     * @param Collection<int, array<string, mixed>> $tasks
+     *
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    private function groupTasksByStatus(Collection $tasks): array
+    {
+        return [
+            'pending' => $tasks->where('status', 'pending')->values()->all(),
+            'in_progress' => $tasks->where('status', 'in_progress')->values()->all(),
+            'completed' => $tasks->where('status', 'completed')->values()->all(),
+            'cancelled' => $tasks->where('status', 'cancelled')->values()->all(),
+        ];
+    }
+
+    /**
+     * Prepare reusable lookup datasets for forms.
+     *
+     * @return array<string, Collection<int, array<string, mixed>>>
+     */
+    private function formLookups(): array
+    {
+        $clients = $this->lookupService->clientOptions()
+            ->map(fn (array $client): array => [
+                'id' => $client['id'],
+                'name' => $client['name'],
+            ]);
+
+        return [
+            'users' => $this->lookupService->activeDevelopers(),
+            'sites' => $this->lookupService->siteOptions(),
+            'clients' => $clients,
+        ];
     }
 }
 

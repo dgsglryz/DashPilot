@@ -28,13 +28,28 @@ vi.mock('@/Shared/Composables/useToast', () => ({
 }))
 
 // Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
+type LocalStorageMock = {
+  getItem: ReturnType<typeof vi.fn<(key: string) => string | null>>
+  setItem: ReturnType<typeof vi.fn<(key: string, value: string) => void>>
+  removeItem: ReturnType<typeof vi.fn<(key: string) => void>>
+  clear: ReturnType<typeof vi.fn<() => void>>
+  key: ReturnType<typeof vi.fn<(index: number) => string | null>>
+  length: number
 }
-globalThis.localStorage = localStorageMock as any
+
+const localStorageMock: LocalStorageMock = {
+  getItem: vi.fn<(key: string) => string | null>(),
+  setItem: vi.fn<(key: string, value: string) => void>(),
+  removeItem: vi.fn<(key: string) => void>(),
+  clear: vi.fn<() => void>(),
+  key: vi.fn<(index: number) => string | null>(),
+  length: 0,
+}
+
+Object.defineProperty(globalThis, 'localStorage', {
+  value: localStorageMock as unknown as Storage,
+  writable: true,
+})
 
 describe('CommandPalette', () => {
   beforeEach(() => {

@@ -8,6 +8,7 @@ use App\Modules\Activity\Models\ActivityLog;
 use App\Modules\Alerts\Models\Alert;
 use App\Modules\Reports\Models\Report;
 use App\Modules\Sites\Models\Site;
+use App\Shared\Helpers\SiteMediaHelper;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -163,17 +164,12 @@ class DashboardController extends Controller
                     'status' => $site->status,
                     'platform' => $site->type,
                     'region' => $site->region,
-                    'thumbnail' => $site->thumbnail_url ?? $this->fallbackThumbnail($site->id),
-                    'logo' => $site->logo_url ?? $this->fallbackLogo($site->name),
+                    'thumbnail' => $site->thumbnail_url ?? SiteMediaHelper::thumbnail($site->id, 'dashboard'),
+                    'logo' => $site->logo_url ?? SiteMediaHelper::logo($site->name),
                     'uptime' => $site->uptime_percentage ? number_format((float) $site->uptime_percentage, 2) : null,
                 ];
             })
             ->all();
-    }
-
-    private function fallbackThumbnail(int $siteId): string
-    {
-        return "https://picsum.photos/seed/dashboard-{$siteId}/640/360";
     }
 
     /**
@@ -195,20 +191,13 @@ class DashboardController extends Controller
                     'status' => $site->status,
                     'platform' => $site->type,
                     'region' => $site->region,
-                    'thumbnail' => $site->thumbnail_url ?? $this->fallbackThumbnail($site->id),
-                    'logo' => $site->logo_url ?? $this->fallbackLogo($site->name),
+                    'thumbnail' => $site->thumbnail_url ?? SiteMediaHelper::thumbnail($site->id, 'favorite'),
+                    'logo' => $site->logo_url ?? SiteMediaHelper::logo($site->name),
                     'uptime' => $site->uptime_percentage ? number_format((float) $site->uptime_percentage, 2) : null,
                     'healthScore' => $site->health_score,
                 ];
             })
             ->all();
-    }
-
-    private function fallbackLogo(string $name): string
-    {
-        $seed = Str::slug($name);
-
-        return "https://api.dicebear.com/7.x/initials/svg?seed={$seed}&backgroundColor=111827,1c1f2b&fontSize=60";
     }
 
     /**

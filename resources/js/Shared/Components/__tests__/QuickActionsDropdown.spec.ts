@@ -165,7 +165,7 @@ describe('QuickActionsDropdown', () => {
     const { router } = await import('@inertiajs/vue3')
     vi.mocked(router.post).mockImplementation((url, data, options) => {
       if (options?.onSuccess) {
-        options.onSuccess({} as any)
+        options.onSuccess({} as never)
       }
       return Promise.resolve()
     })

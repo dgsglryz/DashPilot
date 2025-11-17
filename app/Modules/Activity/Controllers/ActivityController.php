@@ -6,8 +6,8 @@ namespace App\Modules\Activity\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Activity\Models\ActivityLog;
 use App\Modules\Sites\Models\Site;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -27,26 +27,7 @@ class ActivityController extends Controller
      */
     public function index(Request $request): Response
     {
-        $query = ActivityLog::with(['site:id,name,url,thumbnail_url', 'user:id,name,email'])
-            ->latest('created_at');
-
-        // Filter by site if provided
-        if ($request->has('site_id') && $request->string('site_id')->isNotEmpty()) {
-            $query->where('site_id', $request->integer('site_id'));
-        }
-
-        // Filter by action type if provided
-        if ($request->has('action') && $request->string('action')->isNotEmpty()) {
-            $query->where('action', 'like', '%'.$request->string('action').'%');
-        }
-
-        // Filter by date range if provided
-        if ($request->has('date_from')) {
-            $query->whereDate('created_at', '>=', $request->string('date_from'));
-        }
-        if ($request->has('date_to')) {
-            $query->whereDate('created_at', '<=', $request->string('date_to'));
-        }
+        $query = $this->filteredActivityQuery($request, ['site:id,name,url,thumbnail_url', 'user:id,name,email']);
 
         $activities = $query->paginate(20)->through(function (ActivityLog $log) {
             return [
@@ -100,24 +81,7 @@ class ActivityController extends Controller
      */
     public function export(Request $request): StreamedResponse
     {
-        $query = ActivityLog::with(['site:id,name,url', 'user:id,name,email'])
-            ->latest('created_at');
-
-        // Apply same filters as index
-        if ($request->has('site_id') && $request->string('site_id')->isNotEmpty()) {
-            $query->where('site_id', $request->integer('site_id'));
-        }
-
-        if ($request->has('action') && $request->string('action')->isNotEmpty()) {
-            $query->where('action', 'like', '%'.$request->string('action').'%');
-        }
-
-        if ($request->has('date_from')) {
-            $query->whereDate('created_at', '>=', $request->string('date_from'));
-        }
-        if ($request->has('date_to')) {
-            $query->whereDate('created_at', '<=', $request->string('date_to'));
-        }
+        $query = $this->filteredActivityQuery($request, ['site:id,name,url', 'user:id,name,email']);
 
         $filename = 'activity_logs_'.now()->format('Y-m-d_His').'.csv';
 
@@ -161,6 +125,50 @@ class ActivityController extends Controller
         // Using SHA256 instead of MD5 for better security (even though this is non-sensitive)
         $seed = hash('sha256', $email);
         return 'https://api.dicebear.com/7.x/avataaars/svg?seed='.$seed.'&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf';
+    }
+
+    /**
+     * Apply common filters and eager loading for activity queries.
+     *
+     * @param Request $request
+     * @param array<int, string> $relations
+     *
+     * @return Builder
+     */
+    private function filteredActivityQuery(Request $request, array $relations): Builder
+    {
+        $query = ActivityLog::with($relations)->latest('created_at');
+
+        return $this->applyActivityFilters($query, $request);
+    }
+
+    /**
+     * Apply filter clauses shared between index/export endpoints.
+     *
+     * @param Builder $query
+     * @param Request $request
+     *
+     * @return Builder
+     */
+    private function applyActivityFilters(Builder $query, Request $request): Builder
+    {
+        if ($request->has('site_id') && $request->string('site_id')->isNotEmpty()) {
+            $query->where('site_id', $request->integer('site_id'));
+        }
+
+        if ($request->has('action') && $request->string('action')->isNotEmpty()) {
+            $query->where('action', 'like', '%'.$request->string('action').'%');
+        }
+
+        if ($request->has('date_from')) {
+            $query->whereDate('created_at', '>=', $request->string('date_from'));
+        }
+
+        if ($request->has('date_to')) {
+            $query->whereDate('created_at', '<=', $request->string('date_to'));
+        }
+
+        return $query;
     }
 }
 

@@ -11,7 +11,8 @@ use App\Modules\Clients\Requests\UpdateClientRequest;
 use App\Modules\Reports\Models\Report;
 use App\Modules\Sites\Models\Site;
 use App\Modules\Tasks\Models\Task;
-use App\Modules\Users\Models\User;
+use App\Shared\Services\LookupService;
+use Illuminate\Support\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -22,6 +23,13 @@ use Inertia\Response;
  */
 class ClientsController extends Controller
 {
+    /**
+     * @param LookupService $lookupService
+     */
+    public function __construct(private readonly LookupService $lookupService)
+    {
+    }
+
     /**
      * Display a listing of all clients with optional filters.
      *
@@ -64,18 +72,9 @@ class ClientsController extends Controller
                 ],
             ]);
 
-        $developers = User::where('status', 'active')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email'])
-            ->map(fn (User $user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ]);
-
         return Inertia::render('Clients/Pages/Index', [
             'clients' => $clients,
-            'developers' => $developers,
+            'developers' => $this->developers(),
             'filters' => [
                 'query' => $request->string('query')->toString(),
                 'status' => $request->string('status')->toString() ?: 'all',
@@ -90,17 +89,8 @@ class ClientsController extends Controller
      */
     public function create(): Response
     {
-        $developers = User::where('status', 'active')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email'])
-            ->map(fn (User $user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ]);
-
         return Inertia::render('Clients/Pages/Create', [
-            'developers' => $developers,
+            'developers' => $this->developers(),
         ]);
     }
 
@@ -172,15 +162,6 @@ class ClientsController extends Controller
             ->latest('report_month')
             ->first();
 
-        $developers = User::where('status', 'active')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email'])
-            ->map(fn (User $user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ]);
-
         return Inertia::render('Clients/Pages/Show', [
             'client' => [
                 'id' => $client->id,
@@ -205,7 +186,7 @@ class ClientsController extends Controller
                 'avgLoadTime' => $latestReport->avg_load_time,
                 'incidentsCount' => $latestReport->incidents_count,
             ] : null,
-            'developers' => $developers,
+            'developers' => $this->developers(),
         ]);
     }
 
@@ -218,15 +199,6 @@ class ClientsController extends Controller
      */
     public function edit(Client $client): Response
     {
-        $developers = User::where('status', 'active')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email'])
-            ->map(fn (User $user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ]);
-
         return Inertia::render('Clients/Pages/Edit', [
             'client' => [
                 'id' => $client->id,
@@ -238,7 +210,7 @@ class ClientsController extends Controller
                 'assigned_developer_id' => $client->assigned_developer_id,
                 'notes' => $client->notes,
             ],
-            'developers' => $developers,
+            'developers' => $this->developers(),
         ]);
     }
 
@@ -322,6 +294,16 @@ class ClientsController extends Controller
             ],
             'reports' => $reports,
         ]);
+    }
+
+    /**
+     * Get cached developer dropdown options.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function developers(): Collection
+    {
+        return $this->lookupService->activeDevelopers();
     }
 }
 

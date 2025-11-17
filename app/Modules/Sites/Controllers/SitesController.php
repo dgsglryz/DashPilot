@@ -6,7 +6,6 @@ namespace App\Modules\Sites\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Activity\Models\ActivityLog;
 use App\Modules\Alerts\Models\Alert;
-use App\Modules\Clients\Models\Client;
 use App\Modules\Monitoring\Models\SiteCheck;
 use App\Modules\Reports\Models\Report;
 use App\Modules\Sites\Jobs\CheckSiteHealth;
@@ -14,11 +13,13 @@ use App\Modules\Sites\Models\Site;
 use App\Modules\Sites\Requests\StoreSiteRequest;
 use App\Modules\Sites\Requests\UpdateSiteRequest;
 use App\Modules\Tasks\Models\Task;
+use App\Shared\Helpers\SiteMediaHelper;
+use App\Shared\Services\LookupService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
@@ -31,6 +32,13 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class SitesController extends Controller
 {
     /**
+     * @param LookupService $lookupService
+     */
+    public function __construct(private readonly LookupService $lookupService)
+    {
+    }
+
+    /**
      * Display the sites list with stats summary.
      *
      * @param Request $request
@@ -40,23 +48,9 @@ class SitesController extends Controller
     public function index(Request $request): Response
     {
         $query = Site::query()
-            ->with(['client:id,name', 'checks' => fn($q) => $q->latest()->take(5)]);
+            ->with(['client:id,name', 'checks' => fn ($q) => $q->latest()->take(5)]);
 
-        if ($request->filled('platform') && $request->string('platform')->toString() !== 'all') {
-            $query->where('type', $request->string('platform')->toString());
-        }
-
-        if ($request->filled('status') && $request->string('status')->toString() !== 'all') {
-            $query->where('status', $request->string('status')->toString());
-        }
-
-        if ($request->filled('query')) {
-            $search = $request->string('query')->toString();
-            $query->where(function ($inner) use ($search): void {
-                $inner->where('name', 'like', "%{$search}%")
-                    ->orWhere('url', 'like', "%{$search}%");
-            });
-        }
+        $this->applySiteFilters($query, $request);
 
         // Get stats before pagination
         $allSites = $query->get();
@@ -80,8 +74,8 @@ class SitesController extends Controller
                 'platform' => $site->type,
                 'industry' => $site->industry,
                 'region' => $site->region,
-                'thumbnail' => $site->thumbnail_url ?? $this->fallbackThumbnail($site->id),
-                'logo' => $site->logo_url ?? $this->fallbackLogo($site->name),
+                'thumbnail' => $site->thumbnail_url ?? SiteMediaHelper::thumbnail($site->id),
+                'logo' => $site->logo_url ?? SiteMediaHelper::logo($site->name),
                 'uptime' => (float) ($site->uptime_percentage ?? 0),
                 'responseTime' => (int) ($site->avg_load_time ? $site->avg_load_time * 1000 : 0),
                 'lastChecked' => $site->last_checked_at?->toIso8601String(),
@@ -100,6 +94,7 @@ class SitesController extends Controller
                 'status' => $request->string('status')->toString() ?: 'all',
                 'platform' => $request->string('platform')->toString() ?: 'all',
             ],
+            'clients' => $this->clientOptions(),
         ]);
     }
 
@@ -171,8 +166,8 @@ class SitesController extends Controller
                 'platform' => $site->type,
                 'industry' => $site->industry,
                 'region' => $site->region,
-                'thumbnail' => $site->thumbnail_url ?? $this->fallbackThumbnail($site->id),
-                'logo' => $site->logo_url ?? $this->fallbackLogo($site->name),
+                'thumbnail' => $site->thumbnail_url ?? SiteMediaHelper::thumbnail($site->id),
+                'logo' => $site->logo_url ?? SiteMediaHelper::logo($site->name),
                 'uptime' => round((float) ($site->uptime_percentage ?? 0), 2),
                 'response' => round((float) ($site->avg_load_time ?? 0), 2),
                 'healthScore' => (int) ($site->health_score ?? 0),
@@ -305,49 +300,14 @@ class SitesController extends Controller
     }
 
     /**
-     * Generate a fallback thumbnail URL for a site.
-     *
-     * @param int $siteId
-     *
-     * @return string
-     */
-    private function fallbackThumbnail(int $siteId): string
-    {
-        return "https://picsum.photos/seed/site-{$siteId}/640/360";
-    }
-
-    /**
-     * Generate a fallback logo URL using DiceBear initials API.
-     *
-     * @param string $name
-     *
-     * @return string
-     */
-    private function fallbackLogo(string $name): string
-    {
-        $seed = Str::slug($name);
-
-        return "https://api.dicebear.com/7.x/initials/svg?seed={$seed}&backgroundColor=111827,1c1f2b&fontSize=60";
-    }
-
-    /**
      * Show the form for creating a new site.
      *
      * @return Response
      */
     public function create(): Response
     {
-        $clients = Client::query()
-            ->orderBy('name')
-            ->get(['id', 'name', 'company'])
-            ->map(fn (Client $client) => [
-                'id' => $client->id,
-                'name' => $client->name,
-                'company' => $client->company,
-            ]);
-
         return Inertia::render('Sites/Pages/Create', [
-            'clients' => $clients,
+            'clients' => $this->clientOptions(),
         ]);
     }
 
@@ -385,15 +345,6 @@ class SitesController extends Controller
     {
         $site->load('client:id,name,company');
 
-        $clients = Client::query()
-            ->orderBy('name')
-            ->get(['id', 'name', 'company'])
-            ->map(fn (Client $client) => [
-                'id' => $client->id,
-                'name' => $client->name,
-                'company' => $client->company,
-            ]);
-
         return Inertia::render('Sites/Pages/Edit', [
             'site' => [
                 'id' => $site->id,
@@ -410,7 +361,7 @@ class SitesController extends Controller
                 'shopify_api_key' => $site->shopify_api_key,
                 'shopify_access_token' => $site->shopify_access_token,
             ],
-            'clients' => $clients,
+            'clients' => $this->clientOptions(),
         ]);
     }
 
@@ -519,27 +470,11 @@ class SitesController extends Controller
     {
         $query = Site::query()->with('client:id,name');
 
-        // If specific site IDs are provided, only export those
         if ($request->has('ids') && is_array($request->input('ids'))) {
             $ids = array_map('intval', $request->input('ids'));
             $query->whereIn('id', $ids);
         } else {
-            // Apply same filters as index
-            if ($request->filled('platform') && $request->string('platform')->toString() !== 'all') {
-                $query->where('type', $request->string('platform')->toString());
-            }
-
-            if ($request->filled('status') && $request->string('status')->toString() !== 'all') {
-                $query->where('status', $request->string('status')->toString());
-            }
-
-            if ($request->filled('query')) {
-                $search = $request->string('query')->toString();
-                $query->where(function ($inner) use ($search): void {
-                    $inner->where('name', 'like', "%{$search}%")
-                        ->orWhere('url', 'like', "%{$search}%");
-                });
-            }
+            $this->applySiteFilters($query, $request);
         }
 
         $format = $request->string('format', 'csv')->toString();
@@ -597,6 +532,45 @@ class SitesController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
+    }
+
+    /**
+     * Apply the request filters shared by index/export endpoints.
+     *
+     * @param Builder $query
+     * @param Request $request
+     *
+     * @return Builder
+     */
+    private function applySiteFilters(Builder $query, Request $request): Builder
+    {
+        if ($request->filled('platform') && $request->string('platform')->toString() !== 'all') {
+            $query->where('type', $request->string('platform')->toString());
+        }
+
+        if ($request->filled('status') && $request->string('status')->toString() !== 'all') {
+            $query->where('status', $request->string('status')->toString());
+        }
+
+        if ($request->filled('query')) {
+            $search = $request->string('query')->toString();
+            $query->where(function (Builder $inner) use ($search): void {
+                $inner->where('name', 'like', "%{$search}%")
+                    ->orWhere('url', 'like', "%{$search}%");
+            });
+        }
+
+        return $query;
+    }
+
+    /**
+     * Retrieve reusable client dropdown options.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function clientOptions(): Collection
+    {
+        return $this->lookupService->clientOptions();
     }
 }
 
