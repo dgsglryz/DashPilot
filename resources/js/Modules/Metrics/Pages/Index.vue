@@ -65,7 +65,7 @@
               <span class="text-gray-400">Healthy</span>
             </div>
           </div>
-          <UptimeChart :data="metrics.uptimeHistory" :time-range="timeRange" />
+          <UptimeChart :key="`uptime-${timeRange}`" :data="metrics.uptimeHistory" :time-range="timeRange" />
         </div>
 
         <!-- Response Time Chart -->
