@@ -23,6 +23,7 @@ const submit = () => {
 </script>
 
 <template>
+    <!-- NOSONAR: Title is set via Inertia.js <Head> component which generates <title> tag at runtime -->
     <GuestLayout>
         <Head title="Register - DashPilot" />
 
