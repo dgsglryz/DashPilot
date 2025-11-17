@@ -23,12 +23,12 @@ withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-    close: () => void;
+    close: [];
 }>();
 
 // Wrapper function for emit to satisfy TypeScript
 const handleClose = (): void => {
-    (emit as (event: 'close') => void)('close');
+    emit('close');
 };
 </script>
 

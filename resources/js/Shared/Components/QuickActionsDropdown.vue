@@ -34,7 +34,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-    'favorite-toggled': () => void;
+    'favorite-toggled': [];
 }>();
 
 const toast = useToast();
@@ -42,7 +42,7 @@ const isOpen = ref(false);
 
 // Wrapper function for emit to satisfy TypeScript
 const handleFavoriteToggled = (): void => {
-    (emit as (event: 'favorite-toggled') => void)('favorite-toggled');
+    emit('favorite-toggled');
 };
 
 const actions = computed<Action[]>(() => [
