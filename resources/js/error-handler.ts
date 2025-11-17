@@ -19,7 +19,7 @@ interface ErrorLogPayload {
  */
 async function logErrorToBackend(payload: ErrorLogPayload): Promise<void> {
     try {
-        await window.axios.post('/api/log-frontend-error', payload, {
+        await globalThis.axios.post('/api/log-frontend-error', payload, {
             timeout: 5000,
         });
     } catch (e) {
@@ -35,7 +35,7 @@ function handleJavaScriptError(event: ErrorEvent): void {
     const payload: ErrorLogPayload = {
         message: event.message || 'Unknown JavaScript error',
         stack: event.error?.stack,
-        url: window.location.href,
+        url: globalThis.location.href,
         userAgent: navigator.userAgent,
         timestamp: new Date().toISOString(),
         errorType: 'javascript',
@@ -51,7 +51,7 @@ function handleUnhandledRejection(event: PromiseRejectionEvent): void {
     const payload: ErrorLogPayload = {
         message: event.reason?.message || String(event.reason) || 'Unhandled promise rejection',
         stack: event.reason?.stack,
-        url: window.location.href,
+        url: globalThis.location.href,
         userAgent: navigator.userAgent,
         timestamp: new Date().toISOString(),
         errorType: 'unhandled_rejection',
@@ -77,7 +77,7 @@ export function handleVueError(err: Error, instance: unknown, info: string): voi
         props: (instance && typeof instance === 'object' && '$props' in instance)
             ? (instance as { $props?: Record<string, unknown> }).$props as Record<string, unknown>
             : undefined,
-        url: window.location.href,
+        url: globalThis.location.href,
         userAgent: navigator.userAgent,
         timestamp: new Date().toISOString(),
         errorType: 'vue',
@@ -100,7 +100,7 @@ export function handleInertiaError(err: Error, page: { component?: string; props
         stack: err.stack,
         component: page?.component,
         props: page?.props,
-        url: window.location.href,
+        url: globalThis.location.href,
         userAgent: navigator.userAgent,
         timestamp: new Date().toISOString(),
         errorType: 'inertia',
@@ -114,10 +114,10 @@ export function handleInertiaError(err: Error, page: { component?: string; props
  */
 export function initializeErrorHandlers(): void {
     // JavaScript errors
-    window.addEventListener('error', handleJavaScriptError);
+    globalThis.addEventListener('error', handleJavaScriptError);
 
     // Unhandled promise rejections
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    globalThis.addEventListener('unhandledrejection', handleUnhandledRejection);
 
     // Console error override (for debugging)
     if (import.meta.env.DEV) {

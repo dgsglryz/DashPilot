@@ -1,10 +1,10 @@
 import axios from 'axios';
-window.axios = axios;
+globalThis.axios = axios;
 
-window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+globalThis.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 // Axios response interceptor for error logging
-window.axios.interceptors.response.use(
+globalThis.axios.interceptors.response.use(
     (response) => response,
     async (error) => {
         // Log HTTP errors to backend
@@ -14,10 +14,10 @@ window.axios.interceptors.response.use(
             // Only log 4xx and 5xx errors (not 401/403 which are expected auth errors)
             if (status >= 400 && status !== 401 && status !== 403) {
                 try {
-                    await window.axios.post('/api/log-frontend-error', {
+                    await globalThis.axios.post('/api/log-frontend-error', {
                         message: `HTTP ${status}: ${error.response.statusText}`,
                         stack: error.stack,
-                        url: error.config?.url || window.location.href,
+                        url: error.config?.url || globalThis.location.href,
                         userAgent: navigator.userAgent,
                         timestamp: new Date().toISOString(),
                         errorType: 'javascript',
