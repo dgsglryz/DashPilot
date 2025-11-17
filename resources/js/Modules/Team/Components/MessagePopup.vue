@@ -103,7 +103,6 @@
 <script setup lang="ts">
 // @ts-nocheck
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { router } from '@inertiajs/vue3'
 import { XMarkIcon, PaperAirplaneIcon } from '@heroicons/vue/24/outline'
 
 /**
