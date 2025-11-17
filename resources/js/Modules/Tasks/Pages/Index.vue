@@ -3,10 +3,10 @@
  * Tasks Index Page - Kanban Board View
  * Displays tasks in a Kanban board layout with columns: Pending, In Progress, Completed, Cancelled
  */
-import { ref } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
-import AppLayout from '@/Shared/Layouts/AppLayout.vue';
-import Pagination from '@/Shared/Components/Pagination.vue';
+import { ref, computed, watch } from "vue";
+import { Link, router, usePage } from "@inertiajs/vue3";
+import AppLayout from "@/Shared/Layouts/AppLayout.vue";
+import Pagination from "@/Shared/Components/Pagination.vue";
 import {
     PlusIcon,
     MagnifyingGlassIcon,
@@ -16,14 +16,14 @@ import {
     PencilIcon,
     TrashIcon,
     EllipsisVerticalIcon,
-} from '@heroicons/vue/24/outline';
+} from "@heroicons/vue/24/outline";
 
 type Task = {
     id: number;
     title: string;
     description: string;
-    status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-    priority: 'low' | 'medium' | 'high' | 'urgent';
+    status: "pending" | "in_progress" | "completed" | "cancelled";
+    priority: "low" | "medium" | "high" | "urgent";
     dueDate: string | null;
     completedAt: string | null;
     assignee: {
@@ -58,8 +58,8 @@ type PaginatedTask = {
     id: number;
     title: string;
     description: string;
-    status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-    priority: 'low' | 'medium' | 'high' | 'urgent';
+    status: "pending" | "in_progress" | "completed" | "cancelled";
+    priority: "low" | "medium" | "high" | "urgent";
     dueDate: string | null;
     completedAt: string | null;
     assignee: {
@@ -105,25 +105,28 @@ const props = defineProps<{
     };
 }>();
 
-const searchQuery = ref(props.filters?.query || '');
-const filterStatus = ref(props.filters?.status || 'all');
-const filterPriority = ref(props.filters?.priority || 'all');
+const searchQuery = ref(props.filters?.query || "");
+const filterPriority = ref(props.filters?.priority || "all");
 const filterMyTasks = ref(props.filters?.my_tasks || false);
 const filterUrgent = ref(props.filters?.urgent || false);
+
+// Get current user ID for "My Tasks" filter
+const page = usePage();
+const currentUserId = (page.props as any).auth?.user?.id;
 
 /**
  * Format relative time from date string
  */
 const formatRelativeTime = (dateString: string | null): string => {
-    if (!dateString) return 'No due date';
+    if (!dateString) return "No due date";
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = date.getTime() - now.getTime();
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffDays < 0) return 'Overdue';
-    if (diffDays === 0) return 'Due today';
-    if (diffDays === 1) return 'Due tomorrow';
+    if (diffDays < 0) return "Overdue";
+    if (diffDays === 0) return "Due today";
+    if (diffDays === 1) return "Due tomorrow";
     if (diffDays < 7) return `Due in ${diffDays} days`;
     return date.toLocaleDateString();
 };
@@ -140,21 +143,22 @@ const isOverdue = (dueDate: string | null): boolean => {
  * Get priority badge classes
  */
 const getPriorityBadgeClasses = (priority: string): string => {
-    return {
-        urgent: 'bg-red-500/10 text-red-400 border-red-500/20',
-        high: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-        medium: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-        low: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-    }[priority] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+    return (
+        {
+            urgent: "bg-red-500/10 text-red-400 border-red-500/20",
+            high: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+            medium: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+            low: "bg-gray-500/10 text-gray-400 border-gray-500/20",
+        }[priority] || "bg-gray-500/10 text-gray-400 border-gray-500/20"
+    );
 };
-
 
 /**
  * Update task status (move between columns)
  */
 const updateTaskStatus = (taskId: number, newStatus: string): void => {
     router.post(
-        route('tasks.status', taskId),
+        route("tasks.status", taskId),
         { status: newStatus },
         {
             preserveScroll: true,
@@ -175,36 +179,71 @@ const cancelTask = (task: Task): void => {
         return;
     }
 
-    router.delete(route('tasks.destroy', task.id), {
+    router.delete(route("tasks.destroy", task.id), {
         preserveScroll: true,
     });
 };
 
 /**
- * Apply filters and reload page
+ * Computed filtered tasks by status (instant client-side filtering)
+ * Just like Sites page - instant search results as you type
+ * @returns {Object} Filtered tasks grouped by status
  */
-const applyFilters = (): void => {
-    router.get(
-        route('tasks.index'),
-        {
-            query: searchQuery.value || undefined,
-            status: filterStatus.value === 'all' ? undefined : filterStatus.value,
-            priority: filterPriority.value === 'all' ? undefined : filterPriority.value,
-            my_tasks: filterMyTasks.value || undefined,
-            urgent: filterUrgent.value || undefined,
-        },
-        {
-            preserveState: true,
-            preserveScroll: true,
-        },
-    );
-};
+const filteredTasksByStatus = computed(() => {
+    const query = searchQuery.value.toLowerCase().trim();
+
+    // Helper function to check if task matches filters
+    const matchesFilters = (task: Task): boolean => {
+        // Search filter (instant, client-side)
+        const matchesSearch =
+            !query ||
+            (task.title || "").toLowerCase().includes(query) ||
+            (task.description || "").toLowerCase().includes(query) ||
+            (task.assignee?.name || "").toLowerCase().includes(query) ||
+            (task.site?.name || "").toLowerCase().includes(query) ||
+            (task.client?.name || "").toLowerCase().includes(query);
+
+        // Priority filter
+        const matchesPriority =
+            filterPriority.value === "all" ||
+            task.priority === filterPriority.value;
+
+        // My tasks filter
+        const matchesMyTasks =
+            !filterMyTasks.value ||
+            (currentUserId && task.assignee?.id === currentUserId);
+
+        // Urgent filter
+        const matchesUrgent = !filterUrgent.value || task.priority === "urgent";
+
+        return (
+            matchesSearch && matchesPriority && matchesMyTasks && matchesUrgent
+        );
+    };
+
+    return {
+        pending: (props.tasks.pending || []).filter(matchesFilters),
+        in_progress: (props.tasks.in_progress || []).filter(matchesFilters),
+        completed: (props.tasks.completed || []).filter(matchesFilters),
+        cancelled: (props.tasks.cancelled || []).filter(matchesFilters),
+    };
+});
 
 const columns = [
-    { key: 'pending', label: 'Pending', icon: ClockIcon, color: 'yellow' },
-    { key: 'in_progress', label: 'In Progress', icon: CheckCircleIcon, color: 'blue' },
-    { key: 'completed', label: 'Completed', icon: CheckCircleIcon, color: 'green' },
-    { key: 'cancelled', label: 'Cancelled', icon: XCircleIcon, color: 'gray' },
+    { key: "pending", label: "Pending", icon: ClockIcon, color: "yellow" },
+    {
+        key: "in_progress",
+        label: "In Progress",
+        icon: CheckCircleIcon,
+        color: "blue",
+    },
+    {
+        key: "completed",
+        label: "Completed",
+        icon: CheckCircleIcon,
+        color: "green",
+    },
+    { key: "cancelled", label: "Cancelled", icon: XCircleIcon, color: "gray" },
 ];
 </script>
 
@@ -288,27 +327,13 @@ const columns = [
                             placeholder="Search tasks..."
                             autocomplete="off"
                             class="w-full rounded-lg border border-gray-700 bg-gray-900 py-2 pl-10 pr-4 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-                            @keyup.enter="applyFilters"
                         />
                     </div>
 
                     <div class="flex gap-2">
                         <select
-                            v-model="filterStatus"
-                            class="rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:border-blue-500 focus:outline-none"
-                            @change="applyFilters"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-
-                        <select
                             v-model="filterPriority"
                             class="rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:border-blue-500 focus:outline-none"
-                            @change="applyFilters"
                         >
                             <option value="all">All Priorities</option>
                             <option value="urgent">Urgent</option>
@@ -324,7 +349,6 @@ const columns = [
                                 v-model="filterMyTasks"
                                 type="checkbox"
                                 class="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
-                                @change="applyFilters"
                             />
                             <span class="text-sm">My Tasks</span>
                         </label>
@@ -336,7 +360,6 @@ const columns = [
                                 v-model="filterUrgent"
                                 type="checkbox"
                                 class="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
-                                @change="applyFilters"
                             />
                             <span class="text-sm">Urgent</span>
                         </label>
@@ -345,7 +368,10 @@ const columns = [
             </div>
 
             <!-- Kanban Board -->
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-4" data-testid="kanban-board">
+            <div
+                class="grid grid-cols-1 gap-6 lg:grid-cols-4"
+                data-testid="kanban-board"
+            >
                 <div
                     v-for="column in columns"
                     :key="column.key"
@@ -360,7 +386,8 @@ const columns = [
                                 :is="column.icon"
                                 class="h-5 w-5"
                                 :class="{
-                                    'text-yellow-400': column.color === 'yellow',
+                                    'text-yellow-400':
+                                        column.color === 'yellow',
                                     'text-blue-400': column.color === 'blue',
                                     'text-green-400': column.color === 'green',
                                     'text-gray-400': column.color === 'gray',
@@ -372,7 +399,11 @@ const columns = [
                             <span
                                 class="rounded-full bg-gray-700 px-2 py-0.5 text-xs font-medium text-gray-300"
                             >
-                                {{ tasks[column.key as keyof TasksByStatus]?.length || 0 }}
+                                {{
+                                    filteredTasksByStatus[
+                                        column.key as keyof TasksByStatus
+                                    ]?.length || 0
+                                }}
                             </span>
                         </div>
                     </div>
@@ -380,14 +411,18 @@ const columns = [
                     <!-- Column Tasks -->
                     <div class="flex-1 space-y-3 overflow-y-auto p-4">
                         <div
-                            v-for="task in tasks[column.key as keyof TasksByStatus]"
+                            v-for="task in filteredTasksByStatus[
+                                column.key as keyof TasksByStatus
+                            ]"
                             :key="task.id"
                             data-testid="task-card"
                             class="group relative rounded-xl border border-gray-700/60 bg-gray-800/60 p-4 transition-all hover:border-blue-500/60 hover:shadow-lg"
                         >
                             <!-- Task Header -->
                             <div class="mb-3">
-                                <div class="flex items-start justify-between gap-2">
+                                <div
+                                    class="flex items-start justify-between gap-2"
+                                >
                                     <Link
                                         :href="route('tasks.edit', task.id)"
                                         class="flex-1 font-semibold text-white transition-colors hover:text-blue-400"
@@ -398,7 +433,9 @@ const columns = [
                                         <button
                                             class="rounded-lg p-1 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-gray-700 hover:text-white"
                                         >
-                                            <EllipsisVerticalIcon class="h-4 w-4" />
+                                            <EllipsisVerticalIcon
+                                                class="h-4 w-4"
+                                            />
                                         </button>
                                     </div>
                                 </div>
@@ -415,7 +452,11 @@ const columns = [
                                 <div class="flex items-center gap-2">
                                     <span
                                         class="rounded-full border px-2 py-0.5 text-xs font-semibold uppercase"
-                                        :class="getPriorityBadgeClasses(task.priority)"
+                                        :class="
+                                            getPriorityBadgeClasses(
+                                                task.priority,
+                                            )
+                                        "
                                     >
                                         {{ task.priority }}
                                     </span>
@@ -432,7 +473,9 @@ const columns = [
                                     "
                                 >
                                     <ClockIcon class="h-3.5 w-3.5" />
-                                    <span>{{ formatRelativeTime(task.dueDate) }}</span>
+                                    <span>{{
+                                        formatRelativeTime(task.dueDate)
+                                    }}</span>
                                 </div>
 
                                 <!-- Assignee -->
@@ -445,9 +488,9 @@ const columns = [
                                     >
                                         {{
                                             task.assignee.name
-                                                .split(' ')
+                                                .split(" ")
                                                 .map((n) => n[0])
-                                                .join('')
+                                                .join("")
                                                 .toUpperCase()
                                                 .slice(0, 2)
                                         }}
@@ -460,9 +503,15 @@ const columns = [
                                     v-if="task.site || task.client"
                                     class="flex items-center gap-1.5 text-xs text-gray-500"
                                 >
-                                    <span v-if="task.site">{{ task.site.name }}</span>
-                                    <span v-if="task.site && task.client">•</span>
-                                    <span v-if="task.client">{{ task.client.name }}</span>
+                                    <span v-if="task.site">{{
+                                        task.site.name
+                                    }}</span>
+                                    <span v-if="task.site && task.client"
+                                        >•</span
+                                    >
+                                    <span v-if="task.client">{{
+                                        task.client.name
+                                    }}</span>
                                 </div>
                             </div>
 
@@ -493,7 +542,12 @@ const columns = [
                                         (c) => c.key !== column.key,
                                     )"
                                     :key="otherColumn.key"
-                                    @click="updateTaskStatus(task.id, otherColumn.key)"
+                                    @click="
+                                        updateTaskStatus(
+                                            task.id,
+                                            otherColumn.key,
+                                        )
+                                    "
                                     class="rounded-lg border border-gray-700/60 bg-gray-900/60 px-2 py-1 text-xs text-gray-400 transition-colors hover:border-blue-500/60 hover:text-blue-400"
                                 >
                                     Move to {{ otherColumn.label }}
@@ -504,8 +558,12 @@ const columns = [
                         <!-- Empty State -->
                         <div
                             v-if="
-                                !tasks[column.key as keyof TasksByStatus] ||
-                                tasks[column.key as keyof TasksByStatus].length === 0
+                                !filteredTasksByStatus[
+                                    column.key as keyof TasksByStatus
+                                ] ||
+                                filteredTasksByStatus[
+                                    column.key as keyof TasksByStatus
+                                ].length === 0
                             "
                             class="rounded-xl border border-dashed border-gray-700/70 p-8 text-center text-gray-500"
                         >
@@ -514,9 +572,15 @@ const columns = [
                     </div>
                 </div>
             </div>
-            
+
             <!-- Pagination -->
-            <div v-if="props.tasksPaginated && props.tasksPaginated.links.length > 3" class="mt-6">
+            <div
+                v-if="
+                    props.tasksPaginated &&
+                    props.tasksPaginated.links.length > 3
+                "
+                class="mt-6"
+            >
                 <Pagination
                     :links="props.tasksPaginated.links"
                     :from="props.tasksPaginated.from ?? undefined"
@@ -527,4 +591,3 @@ const columns = [
         </div>
     </AppLayout>
 </template>
-

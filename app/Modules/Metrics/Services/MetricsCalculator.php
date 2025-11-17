@@ -22,7 +22,9 @@ class MetricsCalculator
      */
     public function calculateAverageUptime(Builder $sitesQuery): float
     {
-        return (float) ($sitesQuery->avg('uptime_percentage') ?? 0);
+        $avg = $sitesQuery->avg('uptime_percentage');
+        
+        return (float) ($avg ?? 0);
     }
 
     /**
@@ -50,9 +52,9 @@ class MetricsCalculator
      */
     public function calculateAverageResponseTime(Carbon $start, Builder $siteChecksQuery): int
     {
-        return (int) round(
-            $siteChecksQuery->where('created_at', '>=', $start)->avg('response_time') ?? 0
-        );
+        $avg = $siteChecksQuery->where('created_at', '>=', $start)->avg('response_time');
+        
+        return (int) round((float) ($avg ?? 0));
     }
 
     /**

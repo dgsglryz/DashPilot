@@ -36,21 +36,21 @@ class MetricsAggregator
         $siteChecksQuery = $this->scopedSiteChecksQuery($user);
 
         return [
-            'averageUptime' => round($this->calculator->calculateAverageUptime($sitesQuery), 2),
-            'uptimeTrend' => round($this->calculator->calculateUptimeTrend($bounds['start'], $bounds['previous'], $siteChecksQuery), 2),
-            'averageResponseTime' => round($this->calculator->calculateAverageResponseTime($bounds['start'], $siteChecksQuery), 2),
-            'responseTrend' => round($this->calculator->calculateResponseTrend($bounds['start'], $bounds['previous'], $siteChecksQuery), 2),
-            'totalRequests' => $this->calculator->calculateTotalRequests($bounds['start'], $siteChecksQuery),
-            'requestsTrend' => round($this->calculator->calculateRequestsTrend($bounds['start'], $bounds['previous'], $siteChecksQuery), 2),
-            'errorRate' => round($this->calculator->calculateErrorRate($bounds['start'], $siteChecksQuery), 2),
-            'errorTrend' => round($this->calculator->calculateErrorTrend($bounds['start'], $bounds['previous'], $siteChecksQuery), 2),
-            'uptimeHistory' => $this->historyBuilder->uptimeHistory($bounds['start'], $siteChecksQuery),
-            'responseTimeHistory' => $this->historyBuilder->responseTimeHistory($bounds['start'], $siteChecksQuery),
-            'trafficHistory' => $this->historyBuilder->trafficHistory($bounds['start'], $siteChecksQuery),
-            'platformDistribution' => $this->distributionBuilder->platformDistribution($sitesQuery),
-            'topSites' => $this->distributionBuilder->topSites($sitesQuery),
-            'errorTypes' => $this->distributionBuilder->errorTypes($bounds['start'], $siteChecksQuery),
-            'statusCodes' => $this->distributionBuilder->statusCodeDistribution($bounds['start'], $siteChecksQuery),
+            'averageUptime' => round($this->calculator->calculateAverageUptime(clone $sitesQuery), 2),
+            'uptimeTrend' => round($this->calculator->calculateUptimeTrend($bounds['start'], $bounds['previous'], clone $siteChecksQuery), 2),
+            'averageResponseTime' => round($this->calculator->calculateAverageResponseTime($bounds['start'], clone $siteChecksQuery), 2),
+            'responseTrend' => round($this->calculator->calculateResponseTrend($bounds['start'], $bounds['previous'], clone $siteChecksQuery), 2),
+            'totalRequests' => $this->calculator->calculateTotalRequests($bounds['start'], clone $siteChecksQuery),
+            'requestsTrend' => round($this->calculator->calculateRequestsTrend($bounds['start'], $bounds['previous'], clone $siteChecksQuery), 2),
+            'errorRate' => round($this->calculator->calculateErrorRate($bounds['start'], clone $siteChecksQuery), 2),
+            'errorTrend' => round($this->calculator->calculateErrorTrend($bounds['start'], $bounds['previous'], clone $siteChecksQuery), 2),
+            'uptimeHistory' => $this->historyBuilder->uptimeHistory($bounds['start'], clone $siteChecksQuery),
+            'responseTimeHistory' => $this->historyBuilder->responseTimeHistory($bounds['start'], clone $siteChecksQuery),
+            'trafficHistory' => $this->historyBuilder->trafficHistory($bounds['start'], clone $siteChecksQuery),
+            'platformDistribution' => $this->distributionBuilder->platformDistribution(clone $sitesQuery),
+            'topSites' => $this->distributionBuilder->topSites(clone $sitesQuery),
+            'errorTypes' => $this->distributionBuilder->errorTypes($bounds['start'], clone $siteChecksQuery),
+            'statusCodes' => $this->distributionBuilder->statusCodeDistribution($bounds['start'], clone $siteChecksQuery),
         ];
     }
 

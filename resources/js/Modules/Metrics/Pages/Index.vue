@@ -202,7 +202,14 @@ const props = defineProps({
   }
 })
 
-const metrics = computed(() => props.metrics)
+const metrics = computed(() => {
+  // Debug: Log metrics data
+  if (import.meta.env.DEV) {
+    console.log('Metrics Page - metrics prop:', props.metrics)
+    console.log('Metrics Page - uptimeHistory:', props.metrics?.uptimeHistory)
+  }
+  return props.metrics
+})
 
 /**
  * Local reactive state
