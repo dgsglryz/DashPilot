@@ -64,7 +64,7 @@ class ActivityController extends Controller
                     'id' => $log->user->id,
                     'name' => $log->user->name,
                     'email' => $log->user->email,
-                    'avatar' => $this->getUserAvatarUrl($log->user->email, $log->user->name),
+                    'avatar' => $this->getUserAvatarUrl($log->user->email),
                 ] : null,
             ];
         });
@@ -152,11 +152,10 @@ class ActivityController extends Controller
      * Get user avatar URL using DiceBear API or initials.
      *
      * @param string $email
-     * @param string $name
      *
      * @return string
      */
-    private function getUserAvatarUrl(string $email, string $name): string
+    private function getUserAvatarUrl(string $email): string
     {
         // Use DiceBear Avataaars for consistent avatars
         // Using SHA256 instead of MD5 for better security (even though this is non-sensitive)

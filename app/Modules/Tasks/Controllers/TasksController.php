@@ -145,11 +145,9 @@ class TasksController extends Controller
     /**
      * Show the form for creating a new task.
      *
-     * @param Request $request
-     *
      * @return Response
      */
-    public function create(Request $request): Response
+    public function create(): Response
     {
         $users = User::where('status', 'active')
             ->orderBy('name')

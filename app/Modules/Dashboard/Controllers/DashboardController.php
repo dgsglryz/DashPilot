@@ -22,11 +22,9 @@ class DashboardController extends Controller
     /**
      * Display the main operations dashboard.
      *
-     * @param Request $request
-     *
      * @return Response
      */
-    public function __invoke(Request $request): Response
+    public function __invoke(): Response
     {
         $totalSites = Site::count();
         $healthySites = Site::where('status', 'healthy')->count();

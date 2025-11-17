@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Notifications\Jobs;
 
+use App\Modules\Notifications\Exceptions\WebhookDeliveryException;
 use App\Modules\Notifications\Models\Webhook;
 use App\Modules\Notifications\Models\WebhookLog;
 use App\Modules\Notifications\Services\WebhookService;
@@ -112,7 +113,9 @@ class DeliverWebhook implements ShouldQueue
             ]);
 
             if (!$success) {
-                throw new \RuntimeException("Webhook delivery failed with status {$statusCode}: {$responseBody}");
+                throw new WebhookDeliveryException(
+                    "Webhook delivery failed with status {$statusCode}: {$responseBody}"
+                );
             }
 
             $logger->logJob(DeliverWebhook::class, [

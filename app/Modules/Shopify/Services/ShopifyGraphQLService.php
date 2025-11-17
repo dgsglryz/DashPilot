@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Http;
 class ShopifyGraphQLService
 {
     private const CACHE_TTL_SECONDS = 600;
+    private const SERVICE_NAME = 'Shopify GraphQL';
 
     private const ANALYTICS_QUERY = <<<'GQL'
     {
@@ -111,7 +112,7 @@ class ShopifyGraphQLService
             'endpoint' => $endpoint,
         ]);
 
-        $logger->logApiRequest('Shopify GraphQL', $endpoint, [
+        $logger->logApiRequest(self::SERVICE_NAME, $endpoint, [
             'site_id' => $site->id,
             'query_length' => strlen(self::ANALYTICS_QUERY),
         ]);
@@ -129,14 +130,14 @@ class ShopifyGraphQLService
                 ]);
 
             $duration = (microtime(true) - $startTime) * 1000;
-            $logger->logApiResponse('Shopify GraphQL', $endpoint, $response->status(), [
+            $logger->logApiResponse(self::SERVICE_NAME, $endpoint, $response->status(), [
                 'site_id' => $site->id,
                 'duration_ms' => round($duration, 2),
             ]);
 
             if ($response->failed()) {
                 throw new ShopifyApiException(
-                    sprintf('Shopify GraphQL request failed: %s', $response->status()),
+                    sprintf('%s request failed: %s', self::SERVICE_NAME, $response->status()),
                     $response->status()
                 );
             }
@@ -144,14 +145,14 @@ class ShopifyGraphQLService
             $payload = $response->json();
 
             if (!is_array($payload) || !isset($payload['data'])) {
-                throw new ShopifyApiException('Unexpected Shopify GraphQL payload.');
+                throw new ShopifyApiException(sprintf('Unexpected %s payload.', self::SERVICE_NAME));
             }
 
             return $payload['data'];
         } catch (\Throwable $e) {
             $logger->logException($e, [
                 'endpoint' => $endpoint,
-                'service' => 'Shopify GraphQL',
+                'service' => self::SERVICE_NAME,
                 'site_id' => $site->id,
             ]);
             throw $e;

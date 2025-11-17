@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Modules\Activity\Models\ActivityLog;
 use App\Modules\Alerts\Models\Alert;
 use App\Modules\Clients\Models\Client;

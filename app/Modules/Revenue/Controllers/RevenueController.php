@@ -17,7 +17,7 @@ class RevenueController extends Controller
     /**
      * Display revenue overview and analytics.
      */
-    public function index(Request $request): Response
+    public function index(): Response
     {
         $shopifySites = Site::whereIn('type', ['shopify', 'woocommerce'])
             ->orderBy('name')

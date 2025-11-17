@@ -158,7 +158,7 @@
               <div class="w-full h-3 bg-gray-900 rounded-full overflow-hidden">
                 <div 
                   class="h-full rounded-full transition-all duration-500"
-                  :class="getErrorBgColor(error.type)"
+                  :class="getErrorColor(error.type)"
                   :style="{ width: `${error.percentage}%` }"
                 ></div>
               </div>
@@ -243,18 +243,4 @@ const getErrorColor = (type) => {
   return colors[type] || 'bg-gray-500'
 }
 
-/**
- * Get error type background color
- * @param {string} type - Error type
- * @returns {string} Tailwind class
- */
-const getErrorBgColor = (type) => {
-  const colors = {
-    '5xx': 'bg-red-500',
-    '4xx': 'bg-yellow-500',
-    'timeout': 'bg-orange-500',
-    'ssl': 'bg-purple-500',
-  }
-  return colors[type] || 'bg-gray-500'
-}
 </script>

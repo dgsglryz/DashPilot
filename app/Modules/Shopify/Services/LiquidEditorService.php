@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Shopify\Services;
 
+use App\Modules\Shopify\Exceptions\ShopifyApiException;
 use App\Modules\Shopify\Models\LiquidSnippet;
 use App\Modules\Sites\Models\Site;
 use App\Shared\Services\LoggingService;
@@ -115,7 +116,7 @@ class LiquidEditorService
     public function getFileContent(Site $site, string $filePath): string
     {
         if (empty($site->shopify_store_url)) {
-            throw new \RuntimeException('Shopify store URL is not configured for this site.');
+            throw new ShopifyApiException('Shopify store URL is not configured for this site.');
         }
 
         // Using SHA256 instead of MD5 for cache key (better security practice)
@@ -151,7 +152,7 @@ class LiquidEditorService
     public function saveFileContent(Site $site, string $filePath, string $content): void
     {
         if (empty($site->shopify_store_url)) {
-            throw new \RuntimeException('Shopify store URL is not configured for this site.');
+            throw new ShopifyApiException('Shopify store URL is not configured for this site.');
         }
 
         $logger = app(LoggingService::class);

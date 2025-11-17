@@ -43,7 +43,7 @@ class LiquidEditorController extends Controller
         $this->ensureShopifySite($site);
 
         return response()->json([
-            'files' => $this->fileTree($site),
+            'files' => $this->fileTree(),
         ]);
     }
 
@@ -110,7 +110,7 @@ class LiquidEditorController extends Controller
      *
      * @return array<int, array<string, mixed>>
      */
-    private function fileTree(Site $site): array
+    private function fileTree(): array
     {
         $files = collect([
             'layout/theme.liquid',

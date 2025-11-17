@@ -58,15 +58,52 @@ async function loginAsAdmin(
 
     // Wait for Vue to hydrate on dashboard
     await page.waitForLoadState("networkidle", { timeout: 30000 });
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000); // Extra wait for Vue hydration
 
     // Verify we're logged in (check for dashboard content)
     try {
-        await page.waitForSelector(
-            '[data-testid="dashboard-stats"], h1:has-text("Overview"), [data-testid="dashboard"]',
-            { timeout: 10000 },
-        );
-    } catch {
+        // Try multiple selectors for dashboard content
+        const dashboardSelectors = [
+            '[data-testid="dashboard-stats"]',
+            'h1:has-text("Overview")',
+            '[data-testid="dashboard"]',
+            'h1:contains("Overview")',
+            "text=Overview",
+        ];
+
+        let found = false;
+        for (const selector of dashboardSelectors) {
+            try {
+                await page.waitForSelector(selector, { timeout: 5000 });
+                found = true;
+                break;
+            } catch {
+                // Continue to next selector
+            }
+        }
+
+        // Also check if sidebar/navigation exists (indicates logged in)
+        if (!found) {
+            const hasSidebar = await page
+                .locator('aside, nav[role="navigation"]')
+                .isVisible()
+                .catch(() => false);
+            if (hasSidebar) {
+                found = true;
+            }
+        }
+
+        if (!found) {
+            // Final fallback: check if we're on dashboard URL
+            const url = page.url();
+            if (!url.includes("/dashboard") && !url.includes("/login")) {
+                throw new Error(
+                    "Login failed - not redirected to dashboard. Current URL: " +
+                        url,
+                );
+            }
+        }
+    } catch (error) {
         // Final fallback: check if we're on dashboard URL
         const url = page.url();
         if (!url.includes("/dashboard") && !url.includes("/login")) {

@@ -113,11 +113,9 @@ class AlertsController extends Controller
     /**
      * Export alerts as CSV (last 30 days).
      *
-     * @param Request $request
-     *
      * @return StreamedResponse
      */
-    public function export(Request $request): StreamedResponse
+    public function export(): StreamedResponse
     {
         $query = Alert::with(['site:id,name', 'resolver:id,name', 'acknowledger:id,name'])
             ->where('created_at', '>=', now()->subDays(30))

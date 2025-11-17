@@ -32,12 +32,10 @@ class SendEmailNotification implements ShouldQueue
      *
      * @param string $type Notification type: 'alert_created', 'alert_resolved', 'daily_digest'
      * @param mixed $data Data to pass to the mailable
-     * @param User|null $user Target user (optional, uses all users for digest)
      */
     public function __construct(
         private readonly string $type,
-        private readonly mixed $data,
-        private ?User $user = null
+        private readonly mixed $data
     ) {
         $this->onQueue('emails');
     }
