@@ -123,10 +123,6 @@ const liveStats = ref({ ...props.stats });
 const isLiveMode = ref(true);
 
 /**
- * Simulates real-time data updates
- * In production, this would fetch from Laravel backend via Inertia
- */
-/**
  * Generate a secure random number between 0 and 1
  * Uses crypto.getRandomValues() for security-sensitive contexts
  */
