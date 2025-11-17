@@ -278,7 +278,9 @@
                                 v-for="site in filteredSites"
                                 :key="site.id"
                                 data-testid="site-row"
-                                @click="router.visit(route('sites.show', site.id))"
+                                @click="
+                                    router.visit(route('sites.show', site.id))
+                                "
                                 class="cursor-pointer hover:bg-gray-700/20 transition-colors"
                                 :class="{
                                     'bg-blue-500/10': selectedSites.includes(
@@ -444,9 +446,9 @@
                         </tbody>
                     </table>
                 </div>
-                
+
                 <!-- Pagination -->
-                <Pagination 
+                <Pagination
                     v-if="sites.links && sites.links.length > 3"
                     :links="sites.links"
                     :from="sites.from"
@@ -595,18 +597,22 @@ const toggleSelectAll = () => {
  * Toggle site selection
  */
 const toggleSiteSelection = (siteId: number) => {
-    const index = selectedSites.value.indexOf(siteId);
-    if (index > -1) {
-        selectedSites.value.splice(index, 1);
-    } else {
-        selectedSites.value.push(siteId);
+    if (selectedSites.value.includes(siteId)) {
+        selectedSites.value = selectedSites.value.filter((id) => id !== siteId);
+        return;
     }
+
+    selectedSites.value = [...selectedSites.value, siteId];
 };
 
 /**
  * Clear selection
  */
 const clearSelection = () => {
+    if (selectedSites.value.length === 0) {
+        return;
+    }
+
     selectedSites.value = [];
 };
 

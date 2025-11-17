@@ -33,12 +33,46 @@ class SearchControllerTest extends TestCase
             ->assertJson(['results' => []]);
     }
 
-    public function test_search_finds_sites(): void
+    public function test_search_defaults_to_pages_scope(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->getJson(route('search', ['q' => 'dash']));
+
+        $response->assertOk();
+
+        $data = $response->json();
+        $this->assertNotEmpty($data['results']);
+        $this->assertTrue(
+            collect($data['results'])->every(
+                fn ($result) => in_array($result['type'], ['page', 'card'], true)
+            ),
+            'Results should only include page or card suggestions for default scope',
+        );
+    }
+
+    public function test_search_finds_cards_by_keyword(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->getJson(route('search', ['q' => 'seo']));
+
+        $response->assertOk()
+            ->assertJsonStructure(['results']);
+
+        $this->assertTrue(
+            collect($response->json('results'))->contains(
+                fn ($result) => $result['type'] === 'card' && $result['label'] === 'SEO Performance'
+            ),
+        );
+    }
+
+    public function test_search_finds_sites_when_scoped(): void
     {
         $user = User::factory()->create();
         Site::factory()->create(['name' => 'Test Site', 'url' => 'https://test.com']);
 
-        $response = $this->actingAs($user)->getJson(route('search', ['q' => 'Test']));
+        $response = $this->actingAs($user)->getJson(route('search', ['q' => 'Test', 'scope' => 'sites']));
 
         $response->assertOk()
             ->assertJsonStructure(['results']);
@@ -50,12 +84,12 @@ class SearchControllerTest extends TestCase
         );
     }
 
-    public function test_search_finds_clients(): void
+    public function test_search_finds_clients_when_scoped(): void
     {
         $user = User::factory()->create();
         Client::factory()->create(['name' => 'Test Client', 'company' => 'Test Company']);
 
-        $response = $this->actingAs($user)->getJson(route('search', ['q' => 'Test']));
+        $response = $this->actingAs($user)->getJson(route('search', ['q' => 'Test', 'scope' => 'clients']));
 
         $response->assertOk();
 
@@ -65,12 +99,12 @@ class SearchControllerTest extends TestCase
         );
     }
 
-    public function test_search_finds_alerts(): void
+    public function test_search_finds_alerts_when_scoped(): void
     {
         $user = User::factory()->create();
         Alert::factory()->create(['title' => 'Test Alert', 'message' => 'Test message']);
 
-        $response = $this->actingAs($user)->getJson(route('search', ['q' => 'Test']));
+        $response = $this->actingAs($user)->getJson(route('search', ['q' => 'Test', 'scope' => 'alerts']));
 
         $response->assertOk();
 
@@ -80,12 +114,12 @@ class SearchControllerTest extends TestCase
         );
     }
 
-    public function test_search_finds_tasks(): void
+    public function test_search_finds_tasks_when_scoped(): void
     {
         $user = User::factory()->create();
         Task::factory()->create(['title' => 'Test Task', 'description' => 'Test description']);
 
-        $response = $this->actingAs($user)->getJson(route('search', ['q' => 'Test']));
+        $response = $this->actingAs($user)->getJson(route('search', ['q' => 'Test', 'scope' => 'tasks']));
 
         $response->assertOk();
 
@@ -116,12 +150,27 @@ class SearchControllerTest extends TestCase
         $user = User::factory()->create();
         Site::factory()->count(30)->create(['name' => 'Test Site']);
 
-        $response = $this->actingAs($user)->getJson(route('search', ['q' => 'Test']));
+        $response = $this->actingAs($user)->getJson(route('search', ['q' => 'Test', 'scope' => 'sites']));
 
         $response->assertOk();
 
         $data = $response->json();
         $this->assertLessThanOrEqual(20, count($data['results']));
+    }
+
+    public function test_invalid_scope_falls_back_to_pages(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->getJson(route('search', ['q' => 'team', 'scope' => 'unknown']));
+
+        $response->assertOk();
+
+        $this->assertTrue(
+            collect($response->json('results'))->every(
+                fn ($result) => in_array($result['type'], ['page', 'card'], true)
+            ),
+        );
     }
 }
 

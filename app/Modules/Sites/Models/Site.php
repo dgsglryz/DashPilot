@@ -129,28 +129,8 @@ class Site extends Model
      */
     protected function wpApiKey(): Attribute
     {
-        return $this->lenientEncryptedAttribute('wp_api_key');
-    }
-
-    /**
-     * Provide lenient encryption handling for the Shopify access token.
-     */
-    protected function shopifyAccessToken(): Attribute
-    {
-        return $this->lenientEncryptedAttribute('shopify_access_token');
-    }
-
-    /**
-     * Build an attribute accessor/mutator that encrypts values while failing gracefully.
-     *
-     * @param string $column
-     *
-     * @return Attribute
-     */
-    private function lenientEncryptedAttribute(string $column): Attribute
-    {
         return Attribute::make(
-            get: function (?string $value) use ($column): ?string {
+            get: function (?string $value): ?string {
                 if (empty($value)) {
                     return null;
                 }
@@ -159,7 +139,46 @@ class Site extends Model
                     return Crypt::decryptString($value);
                 } catch (DecryptException $exception) {
                     Log::warning('Failed to decrypt site credential.', [
-                        'column' => $column,
+                        'column' => 'wp_api_key',
+                        'site_id' => $this->id,
+                        'message' => $exception->getMessage(),
+                    ]);
+
+                    return null;
+                }
+            },
+            set: function (?string $value): ?string {
+                if (empty($value)) {
+                    return null;
+                }
+
+                try {
+                    Crypt::decryptString($value);
+
+                    return $value;
+                } catch (DecryptException) {
+                    return Crypt::encryptString($value);
+                }
+            },
+        );
+    }
+
+    /**
+     * Provide lenient encryption handling for the Shopify access token.
+     */
+    protected function shopifyAccessToken(): Attribute
+    {
+        return Attribute::make(
+            get: function (?string $value): ?string {
+                if (empty($value)) {
+                    return null;
+                }
+
+                try {
+                    return Crypt::decryptString($value);
+                } catch (DecryptException $exception) {
+                    Log::warning('Failed to decrypt site credential.', [
+                        'column' => 'shopify_access_token',
                         'site_id' => $this->id,
                         'message' => $exception->getMessage(),
                     ]);

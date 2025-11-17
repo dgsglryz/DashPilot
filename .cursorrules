@@ -316,7 +316,7 @@ DeliverWebhook::dispatch($webhook, $payload)
 
 **Comments (MANDATORY - ENGLISH ONLY):**
 - ALL comments, documentation, logs, commit messages, and code must be in ENGLISH ONLY
-- NO Turkish, NO other languages - ONLY English
+- NO Turkish, NO other languages - ONLY English, but cursor agent chat should be just in Turkish no english.
 - Every class must have PHPDoc comment explaining purpose (in English)
 - Every public method must have PHPDoc with:
   - Brief description of what it does (in English)

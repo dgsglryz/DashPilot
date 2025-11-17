@@ -6,12 +6,15 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 
 - **Nov 17** – **Workflow polish & reliability fixes**
     - ✅ **Global search relevance** – multi-word queries (e.g., “seo performance”) now trigger the correct shortcuts instead of falling back to Sites.
+    - ✅ **Scoped suggestions** – header search now only suggests dashboard pages + three curated hero cards, while Sites/Clients/Alerts keep their own scoped search experiences via the `/api/search?scope=` parameter.
+    - ✅ **Search UX polish** – clicking outside the dropdown or hitting `Esc` now closes the overlay instantly, and card previews display Unsplash imagery that mirrors the dashboard tiles.
     - ✅ **Team messaging** – CSRF token injected into `app.blade.php` so the “Send message” popup can post without failing.
     - ✅ **Alerts detail modal** – “View details” on the Alerts page opens a centered sheet with severity, metadata, and quick acknowledge/resolve actions.
     - ✅ **Sites quick-create** – `Sites › Add Site` now launches an inline modal with a minimal form (client, name, URL, platform, status) and refreshes the table after creation.
     - ✅ **Site-level reports** – new “Generate Report” button on the site detail hero posts to `/sites/{site}/reports/quick-generate` and opens the download link without leaving the page.
     - ✅ **Report downloads** – the Reports table now uses a direct anchor (`target="_blank"`) so files download reliably instead of routing through Inertia.
     - ✅ **Dashboard navigation** – the “Site Monitoring” stat card links to `sites.index` just like the SEO card links to the metrics module.
+    - ✅ **Redis client fallback** – Predis is bundled and auto-selected when the `redis` PHP extension is missing so resolving alerts can dispatch email/webhook jobs without blowing up.
 - **Nov 16** – **NODE.JS VERSION UPDATE**: Updated to Node.js 20.19+ requirement for Vite 7 compatibility:
     - ✅ **package.json** - Updated engines to require Node.js >=20.19.0 and npm >=10.0.0
     - ✅ **Dockerfile** - Updated to install Node.js 20 LTS via NodeSource repository

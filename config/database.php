@@ -2,6 +2,14 @@
 
 use Illuminate\Support\Str;
 
+$configuredRedisClient = env('REDIS_CLIENT');
+
+if ($configuredRedisClient === null) {
+    $configuredRedisClient = extension_loaded('redis') ? 'phpredis' : 'predis';
+} elseif ($configuredRedisClient === 'phpredis' && ! extension_loaded('redis')) {
+    $configuredRedisClient = 'predis';
+}
+
 return [
 
     /*
@@ -144,7 +152,7 @@ return [
 
     'redis' => [
 
-        'client' => env('REDIS_CLIENT', 'phpredis'),
+        'client' => $configuredRedisClient,
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),

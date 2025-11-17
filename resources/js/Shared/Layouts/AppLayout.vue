@@ -59,10 +59,12 @@ type SearchResult = {
     params?: Record<string, string | number>;
     icon?: string;
     badge?: string;
+    preview?: string;
 };
 
 const searchResults = ref<SearchResult[]>([]);
 const isSearching = ref(false);
+const searchContainer = ref<HTMLElement | null>(null);
 
 /**
  * Recent viewed items from localStorage
@@ -163,7 +165,7 @@ const performSearch = useDebounceFn(async (query: string) => {
     isSearching.value = true;
     try {
         const response = await axios.get(route("search"), {
-            params: { q: query },
+            params: { q: query, scope: "pages" },
         });
         searchResults.value = response.data.results || [];
     } catch (error) {
@@ -188,9 +190,16 @@ watch(searchQuery, (newQuery) => {
 /**
  * Search suggestions from backend results
  */
-const searchSuggestions = computed(() => {
-    return searchResults.value;
-});
+const searchSuggestions = computed(() => searchResults.value);
+const cardSuggestions = computed(() =>
+    searchSuggestions.value.filter((item) => item.type === "card"),
+);
+const pageSuggestions = computed(() =>
+    searchSuggestions.value.filter((item) => item.type === "page"),
+);
+const hasSuggestions = computed(
+    () => cardSuggestions.value.length > 0 || pageSuggestions.value.length > 0,
+);
 
 const showSuggestions = ref(false);
 
@@ -215,8 +224,7 @@ const handleSearch = (): void => {
             });
         }
     } else {
-        // Default to sites page with search query
-        router.visit(route("sites.index", { query: searchQuery.value }), {
+        router.visit(route("dashboard"), {
             preserveState: false,
             preserveScroll: false,
         });
@@ -254,6 +262,26 @@ const handleSearchBlur = (): void => {
     setTimeout(() => {
         showSuggestions.value = false;
     }, 200);
+};
+
+const handleSearchFocus = (): void => {
+    if (hasSuggestions.value) {
+        showSuggestions.value = true;
+    }
+};
+
+const closeSuggestions = (): void => {
+    showSuggestions.value = false;
+};
+
+const handleClickOutside = (event: MouseEvent): void => {
+    if (!searchContainer.value) {
+        return;
+    }
+
+    if (!searchContainer.value.contains(event.target as Node)) {
+        showSuggestions.value = false;
+    }
 };
 
 /**
@@ -350,10 +378,23 @@ const handleKeyboardShortcuts = (e: KeyboardEvent): void => {
 
 onMounted(() => {
     document.addEventListener("keydown", handleKeyboardShortcuts);
+    document.addEventListener("click", handleClickOutside);
 });
 
 onUnmounted(() => {
     document.removeEventListener("keydown", handleKeyboardShortcuts);
+    document.removeEventListener("click", handleClickOutside);
+});
+
+watch(searchSuggestions, () => {
+    if (hasSuggestions.value && searchQuery.value.trim().length >= 2) {
+        showSuggestions.value = true;
+        return;
+    }
+
+    if (!hasSuggestions.value) {
+        showSuggestions.value = false;
+    }
 });
 </script>
 
@@ -471,7 +512,7 @@ onUnmounted(() => {
                 </button>
 
                 <div class="hidden flex-1 lg:block">
-                    <div class="relative">
+                    <div class="relative" ref="searchContainer">
                         <MagnifyingGlassIcon
                             class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
                         />
@@ -480,8 +521,9 @@ onUnmounted(() => {
                             type="text"
                             placeholder="Search sites, alerts, reports..."
                             @keydown.enter="handleSearch"
-                            @focus="showSuggestions = true"
+                            @focus="handleSearchFocus"
                             @blur="handleSearchBlur"
+                            @keydown.escape.prevent="closeSuggestions"
                             class="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-20 text-sm text-white placeholder:text-gray-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <kbd
@@ -492,11 +534,8 @@ onUnmounted(() => {
 
                         <!-- Search Suggestions Dropdown -->
                         <div
-                            v-if="
-                                showSuggestions &&
-                                (searchSuggestions.length > 0 || isSearching)
-                            "
-                            class="absolute top-full left-0 right-0 mt-2 rounded-lg border border-gray-700 bg-gray-800 shadow-xl z-50 max-h-96 overflow-y-auto"
+                            v-if="showSuggestions && (hasSuggestions || isSearching)"
+                            class="absolute top-full left-0 right-0 z-50 mt-2 max-h-[28rem] overflow-y-auto rounded-xl border border-gray-700 bg-gray-900/95 shadow-2xl backdrop-blur-md"
                         >
                             <div
                                 v-if="isSearching"
@@ -504,53 +543,100 @@ onUnmounted(() => {
                             >
                                 Searching...
                             </div>
-                            <div
-                                v-else
-                                v-for="(suggestion, index) in searchSuggestions"
-                                :key="`${suggestion.type}-${suggestion.id || index}`"
-                                @mousedown="selectSuggestion(suggestion)"
-                                class="px-4 py-3 hover:bg-gray-700 cursor-pointer transition-colors flex items-center gap-3 border-b border-gray-700/50 last:border-b-0"
-                            >
-                                <component
-                                    :is="
-                                        getIconComponent(
-                                            suggestion.icon ||
-                                                'MagnifyingGlassIcon',
-                                        )
-                                    "
-                                    class="h-5 w-5 text-gray-400 flex-shrink-0"
-                                />
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center gap-2">
-                                        <span
-                                            class="text-white font-medium truncate"
-                                            >{{ suggestion.label }}</span
-                                        >
-                                        <span
-                                            v-if="suggestion.badge"
-                                            class="px-2 py-0.5 text-xs rounded bg-blue-500/20 text-blue-400"
-                                        >
-                                            {{ suggestion.badge }}
-                                        </span>
-                                    </div>
-                                    <p
-                                        v-if="suggestion.subtitle"
-                                        class="text-xs text-gray-400 truncate mt-0.5"
-                                    >
-                                        {{ suggestion.subtitle }}
+                            <template v-else>
+                                <div
+                                    v-if="cardSuggestions.length > 0"
+                                    class="border-b border-gray-800 p-4"
+                                >
+                                    <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                        Key cards
                                     </p>
+                                    <div class="grid gap-3 md:grid-cols-3">
+                                        <button
+                                            v-for="card in cardSuggestions"
+                                            :key="`card-${card.label}`"
+                                            class="group relative overflow-hidden rounded-xl border border-gray-700/80 bg-gray-900/60 text-left transition hover:border-blue-500/60"
+                                            @mousedown.prevent.stop="selectSuggestion(card)"
+                                        >
+                                            <div class="relative h-24">
+                                                <img
+                                                    v-if="card.preview"
+                                                    :src="card.preview"
+                                                    :alt="card.label"
+                                                    class="h-full w-full object-cover opacity-60 transition duration-300 group-hover:scale-105"
+                                                />
+                                                <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/60 to-transparent"></div>
+                                                <div class="absolute inset-0 flex flex-col justify-end p-3">
+                                                    <div class="flex items-center gap-2 text-xs font-semibold uppercase text-gray-400">
+                                                        <component
+                                                            :is="getIconComponent(card.icon || 'MagnifyingGlassIcon')"
+                                                            class="h-4 w-4 text-blue-300"
+                                                        />
+                                                        Quick access
+                                                    </div>
+                                                    <p class="text-sm font-semibold text-white">
+                                                        {{ card.label }}
+                                                    </p>
+                                                    <p class="text-xs text-gray-300">
+                                                        {{ card.subtitle }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div
-                                v-if="
-                                    !isSearching &&
-                                    searchSuggestions.length === 0 &&
-                                    searchQuery.length >= 2
-                                "
-                                class="px-4 py-3 text-center text-gray-400 text-sm"
-                            >
-                                No results found
-                            </div>
+
+                                <div
+                                    v-if="pageSuggestions.length > 0"
+                                    class="divide-y divide-gray-800"
+                                >
+                                    <p class="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                        Pages
+                                    </p>
+                                    <div
+                                        v-for="(suggestion, index) in pageSuggestions"
+                                        :key="`page-${suggestion.id || index}`"
+                                        @mousedown.prevent.stop="selectSuggestion(suggestion)"
+                                        class="flex cursor-pointer items-center gap-3 px-4 py-3 transition hover:bg-gray-800"
+                                    >
+                                        <component
+                                            :is="
+                                                getIconComponent(
+                                                    suggestion.icon ||
+                                                        'MagnifyingGlassIcon',
+                                                )
+                                            "
+                                            class="h-5 w-5 flex-shrink-0 text-gray-400"
+                                        />
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <span class="truncate font-medium text-white">
+                                                    {{ suggestion.label }}
+                                                </span>
+                                                <span
+                                                    v-if="suggestion.badge"
+                                                    class="rounded bg-blue-500/20 px-2 py-0.5 text-xs text-blue-300"
+                                                >
+                                                    {{ suggestion.badge }}
+                                                </span>
+                                            </div>
+                                            <p
+                                                v-if="suggestion.subtitle"
+                                                class="mt-0.5 truncate text-xs text-gray-400"
+                                            >
+                                                {{ suggestion.subtitle }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    v-if="!cardSuggestions.length && !pageSuggestions.length && searchQuery.length >= 2"
+                                    class="px-4 py-3 text-center text-sm text-gray-400"
+                                >
+                                    No results found
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </div>
