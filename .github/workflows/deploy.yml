@@ -1,9 +1,12 @@
 name: Deploy to Production
 
+# Temporarily disabled - will enable when ready for production deployment
+# on:
+#   push:
+#     branches: ["main"]
+#   workflow_dispatch:
 on:
-  push:
-    branches: ["main"]
-  workflow_dispatch:
+  workflow_dispatch:  # Only manual trigger for now
 
 env:
   APP_ENV: production
