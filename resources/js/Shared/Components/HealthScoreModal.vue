@@ -25,6 +25,11 @@ withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
     close: () => void;
 }>();
+
+// Wrapper function for emit to satisfy TypeScript
+const handleClose = (): void => {
+    (emit as (event: 'close') => void)('close');
+};
 </script>
 
 <template>
@@ -39,7 +44,7 @@ const emit = defineEmits<{
         <div
             v-if="isOpen"
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-            @click.self="emit('close')"
+            @click.self="handleClose"
         >
             <div
                 class="relative w-full max-w-2xl rounded-xl border border-gray-700 bg-gray-800 p-6 shadow-2xl"
@@ -58,7 +63,7 @@ const emit = defineEmits<{
                         </div>
                     </div>
                     <button
-                        @click="emit('close')"
+                        @click="handleClose"
                         class="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-700 hover:text-white"
                     >
                         <XMarkIcon class="h-5 w-5" />
@@ -132,7 +137,7 @@ const emit = defineEmits<{
                 <!-- Footer -->
                 <div class="mt-6 flex justify-end">
                     <button
-                        @click="emit('close')"
+                        @click="handleClose"
                         class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
                     >
                         Close

@@ -40,6 +40,11 @@ const emit = defineEmits<{
 const toast = useToast();
 const isOpen = ref(false);
 
+// Wrapper function for emit to satisfy TypeScript
+const handleFavoriteToggled = (): void => {
+    (emit as (event: 'favorite-toggled') => void)('favorite-toggled');
+};
+
 const actions = computed<Action[]>(() => [
     {
         label: 'Run health check now',
@@ -91,7 +96,7 @@ const actions = computed<Action[]>(() => [
                             ? 'Removed from favorites'
                             : 'Added to favorites',
                     );
-                    emit('favorite-toggled');
+                    handleFavoriteToggled();
                     isOpen.value = false;
                 },
             });
