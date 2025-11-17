@@ -86,10 +86,10 @@ const eventsByDay = computed(() => {
     const source: ScheduledCheck[] =
         props.scheduledChecks.length > 0 ? props.scheduledChecks : fallbackEvents;
 
-    source.forEach((event) => {
+    for (const event of source) {
         const date = new Date(event.date);
         if (date.getFullYear() !== targetYear || date.getMonth() !== targetMonth) {
-            return;
+            continue;
         }
 
         const day = date.getDate();
@@ -98,7 +98,7 @@ const eventsByDay = computed(() => {
         }
 
         map.get(day)?.push(event);
-    });
+    }
 
     return map;
 });

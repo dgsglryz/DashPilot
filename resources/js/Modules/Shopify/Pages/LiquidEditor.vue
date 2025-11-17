@@ -186,7 +186,7 @@ const hasChanges = computed(() => {
 const loadSiteTheme = async () => {
   if (!selectedSiteId.value) return
 
-  const response = await window.axios.get(`/shopify/editor/${selectedSiteId.value}/files`)
+  const response = await globalThis.axios.get(`/shopify/editor/${selectedSiteId.value}/files`)
   themeFiles.value = response.data.files
 }
 
@@ -206,12 +206,12 @@ const selectFile = (file) => {
   selectedFile.value = file
   
   // Add to open tabs if not already open
-  if (!openTabs.value.find(t => t.path === file.path)) {
+  if (!openTabs.value.some(t => t.path === file.path)) {
     openTabs.value.push(file)
   }
   
   // Load file content
-  window.axios
+  globalThis.axios
     .get(`/shopify/editor/${selectedSiteId.value}/file`, { params: { path: file.path } })
     .then(({ data }) => {
       editorContent.value = data.content || ''
@@ -277,7 +277,7 @@ const saveTemplate = () => {
   
   saving.value = true
 
-  window.axios
+  globalThis.axios
     .post(`/shopify/editor/${selectedSiteId.value}/save`, {
       path: selectedFile.value.path,
       content: editorContent.value
@@ -303,7 +303,7 @@ const insertSnippet = (snippet) => {
  * @param {Object} snippet - New snippet object
  */
 const saveCustomSnippet = (snippet) => {
-  window.axios.post('/shopify/snippets', snippet).then(() => {
+  globalThis.axios.post('/shopify/snippets', snippet).then(() => {
     showSnippets.value = false
   })
 }
