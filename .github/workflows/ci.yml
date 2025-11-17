@@ -89,7 +89,7 @@ jobs:
 
   sonarcloud:
     name: SonarCloud Scan
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
