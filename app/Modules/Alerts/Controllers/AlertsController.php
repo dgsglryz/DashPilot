@@ -23,6 +23,8 @@ class AlertsController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Alert::class);
+        
         $perPage = $request->integer('per_page', 20);
         $user = $request->user();
         
@@ -76,9 +78,22 @@ class AlertsController extends Controller
     /**
      * Mark every unread alert as read.
      */
-    public function markAllRead(): RedirectResponse
+    public function markAllRead(Request $request): RedirectResponse
     {
-        Alert::where('is_read', false)->update(['is_read' => true]);
+        $this->authorize('viewAny', Alert::class);
+        
+        $user = $request->user();
+        
+        // Scope to user's assigned clients (admin sees all)
+        $query = Alert::where('is_read', false);
+        
+        if ($user->role !== 'admin') {
+            $query->whereHas('site.client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
+        
+        $query->update(['is_read' => true]);
 
         return back()->with('success', 'All alerts marked as read.');
     }
@@ -137,13 +152,20 @@ class AlertsController extends Controller
      */
     public function export(Request $request): StreamedResponse
     {
+        $this->authorize('viewAny', Alert::class);
+        
+        $user = $request->user();
+        
         // Filter alerts to only show those for sites belonging to user's assigned clients
         $query = Alert::with(['site:id,name', 'resolver:id,name', 'acknowledger:id,name'])
-            ->whereHas('site.client', function ($q) use ($request) {
-                $q->where('assigned_developer_id', $request->user()->id);
-            })
             ->where('created_at', '>=', now()->subDays(30))
             ->latest('created_at');
+        
+        if ($user->role !== 'admin') {
+            $query->whereHas('site.client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
 
         $filename = 'alerts_'.now()->format('Y-m-d_His').'.csv';
 

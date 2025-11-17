@@ -8,6 +8,7 @@ use App\Modules\Activity\Models\ActivityLog;
 use App\Modules\Sites\Models\Site;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -27,7 +28,17 @@ class ActivityController extends Controller
      */
     public function index(Request $request): Response
     {
+        // Authorization: Users can view activity for their assigned clients
+        $user = $request->user();
+        
         $query = $this->filteredActivityQuery($request, ['site:id,name,url,thumbnail_url', 'user:id,name,email']);
+        
+        // Scope to user's assigned clients (admin sees all)
+        if ($user->role !== 'admin') {
+            $query->whereHas('site.client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
 
         $activities = $query->paginate(20)->through(function (ActivityLog $log) {
             return [
@@ -50,14 +61,29 @@ class ActivityController extends Controller
             ];
         });
 
+        // Scope stats to user's assigned clients
+        $statsQuery = ActivityLog::query();
+        if ($user->role !== 'admin') {
+            $statsQuery->whereHas('site.client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
+        
         $stats = [
-            'total' => ActivityLog::count(),
-            'today' => ActivityLog::whereDate('created_at', today())->count(),
-            'thisWeek' => ActivityLog::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-            'thisMonth' => ActivityLog::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+            'total' => (clone $statsQuery)->count(),
+            'today' => (clone $statsQuery)->whereDate('created_at', today())->count(),
+            'thisWeek' => (clone $statsQuery)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+            'thisMonth' => (clone $statsQuery)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
         ];
 
-        $sites = Site::orderBy('name')->get(['id', 'name']);
+        // Scope sites to user's assigned clients
+        $sitesQuery = Site::query();
+        if ($user->role !== 'admin') {
+            $sitesQuery->whereHas('client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
+        $sites = $sitesQuery->orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('Activity/Pages/Index', [
             'activities' => $activities,
@@ -81,7 +107,16 @@ class ActivityController extends Controller
      */
     public function export(Request $request): StreamedResponse
     {
+        $user = $request->user();
+        
         $query = $this->filteredActivityQuery($request, ['site:id,name,url', 'user:id,name,email']);
+        
+        // Scope to user's assigned clients (admin sees all)
+        if ($user->role !== 'admin') {
+            $query->whereHas('site.client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
 
         $filename = 'activity_logs_'.now()->format('Y-m-d_His').'.csv';
 

@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Providers;
 
@@ -54,9 +55,8 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
     protected function gate(): void
     {
         Gate::define('viewTelescope', function ($user) {
-            return in_array($user->email, [
-                //
-            ]);
+            // Only allow admin users to access Telescope in non-local environments
+            return $user->role === 'admin';
         });
     }
 }

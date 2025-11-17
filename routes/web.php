@@ -43,12 +43,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/alerts', [AlertsController::class, 'index'])->name('alerts.index');
     Route::get('/alerts/export', [AlertsController::class, 'export'])->name('alerts.export');
-    Route::post('/alerts/mark-all-read', [AlertsController::class, 'markAllRead'])->name('alerts.markAllRead');
+    Route::post('/alerts/mark-all-read', [AlertsController::class, 'markAllRead'])->middleware('throttle:20,1')->name('alerts.markAllRead');
     Route::post('/alerts/{alert}/acknowledge', [AlertsController::class, 'acknowledge'])->name('alerts.acknowledge');
     Route::post('/alerts/{alert}/resolve', [AlertsController::class, 'resolve'])->name('alerts.resolve');
 
     Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
-    Route::post('/reports/generate', [ReportsController::class, 'generate'])->name('reports.generate');
+    Route::post('/reports/generate', [ReportsController::class, 'generate'])->middleware('throttle:10,1')->name('reports.generate');
     Route::get('/reports/{report}/download', [ReportsController::class, 'download'])->name('reports.download');
     Route::delete('/reports/{report}', [ReportsController::class, 'destroy'])->name('reports.destroy');
     Route::post('/sites/{site}/reports/quick-generate', [ReportsController::class, 'generateForSite'])->name('sites.reports.generate');
@@ -59,7 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('messages')->name('messages.')->group(function () {
         Route::get('/conversation/{user}', [MessagesController::class, 'getConversation'])->name('conversation');
-        Route::post('/send', [MessagesController::class, 'send'])->name('send');
+        Route::post('/send', [MessagesController::class, 'send'])->middleware('throttle:30,1')->name('send');
         Route::get('/unread-count', [MessagesController::class, 'unreadCount'])->name('unread-count');
         Route::get('/conversations', [MessagesController::class, 'conversations'])->name('conversations');
     });
@@ -102,6 +102,6 @@ Route::middleware('auth')->group(function () {
 });
 
 // Frontend error logging endpoint (no auth required for error reporting)
-Route::post('/api/log-frontend-error', [\App\Http\Controllers\Api\FrontendErrorLogController::class, 'store'])->name('api.log-frontend-error');
+Route::post('/api/log-frontend-error', [\App\Http\Controllers\Api\FrontendErrorLogController::class, 'store'])->middleware('throttle:60,1')->name('api.log-frontend-error');
 
 require __DIR__.'/auth.php';

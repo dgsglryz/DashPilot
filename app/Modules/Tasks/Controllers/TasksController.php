@@ -34,7 +34,23 @@ class TasksController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Task::class);
+        
+        $user = $request->user();
         $query = Task::query()->with(['assignee:id,name,email', 'site:id,name', 'client:id,name']);
+        
+        // Scope to user's assigned clients (admin sees all)
+        if ($user->role !== 'admin') {
+            $query->where(function ($q) use ($user) {
+                $q->where('assigned_to', $user->id)
+                    ->orWhereHas('client', function ($clientQ) use ($user) {
+                        $clientQ->where('assigned_developer_id', $user->id);
+                    })
+                    ->orWhereHas('site.client', function ($siteQ) use ($user) {
+                        $siteQ->where('assigned_developer_id', $user->id);
+                    });
+            });
+        }
 
         // Filter by status
         if ($request->filled('status') && $request->string('status')->toString() !== 'all') {
@@ -101,6 +117,8 @@ class TasksController extends Controller
      */
     public function create(): Response
     {
+        $this->authorize('create', Task::class);
+        
         $lookups = $this->taskViewService->lookups();
 
         return Inertia::render('Tasks/Pages/Create', [
@@ -120,6 +138,8 @@ class TasksController extends Controller
      */
     public function store(StoreTaskRequest $request): RedirectResponse
     {
+        $this->authorize('create', Task::class);
+        
         $task = Task::create($request->validated());
 
         // Mark as completed if status is completed
@@ -147,6 +167,8 @@ class TasksController extends Controller
      */
     public function show(Task $task): Response
     {
+        $this->authorize('view', $task);
+        
         $task->load(['assignee:id,name,email', 'site:id,name', 'client:id,name']);
 
         return Inertia::render('Tasks/Pages/Show', [
@@ -163,6 +185,8 @@ class TasksController extends Controller
      */
     public function edit(Task $task): Response
     {
+        $this->authorize('update', $task);
+        
         $task->load(['assignee:id,name,email', 'site:id,name', 'client:id,name']);
 
         $lookups = $this->taskViewService->lookups();
@@ -196,6 +220,8 @@ class TasksController extends Controller
      */
     public function update(UpdateTaskRequest $request, Task $task): RedirectResponse
     {
+        $this->authorize('update', $task);
+        
         $oldStatus = $task->status;
         $task->update($request->validated());
 
@@ -228,6 +254,8 @@ class TasksController extends Controller
      */
     public function updateStatus(Request $request, Task $task): RedirectResponse
     {
+        $this->authorize('update', $task);
+        
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:pending,in_progress,completed,cancelled'],
         ]);
@@ -263,6 +291,8 @@ class TasksController extends Controller
      */
     public function destroy(Request $request, Task $task): RedirectResponse
     {
+        $this->authorize('delete', $task);
+        
         $taskTitle = $task->title;
         $previousStatus = $task->status;
 
@@ -290,6 +320,10 @@ class TasksController extends Controller
      */
     public function getUserTasks(User $user): \Illuminate\Http\JsonResponse
     {
+        // Only allow viewing own tasks or if admin
+        $currentUser = auth()->user();
+        abort_unless($currentUser->id === $user->id || $currentUser->role === 'admin', 403);
+        
         $taskCollection = Task::where('assigned_to', $user->id)
             ->with(['site:id,name', 'client:id,name'])
             ->orderBy('created_at', 'desc')

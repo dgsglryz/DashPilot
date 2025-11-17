@@ -5,6 +5,7 @@ namespace App\Modules\Dashboard\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Dashboard\Services\DashboardDataService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,20 +18,22 @@ class DashboardController extends Controller
     {
     }
 
-    public function __invoke(): Response
+    public function __invoke(Request $request): Response
     {
+        $user = $request->user();
+        
         return Inertia::render('Dashboard/Pages/Index', [
-            'stats' => $this->dashboardData->stats(),
-            'recentAlerts' => $this->dashboardData->recentAlerts(),
+            'stats' => $this->dashboardData->stats($user),
+            'recentAlerts' => $this->dashboardData->recentAlerts($user),
             'scheduledChecks' => $this->dashboardData->scheduledChecks(),
-            'featuredSites' => $this->dashboardData->featuredSites(),
-            'favoritedSites' => $this->dashboardData->favoritedSites(),
-            'activities' => $this->dashboardData->activities(),
+            'featuredSites' => $this->dashboardData->featuredSites($user),
+            'favoritedSites' => $this->dashboardData->favoritedSites($user),
+            'activities' => $this->dashboardData->activities($user),
             'chartData' => [
-                'sitesByStatus' => $this->dashboardData->sitesByStatus(),
-                'alertFrequency' => $this->dashboardData->alertFrequency(),
-                'uptimeTrend' => $this->dashboardData->uptimeTrend(),
-                'topProblematicSites' => $this->dashboardData->topProblematicSites(),
+                'sitesByStatus' => $this->dashboardData->sitesByStatus($user),
+                'alertFrequency' => $this->dashboardData->alertFrequency($user),
+                'uptimeTrend' => $this->dashboardData->uptimeTrend($user),
+                'topProblematicSites' => $this->dashboardData->topProblematicSites($user),
             ],
         ]);
     }

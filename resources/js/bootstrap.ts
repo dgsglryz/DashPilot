@@ -31,7 +31,9 @@ globalThis.axios.interceptors.response.use(
                     });
                 } catch (e) {
                     // Silently fail - don't log logging errors
-                    console.error('Failed to log HTTP error:', e);
+                    if (import.meta.env.DEV) {
+                        console.error('Failed to log HTTP error:', e);
+                    }
                 }
             }
         }

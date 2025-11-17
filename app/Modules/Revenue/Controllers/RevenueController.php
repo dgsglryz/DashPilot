@@ -17,11 +17,20 @@ class RevenueController extends Controller
     /**
      * Display revenue overview and analytics.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $shopifySites = Site::whereIn('type', ['shopify', 'woocommerce'])
-            ->orderBy('name')
-            ->get();
+        $user = $request->user();
+        
+        $query = Site::whereIn('type', ['shopify', 'woocommerce']);
+        
+        // Scope to user's assigned clients (admin sees all)
+        if ($user->role !== 'admin') {
+            $query->whereHas('client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
+        
+        $shopifySites = $query->orderBy('name')->get();
 
         // Calculate revenue metrics
         $totalRevenue = $this->estimateTotalRevenue($shopifySites);

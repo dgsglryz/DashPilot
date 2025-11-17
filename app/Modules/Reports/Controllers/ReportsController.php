@@ -24,6 +24,8 @@ class ReportsController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Report::class);
+        
         // Admin users see all sites, others see only their assigned clients
         $user = $request->user();
         $sitesQuery = Site::query();
@@ -48,6 +50,8 @@ class ReportsController extends Controller
      */
     public function generate(Request $request, ReportGeneratorService $generator): RedirectResponse
     {
+        $this->authorize('create', Report::class);
+        
         $validated = $request->validate([
             'templateId' => ['required', 'integer'],
             'startDate' => ['required', 'date'],

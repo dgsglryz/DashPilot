@@ -24,6 +24,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/database/*.sqlite
 
 # Test results and reports (should not be committed)
 /test-results/
@@ -36,3 +37,6 @@ coverage.xml
 *.md
 !README.md
 !tests/e2e/README.md
+
+# Cursor rules (personal development configuration)
+.cursorrules

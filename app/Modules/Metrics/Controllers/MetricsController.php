@@ -24,9 +24,15 @@ class MetricsController extends Controller
      */
     public function index(Request $request): Response
     {
+        $user = $request->user();
         $timeRange = $request->string('time_range')->value() ?? '7d';
+        
+        // Scope metrics to user's assigned clients (admin sees all)
+        $cacheKey = $user->role === 'admin' 
+            ? "metrics:{$timeRange}" 
+            : "metrics:{$timeRange}:user:{$user->id}";
 
-        $metrics = Cache::remember("metrics:{$timeRange}", 300, fn () => $this->metricsAggregator->buildMetrics($timeRange));
+        $metrics = Cache::remember($cacheKey, 300, fn () => $this->metricsAggregator->buildMetrics($timeRange, $user));
 
         return Inertia::render('Metrics/Pages/Index', [
             'metrics' => $metrics,

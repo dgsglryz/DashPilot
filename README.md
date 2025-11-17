@@ -85,7 +85,9 @@ Built for web agencies managing large WordPress and Shopify portfolios. DashPilo
 |                    | Shopify REST/GraphQL | Orders/products/analytics     |
 | **Infrastructure** | Docker Compose       | Multi-container stack         |
 |                    | GitHub Actions       | CI/CD pipeline                |
-| **Dev Tools**      | v0.dev               | AI-powered UI design          |
+| **Dev Tools**      | Cursor               | AI-powered IDE                |
+|                    | Claude               | AI assistant                  |
+|                    | v0.dev               | AI-powered UI design          |
 |                    | What The Diff        | AI-powered code review        |
 |                    | SonarCloud           | Code quality + security       |
 
@@ -103,7 +105,7 @@ Built for web agencies managing large WordPress and Shopify portfolios. DashPilo
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/dogusguleryuz/DashPilot.git
+git clone https://github.com/dgsglryz/DashPilot.git
 cd DashPilot
 
 # 2. Copy environment file
@@ -220,29 +222,7 @@ npm run test:e2e
 
 ## 🚢 Deployment
 
-### Production Checklist
-
-```bash
-# Configure environment
-cp .env.example .env.production
-# Set APP_ENV=production, APP_DEBUG=false, database/redis creds
-
-# Install optimized dependencies
-composer install --no-dev --optimize-autoloader
-npm ci --production
-npm run build
-
-# Optimize Laravel caches
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-
-# Run migrations
-php artisan migrate --force
-
-# Start queue workers (Supervisor)
-php artisan queue:work --queue=health-checks,emails,webhooks --tries=3
-```
+This project is configured for local development using Docker Compose. For production deployment, refer to Laravel's official deployment documentation and configure your hosting environment accordingly.
 
 ---
 
@@ -414,6 +394,7 @@ Released under the [MIT License](LICENSE).
 
 - Laravel, Vue, Inertia, and Tailwind communities
 - Shopify & WordPress ecosystem maintainers
+- Cursor + Claude for AI-powered development
 - v0.dev for AI-powered UI design
 - SonarCloud + GitHub Actions for CI tooling
 - What The Diff for AI-powered code review
@@ -422,5 +403,5 @@ Released under the [MIT License](LICENSE).
 
 ## 📧 Contact & Support
 
-- **Issues**: [GitHub Issues](https://github.com/dogusguleryuz/DashPilot/issues)
-- **Documentation**: https://github.com/dogusguleryuz/DashPilot/wiki
+- **Issues**: [GitHub Issues](https://github.com/dgsglryz/DashPilot/issues)
+- **Documentation**: https://github.com/dgsglryz/DashPilot/wiki

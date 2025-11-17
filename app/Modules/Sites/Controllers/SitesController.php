@@ -42,6 +42,8 @@ class SitesController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Site::class);
+        
         // Admin users see all sites, others see only their assigned clients
         $user = $request->user();
         $query = Site::query()
@@ -205,6 +207,8 @@ class SitesController extends Controller
      */
     public function create(): Response
     {
+        $this->authorize('create', Site::class);
+        
         return Inertia::render('Sites/Pages/Create', [
             'clients' => $this->siteViewService->clientOptions(),
         ]);
@@ -219,6 +223,8 @@ class SitesController extends Controller
      */
     public function store(StoreSiteRequest $request): RedirectResponse
     {
+        $this->authorize('create', Site::class);
+        
         $site = Site::create($request->validated());
 
         ActivityLog::create([
@@ -391,12 +397,17 @@ class SitesController extends Controller
      */
     public function export(Request $request): StreamedResponse|BinaryFileResponse
     {
+        $this->authorize('viewAny', Site::class);
+        
+        $user = $request->user();
+        $query = Site::query()->with('client:id,name');
+        
         // Filter sites to only show those belonging to user's assigned clients
-        $query = Site::query()
-            ->whereHas('client', function ($q) use ($request) {
-                $q->where('assigned_developer_id', $request->user()->id);
-            })
-            ->with('client:id,name');
+        if ($user->role !== 'admin') {
+            $query->whereHas('client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
 
         if ($request->has('ids') && is_array($request->input('ids'))) {
             $ids = array_map('intval', $request->input('ids'));

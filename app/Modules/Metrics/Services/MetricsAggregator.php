@@ -5,6 +5,8 @@ namespace App\Modules\Metrics\Services;
 
 use App\Modules\Monitoring\Models\SiteCheck;
 use App\Modules\Sites\Models\Site;
+use App\Modules\Users\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -19,30 +21,69 @@ class MetricsAggregator
      * Build the full metrics payload for a given time range.
      *
      * @param string $timeRange
+     * @param User|null $user Optional user to scope metrics to their assigned clients
      *
      * @return array<string, mixed>
      */
-    public function buildMetrics(string $timeRange): array
+    public function buildMetrics(string $timeRange, ?User $user = null): array
     {
         $bounds = $this->resolveTimeBounds($timeRange);
 
         return [
-            'averageUptime' => round($this->calculateAverageUptime(), 2),
-            'uptimeTrend' => round($this->calculateUptimeTrend($bounds['start'], $bounds['previous']), 2),
-            'averageResponseTime' => round($this->calculateAverageResponseTime($bounds['start']), 2),
-            'responseTrend' => round($this->calculateResponseTrend($bounds['start'], $bounds['previous']), 2),
-            'totalRequests' => $this->calculateTotalRequests($bounds['start']),
-            'requestsTrend' => round($this->calculateRequestsTrend($bounds['start'], $bounds['previous']), 2),
-            'errorRate' => round($this->calculateErrorRate($bounds['start']), 2),
-            'errorTrend' => round($this->calculateErrorTrend($bounds['start'], $bounds['previous']), 2),
-            'uptimeHistory' => $this->uptimeHistory($bounds['start']),
-            'responseTimeHistory' => $this->responseTimeHistory($bounds['start']),
-            'trafficHistory' => $this->trafficHistory($bounds['start']),
-            'platformDistribution' => $this->platformDistribution(),
-            'topSites' => $this->topSites(),
-            'errorTypes' => $this->errorTypes($bounds['start']),
-            'statusCodes' => $this->statusCodeDistribution($bounds['start']),
+            'averageUptime' => round($this->calculateAverageUptime($user), 2),
+            'uptimeTrend' => round($this->calculateUptimeTrend($bounds['start'], $bounds['previous'], $user), 2),
+            'averageResponseTime' => round($this->calculateAverageResponseTime($bounds['start'], $user), 2),
+            'responseTrend' => round($this->calculateResponseTrend($bounds['start'], $bounds['previous'], $user), 2),
+            'totalRequests' => $this->calculateTotalRequests($bounds['start'], $user),
+            'requestsTrend' => round($this->calculateRequestsTrend($bounds['start'], $bounds['previous'], $user), 2),
+            'errorRate' => round($this->calculateErrorRate($bounds['start'], $user), 2),
+            'errorTrend' => round($this->calculateErrorTrend($bounds['start'], $bounds['previous'], $user), 2),
+            'uptimeHistory' => $this->uptimeHistory($bounds['start'], $user),
+            'responseTimeHistory' => $this->responseTimeHistory($bounds['start'], $user),
+            'trafficHistory' => $this->trafficHistory($bounds['start'], $user),
+            'platformDistribution' => $this->platformDistribution($user),
+            'topSites' => $this->topSites($user),
+            'errorTypes' => $this->errorTypes($bounds['start'], $user),
+            'statusCodes' => $this->statusCodeDistribution($bounds['start'], $user),
         ];
+    }
+    
+    /**
+     * Get scoped site query builder based on user role.
+     *
+     * @param User|null $user
+     * @return Builder
+     */
+    private function scopedSitesQuery(?User $user = null): Builder
+    {
+        $query = Site::query();
+        
+        if ($user && $user->role !== 'admin') {
+            $query->whereHas('client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
+        
+        return $query;
+    }
+    
+    /**
+     * Get scoped site check query builder based on user role.
+     *
+     * @param User|null $user
+     * @return Builder
+     */
+    private function scopedSiteChecksQuery(?User $user = null): Builder
+    {
+        $query = SiteCheck::query();
+        
+        if ($user && $user->role !== 'admin') {
+            $query->whereHas('site.client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
+        
+        return $query;
     }
 
     /**
@@ -66,73 +107,72 @@ class MetricsAggregator
         return compact('start', 'previous');
     }
 
-    private function calculateAverageUptime(): float
+    private function calculateAverageUptime(?User $user = null): float
     {
-        return (float) (Site::avg('uptime_percentage') ?? 0);
+        return (float) ($this->scopedSitesQuery($user)->avg('uptime_percentage') ?? 0);
     }
 
-    private function calculateUptimeTrend(Carbon $currentStart, Carbon $previousStart): float
+    private function calculateUptimeTrend(Carbon $currentStart, Carbon $previousStart, ?User $user = null): float
     {
-        $current = $this->percentageFromChecks($currentStart);
-        $previous = $this->percentageFromChecks($previousStart, $currentStart);
+        $current = $this->percentageFromChecks($currentStart, null, $user);
+        $previous = $this->percentageFromChecks($previousStart, $currentStart, $user);
 
         return $this->trendDelta($current, $previous);
     }
 
-    private function calculateAverageResponseTime(Carbon $start): int
+    private function calculateAverageResponseTime(Carbon $start, ?User $user = null): int
     {
         return (int) round(
-            SiteCheck::where('created_at', '>=', $start)->avg('response_time') ?? 0
+            $this->scopedSiteChecksQuery($user)->where('created_at', '>=', $start)->avg('response_time') ?? 0
         );
     }
 
-    private function calculateResponseTrend(Carbon $currentStart, Carbon $previousStart): float
+    private function calculateResponseTrend(Carbon $currentStart, Carbon $previousStart, ?User $user = null): float
     {
-        $current = $this->calculateAverageResponseTime($currentStart);
-        $previous = $this->calculateAverageResponseTime($previousStart);
+        $current = $this->calculateAverageResponseTime($currentStart, $user);
+        $previous = $this->calculateAverageResponseTime($previousStart, $user);
 
         return $this->trendDelta($previous, $current, invert: true);
     }
 
-    private function calculateTotalRequests(Carbon $start): int
+    private function calculateTotalRequests(Carbon $start, ?User $user = null): int
     {
-        return SiteCheck::where('created_at', '>=', $start)->count();
+        return $this->scopedSiteChecksQuery($user)->where('created_at', '>=', $start)->count();
     }
 
-    private function calculateRequestsTrend(Carbon $currentStart, Carbon $previousStart): float
+    private function calculateRequestsTrend(Carbon $currentStart, Carbon $previousStart, ?User $user = null): float
     {
-        $current = $this->calculateTotalRequests($currentStart);
-        $previous = SiteCheck::whereBetween('created_at', [$previousStart, $currentStart])->count();
+        $current = $this->calculateTotalRequests($currentStart, $user);
+        $previous = $this->scopedSiteChecksQuery($user)->whereBetween('created_at', [$previousStart, $currentStart])->count();
 
         return $this->trendDelta($current, $previous);
     }
 
-    private function calculateErrorRate(Carbon $start): float
+    private function calculateErrorRate(Carbon $start, ?User $user = null): float
     {
-        $total = SiteCheck::where('created_at', '>=', $start)->count();
+        $query = $this->scopedSiteChecksQuery($user)->where('created_at', '>=', $start);
+        $total = $query->count();
 
         if ($total === 0) {
             return 0.0;
         }
 
-        $errors = SiteCheck::where('created_at', '>=', $start)
-            ->where('status', SiteCheck::STATUS_FAIL)
-            ->count();
+        $errors = (clone $query)->where('status', SiteCheck::STATUS_FAIL)->count();
 
         return round(($errors / $total) * 100, 2);
     }
 
-    private function calculateErrorTrend(Carbon $currentStart, Carbon $previousStart): float
+    private function calculateErrorTrend(Carbon $currentStart, Carbon $previousStart, ?User $user = null): float
     {
-        $current = $this->calculateErrorRate($currentStart);
-        $previous = $this->calculateErrorRate($previousStart);
+        $current = $this->calculateErrorRate($currentStart, $user);
+        $previous = $this->calculateErrorRate($previousStart, $user);
 
         return $this->trendDelta($current, $previous);
     }
 
-    private function uptimeHistory(Carbon $start): array
+    private function uptimeHistory(Carbon $start, ?User $user = null): array
     {
-        $records = SiteCheck::where('created_at', '>=', $start)
+        $records = $this->scopedSiteChecksQuery($user)->where('created_at', '>=', $start)
             ->selectRaw('DATE(created_at) as day, AVG(CASE status WHEN ? THEN 100 WHEN ? THEN 85 ELSE 20 END) as uptime', [
                 SiteCheck::STATUS_PASS,
                 SiteCheck::STATUS_WARNING,
@@ -147,9 +187,9 @@ class MetricsAggregator
         ];
     }
 
-    private function responseTimeHistory(Carbon $start): array
+    private function responseTimeHistory(Carbon $start, ?User $user = null): array
     {
-        $records = SiteCheck::where('created_at', '>=', $start)
+        $records = $this->scopedSiteChecksQuery($user)->where('created_at', '>=', $start)
             ->selectRaw('DATE(created_at) as day, AVG(response_time) as avg_response')
             ->groupBy('day')
             ->orderBy('day')
@@ -161,9 +201,9 @@ class MetricsAggregator
         ];
     }
 
-    private function trafficHistory(Carbon $start): array
+    private function trafficHistory(Carbon $start, ?User $user = null): array
     {
-        $records = SiteCheck::where('created_at', '>=', $start)
+        $records = $this->scopedSiteChecksQuery($user)->where('created_at', '>=', $start)
             ->selectRaw('DATE(created_at) as day, COUNT(*) as requests')
             ->groupBy('day')
             ->orderBy('day')
@@ -179,17 +219,19 @@ class MetricsAggregator
         ];
     }
 
-    private function platformDistribution(): array
+    private function platformDistribution(?User $user = null): array
     {
-        return Site::select('type', DB::raw('COUNT(*) as total'))
+        return $this->scopedSitesQuery($user)
+            ->select('type', DB::raw('COUNT(*) as total'))
             ->groupBy('type')
             ->pluck('total', 'type')
             ->all();
     }
 
-    private function topSites(): array
+    private function topSites(?User $user = null): array
     {
-        return Site::orderByDesc('uptime_percentage')
+        return $this->scopedSitesQuery($user)
+            ->orderByDesc('uptime_percentage')
             ->limit(5)
             ->get()
             ->map(function (Site $site) {
@@ -208,9 +250,9 @@ class MetricsAggregator
             ->all();
     }
 
-    private function errorTypes(Carbon $start): array
+    private function errorTypes(Carbon $start, ?User $user = null): array
     {
-        $checks = SiteCheck::where('created_at', '>=', $start)
+        $checks = $this->scopedSiteChecksQuery($user)->where('created_at', '>=', $start)
             ->where('status', SiteCheck::STATUS_FAIL)
             ->get(['check_type']);
 
@@ -227,9 +269,9 @@ class MetricsAggregator
         })->values()->all();
     }
 
-    private function statusCodeDistribution(Carbon $start): array
+    private function statusCodeDistribution(Carbon $start, ?User $user = null): array
     {
-        $codes = SiteCheck::where('created_at', '>=', $start)
+        $codes = $this->scopedSiteChecksQuery($user)->where('created_at', '>=', $start)
             ->get(['details'])
             ->map(fn (SiteCheck $check) => $check->details['http_status'] ?? null)
             ->filter()
@@ -248,9 +290,9 @@ class MetricsAggregator
         return $codes;
     }
 
-    private function percentageFromChecks(Carbon $start, ?Carbon $end = null): float
+    private function percentageFromChecks(Carbon $start, ?Carbon $end = null, ?User $user = null): float
     {
-        $query = SiteCheck::where('created_at', '>=', $start);
+        $query = $this->scopedSiteChecksQuery($user)->where('created_at', '>=', $start);
 
         if ($end !== null) {
             $query->where('created_at', '<', $end);

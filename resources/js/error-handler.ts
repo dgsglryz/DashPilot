@@ -24,7 +24,9 @@ async function logErrorToBackend(payload: ErrorLogPayload): Promise<void> {
         });
     } catch (e) {
         // Silently fail - don't log logging errors
-        console.error('Failed to log error to backend:', e);
+        if (import.meta.env.DEV) {
+            console.error('Failed to log error to backend:', e);
+        }
     }
 }
 

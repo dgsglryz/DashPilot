@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Sites\Requests;
 
+use App\Modules\Clients\Models\Client;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -16,6 +17,22 @@ abstract class BaseSiteRequest extends FormRequest
      */
     public function authorize(): bool
     {
+        $user = $this->user();
+        
+        // Admin can create sites for any client
+        if ($user->role === 'admin') {
+            return true;
+        }
+        
+        // Verify user has access to the client_id they're trying to use
+        if ($this->has('client_id')) {
+            $client = Client::find($this->input('client_id'));
+            
+            // Client must exist and be assigned to the user
+            return $client && $client->assigned_developer_id === $user->id;
+        }
+        
+        // If no client_id provided, allow (validation will catch it)
         return true;
     }
 

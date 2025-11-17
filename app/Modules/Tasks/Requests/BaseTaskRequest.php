@@ -19,7 +19,38 @@ abstract class BaseTaskRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; // Authorization handled elsewhere
+        $user = $this->user();
+        
+        // Admin can create tasks for any client/site
+        if ($user->role === 'admin') {
+            return true;
+        }
+        
+        // Verify user has access to the client_id or site_id they're trying to use
+        if ($this->has('client_id')) {
+            $client = Client::find($this->input('client_id'));
+            if (!$client || $client->assigned_developer_id !== $user->id) {
+                return false;
+            }
+        }
+        
+        if ($this->has('site_id')) {
+            $site = Site::with('client')->find($this->input('site_id'));
+            if (!$site || !$site->client || $site->client->assigned_developer_id !== $user->id) {
+                return false;
+            }
+        }
+        
+        // Verify assigned_to is valid (user can assign to themselves or admin can assign to anyone)
+        if ($this->has('assigned_to')) {
+            $assignedTo = (int) $this->input('assigned_to');
+            if ($assignedTo !== $user->id && $user->role !== 'admin') {
+                // Non-admin users can only assign tasks to themselves
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     /**

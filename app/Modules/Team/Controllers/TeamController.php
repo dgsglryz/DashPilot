@@ -24,6 +24,9 @@ class TeamController extends Controller
      */
     public function index(): Response
     {
+        // Admin-only feature
+        abort_unless(Auth::user()->role === 'admin', 403, 'Only administrators can view team management.');
+        
         $members = User::orderBy('name')->get()->map(function (User $user) {
             return [
                 'id' => $user->id,
@@ -54,6 +57,9 @@ class TeamController extends Controller
      */
     public function invite(Request $request): RedirectResponse
     {
+        // Admin-only feature
+        abort_unless(Auth::user()->role === 'admin', 403, 'Only administrators can invite team members.');
+        
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
@@ -87,6 +93,9 @@ class TeamController extends Controller
      */
     public function destroy(User $user): RedirectResponse
     {
+        // Admin-only feature
+        abort_unless(Auth::user()->role === 'admin', 403, 'Only administrators can remove team members.');
+        
         abort_if($user->id === Auth::id(), 403, 'You cannot remove yourself.');
 
         $user->delete();

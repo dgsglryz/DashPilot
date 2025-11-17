@@ -7,8 +7,10 @@ use App\Modules\Activity\Models\ActivityLog;
 use App\Modules\Alerts\Models\Alert;
 use App\Modules\Reports\Models\Report;
 use App\Modules\Sites\Models\Site;
+use App\Modules\Users\Models\User;
 use App\Shared\Helpers\SiteMediaHelper;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -18,32 +20,110 @@ use Illuminate\Support\Str;
 class DashboardDataService
 {
     /**
+     * Get scoped sites query based on user role.
+     *
+     * @param User|null $user
+     * @return Builder
+     */
+    private function scopedSitesQuery(?User $user = null): Builder
+    {
+        $query = Site::query();
+        
+        if ($user && $user->role !== 'admin') {
+            $query->whereHas('client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
+        
+        return $query;
+    }
+    
+    /**
+     * Get scoped alerts query based on user role.
+     *
+     * @param User|null $user
+     * @return Builder
+     */
+    private function scopedAlertsQuery(?User $user = null): Builder
+    {
+        $query = Alert::query();
+        
+        if ($user && $user->role !== 'admin') {
+            $query->whereHas('site.client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
+        
+        return $query;
+    }
+    
+    /**
+     * Get scoped activity logs query based on user role.
+     *
+     * @param User|null $user
+     * @return Builder
+     */
+    private function scopedActivityQuery(?User $user = null): Builder
+    {
+        $query = ActivityLog::query();
+        
+        if ($user && $user->role !== 'admin') {
+            $query->whereHas('site.client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
+        
+        return $query;
+    }
+    
+    /**
      * Build aggregate stats block with lightweight caching.
      */
-    public function stats(): array
+    public function stats(?User $user = null): array
     {
-        return Cache::remember('dashboard:stats', 60, function (): array {
-            $totalSites = Site::count();
-            $healthySites = Site::where('status', 'healthy')->count();
-            $avgUptime = round((float) (Report::avg('uptime_percentage') ?? 99.2), 2);
+        $cacheKey = $user && $user->role === 'admin' 
+            ? 'dashboard:stats' 
+            : "dashboard:stats:user:{$user->id}";
+            
+        return Cache::remember($cacheKey, 60, function () use ($user): array {
+            $sitesQuery = $this->scopedSitesQuery($user);
+            $totalSites = $sitesQuery->count();
+            $healthySites = (clone $sitesQuery)->where('status', 'healthy')->count();
+            $warningSites = (clone $sitesQuery)->where('status', 'warning')->count();
+            
+            // Scope reports query
+            $reportsQuery = Report::query();
+            if ($user && $user->role !== 'admin') {
+                $reportsQuery->whereHas('site.client', function ($q) use ($user) {
+                    $q->where('assigned_developer_id', $user->id);
+                });
+            }
+            $avgUptime = round((float) ($reportsQuery->avg('uptime_percentage') ?? 99.2), 2);
+            
+            $alertsQuery = $this->scopedAlertsQuery($user);
+            $criticalAlerts = (clone $alertsQuery)->where('is_resolved', false)->count();
+            
+            $activityQuery = $this->scopedActivityQuery($user);
+            $activitiesToday = (clone $activityQuery)->whereDate('created_at', Carbon::today())->count();
 
             return [
                 'totalSites' => $totalSites,
                 'activeSites' => $healthySites,
                 'healthySites' => $healthySites,
-                'criticalAlerts' => Alert::where('is_resolved', false)->count(),
+                'criticalAlerts' => $criticalAlerts,
                 'avgUptime' => $avgUptime,
                 'totalRevenue' => $this->estimateRevenue($totalSites, $avgUptime),
-                'avgSeoScore' => (int) round(Site::avg('health_score') ?: 82),
-                'activitiesToday' => ActivityLog::whereDate('created_at', Carbon::today())->count(),
-                'warningSites' => Site::where('status', 'warning')->count(),
+                'avgSeoScore' => (int) round($sitesQuery->avg('health_score') ?: 82),
+                'activitiesToday' => $activitiesToday,
+                'warningSites' => $warningSites,
             ];
         });
     }
 
-    public function recentAlerts(): array
+    public function recentAlerts(?User $user = null): array
     {
-        return Alert::latest('created_at')
+        return $this->scopedAlertsQuery($user)
+            ->latest('created_at')
             ->take(5)
             ->get(['id', 'type', 'severity', 'message', 'created_at'])
             ->map(fn (Alert $alert): array => [
@@ -91,9 +171,9 @@ class DashboardDataService
         ];
     }
 
-    public function featuredSites(): array
+    public function featuredSites(?User $user = null): array
     {
-        return Site::query()
+        return $this->scopedSitesQuery($user)
             ->orderByDesc('health_score')
             ->limit(6)
             ->get(['id', 'name', 'status', 'type', 'region', 'thumbnail_url', 'logo_url', 'uptime_percentage'])
@@ -110,9 +190,9 @@ class DashboardDataService
             ->all();
     }
 
-    public function favoritedSites(): array
+    public function favoritedSites(?User $user = null): array
     {
-        return Site::query()
+        return $this->scopedSitesQuery($user)
             ->where('is_favorited', true)
             ->orderByDesc('health_score')
             ->limit(6)
@@ -131,36 +211,48 @@ class DashboardDataService
             ->all();
     }
 
-    public function sitesByStatus(): array
+    public function sitesByStatus(?User $user = null): array
     {
+        $query = $this->scopedSitesQuery($user);
+        
         return [
-            'healthy' => Site::where('status', 'healthy')->count(),
-            'warning' => Site::where('status', 'warning')->count(),
-            'critical' => Site::where('status', 'critical')->count(),
-            'offline' => Site::where('status', 'offline')->count(),
+            'healthy' => (clone $query)->where('status', 'healthy')->count(),
+            'warning' => (clone $query)->where('status', 'warning')->count(),
+            'critical' => (clone $query)->where('status', 'critical')->count(),
+            'offline' => (clone $query)->where('status', 'offline')->count(),
         ];
     }
 
-    public function alertFrequency(): array
+    public function alertFrequency(?User $user = null): array
     {
         $days = [];
+        $alertsQuery = $this->scopedAlertsQuery($user);
+        
         for ($i = 29; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
             $days[] = [
                 'date' => $date->format('M d'),
-                'count' => Alert::whereDate('created_at', $date->toDateString())->count(),
+                'count' => (clone $alertsQuery)->whereDate('created_at', $date->toDateString())->count(),
             ];
         }
 
         return $days;
     }
 
-    public function uptimeTrend(): array
+    public function uptimeTrend(?User $user = null): array
     {
         $days = [];
+        $reportsQuery = Report::query();
+        
+        if ($user && $user->role !== 'admin') {
+            $reportsQuery->whereHas('site.client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
+        
         for ($i = 29; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
-            $avgUptime = (float) (Report::whereDate('created_at', $date->toDateString())
+            $avgUptime = (float) ((clone $reportsQuery)->whereDate('created_at', $date->toDateString())
                 ->avg('uptime_percentage') ?? 99.2);
             $days[] = [
                 'date' => $date->format('M d'),
@@ -171,9 +263,9 @@ class DashboardDataService
         return $days;
     }
 
-    public function topProblematicSites(): array
+    public function topProblematicSites(?User $user = null): array
     {
-        return Site::query()
+        return $this->scopedSitesQuery($user)
             ->withCount('alerts')
             ->orderBy('health_score')
             ->orderByDesc('alerts_count')
@@ -191,9 +283,9 @@ class DashboardDataService
             ->all();
     }
 
-    public function activities(): array
+    public function activities(?User $user = null): array
     {
-        return ActivityLog::query()
+        return $this->scopedActivityQuery($user)
             ->latest('created_at')
             ->take(10)
             ->with(['user:id,name', 'site:id,name'])
@@ -226,5 +318,6 @@ class DashboardDataService
         };
     }
 }
+
 
 

@@ -39,7 +39,15 @@ class ClientsController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Client::class);
+        
+        $user = $request->user();
         $query = Client::query()->with(['assignedDeveloper:id,name,email', 'sites:id,client_id,status']);
+        
+        // Scope to user's assigned clients (admin sees all)
+        if ($user->role !== 'admin') {
+            $query->where('assigned_developer_id', $user->id);
+        }
 
         if ($request->filled('status') && $request->string('status')->toString() !== 'all') {
             $query->where('status', $request->string('status')->toString());
@@ -89,6 +97,8 @@ class ClientsController extends Controller
      */
     public function create(): Response
     {
+        $this->authorize('create', Client::class);
+        
         return Inertia::render('Clients/Pages/Create', [
             'developers' => $this->developers(),
         ]);
@@ -103,6 +113,8 @@ class ClientsController extends Controller
      */
     public function store(StoreClientRequest $request): RedirectResponse
     {
+        $this->authorize('create', Client::class);
+        
         $client = Client::create($request->validated());
 
         ActivityLog::create([
@@ -124,6 +136,8 @@ class ClientsController extends Controller
      */
     public function show(Client $client): Response
     {
+        $this->authorize('view', $client);
+        
         $client->load(['assignedDeveloper:id,name,email', 'sites', 'tasks', 'reports']);
 
         $sites = $client->sites()
@@ -199,6 +213,8 @@ class ClientsController extends Controller
      */
     public function edit(Client $client): Response
     {
+        $this->authorize('update', $client);
+        
         return Inertia::render('Clients/Pages/Edit', [
             'client' => [
                 'id' => $client->id,
@@ -224,6 +240,8 @@ class ClientsController extends Controller
      */
     public function update(UpdateClientRequest $request, Client $client): RedirectResponse
     {
+        $this->authorize('update', $client);
+        
         $client->update($request->validated());
 
         ActivityLog::create([
@@ -246,6 +264,8 @@ class ClientsController extends Controller
      */
     public function destroy(Request $request, Client $client): RedirectResponse
     {
+        $this->authorize('delete', $client);
+        
         $clientName = $client->name;
         $client->delete();
 
@@ -268,6 +288,8 @@ class ClientsController extends Controller
      */
     public function reports(Client $client): Response
     {
+        $this->authorize('view', $client);
+        
         $reports = $client->reports()
             ->with('site:id,name,url')
             ->latest('report_month')
