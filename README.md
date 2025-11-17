@@ -16,8 +16,6 @@
 - Vue Version: 3.x Composition API via Inertia.js
 - Docker: 6-container stack (app, db, redis, phpmyadmin, mailhog, nginx)
 
-![Dashboard Screenshot](public/images/cards/sites-card.svg)
-
 > **📸 Screenshots Coming Soon**: Real dashboard screenshots will be added Monday morning. See [docs/screenshots/](docs/screenshots/) for placeholder.
 
 ---
@@ -562,7 +560,7 @@ graph TB
 
     UPDATE["Update Site Model<br/>health_score, last_checked_at"]
 
-    ALERT_CHECK{"Health Score<br/>< Threshold?"]
+    ALERT_CHECK{"Health Score<br/>&lt; Threshold?"]
 
     CREATE_ALERT["AlertObserver<br/>Create Alert"]
 
