@@ -56,13 +56,13 @@ class SitesController extends Controller
 
         $this->applySiteFilters($query, $request);
 
-        // Get stats before pagination
-        $allSites = $query->get();
+        // Get stats using database queries (more efficient than loading all records)
+        $baseQuery = clone $query;
         $stats = [
-            'total' => $allSites->count(),
-            'healthy' => $allSites->where('status', 'healthy')->count(),
-            'warning' => $allSites->where('status', 'warning')->count(),
-            'critical' => $allSites->where('status', 'critical')->count(),
+            'total' => $baseQuery->count(),
+            'healthy' => (clone $baseQuery)->where('status', 'healthy')->count(),
+            'warning' => (clone $baseQuery)->where('status', 'warning')->count(),
+            'critical' => (clone $baseQuery)->where('status', 'critical')->count(),
         ];
 
         // Paginate results

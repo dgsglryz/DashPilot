@@ -23,7 +23,8 @@ class SitesControllerTest extends TestCase
     public function test_sites_index_displays_all_sites(): void
     {
         $user = User::factory()->create();
-        Site::factory()->count(5)->create();
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        Site::factory()->count(5)->create(['client_id' => $client->id]);
 
         $response = $this->actingAs($user)->get(route('sites.index'));
 
@@ -37,8 +38,9 @@ class SitesControllerTest extends TestCase
     public function test_sites_index_filters_by_platform(): void
     {
         $user = User::factory()->create();
-        Site::factory()->count(3)->create(['type' => 'wordpress']);
-        Site::factory()->count(2)->create(['type' => 'shopify']);
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        Site::factory()->count(3)->create(['type' => 'wordpress', 'client_id' => $client->id]);
+        Site::factory()->count(2)->create(['type' => 'shopify', 'client_id' => $client->id]);
 
         $response = $this->actingAs($user)->get(route('sites.index', ['platform' => 'wordpress']));
 
@@ -51,8 +53,9 @@ class SitesControllerTest extends TestCase
     public function test_sites_index_filters_by_status(): void
     {
         $user = User::factory()->create();
-        Site::factory()->count(3)->create(['status' => 'healthy']);
-        Site::factory()->count(2)->create(['status' => 'warning']);
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        Site::factory()->count(3)->create(['status' => 'healthy', 'client_id' => $client->id]);
+        Site::factory()->count(2)->create(['status' => 'warning', 'client_id' => $client->id]);
 
         $response = $this->actingAs($user)->get(route('sites.index', ['status' => 'healthy']));
 
@@ -65,8 +68,9 @@ class SitesControllerTest extends TestCase
     public function test_sites_index_searches_by_name(): void
     {
         $user = User::factory()->create();
-        Site::factory()->create(['name' => 'Test Site']);
-        Site::factory()->create(['name' => 'Another Site']);
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        Site::factory()->create(['name' => 'Test Site', 'client_id' => $client->id]);
+        Site::factory()->create(['name' => 'Another Site', 'client_id' => $client->id]);
 
         $response = $this->actingAs($user)->get(route('sites.index', ['query' => 'Test']));
 
@@ -80,7 +84,7 @@ class SitesControllerTest extends TestCase
     public function test_sites_show_displays_site_details(): void
     {
         $user = User::factory()->create();
-        $client = Client::factory()->create();
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
         $site = Site::factory()->create(['client_id' => $client->id]);
 
         $response = $this->actingAs($user)->get(route('sites.show', $site));
@@ -134,7 +138,7 @@ class SitesControllerTest extends TestCase
     public function test_sites_edit_displays_form(): void
     {
         $user = User::factory()->create();
-        $client = Client::factory()->create();
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
         $site = Site::factory()->create(['client_id' => $client->id]);
 
         $response = $this->actingAs($user)->get(route('sites.edit', $site));
@@ -149,7 +153,7 @@ class SitesControllerTest extends TestCase
     public function test_sites_update_modifies_site(): void
     {
         $user = User::factory()->create();
-        $client = Client::factory()->create();
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
         $site = Site::factory()->create(['name' => 'Old Name', 'client_id' => $client->id]);
 
         $response = $this->actingAs($user)->put(route('sites.update', $site), [
@@ -170,7 +174,8 @@ class SitesControllerTest extends TestCase
     public function test_sites_destroy_deletes_site(): void
     {
         $user = User::factory()->create();
-        $site = Site::factory()->create();
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        $site = Site::factory()->create(['client_id' => $client->id]);
 
         $response = $this->actingAs($user)->delete(route('sites.destroy', $site));
 
@@ -186,7 +191,8 @@ class SitesControllerTest extends TestCase
     public function test_sites_run_health_check_dispatches_job(): void
     {
         $user = User::factory()->create();
-        $site = Site::factory()->create();
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        $site = Site::factory()->create(['client_id' => $client->id]);
 
         \Illuminate\Support\Facades\Queue::fake();
 
@@ -199,7 +205,8 @@ class SitesControllerTest extends TestCase
     public function test_sites_toggle_favorite_updates_status(): void
     {
         $user = User::factory()->create();
-        $site = Site::factory()->create(['is_favorited' => false]);
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        $site = Site::factory()->create(['is_favorited' => false, 'client_id' => $client->id]);
 
         $response = $this->actingAs($user)->post(route('sites.toggle-favorite', $site));
 
@@ -210,7 +217,8 @@ class SitesControllerTest extends TestCase
     public function test_sites_export_csv_downloads_file(): void
     {
         $user = User::factory()->create();
-        Site::factory()->count(3)->create();
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        Site::factory()->count(3)->create(['client_id' => $client->id]);
 
         $response = $this->actingAs($user)->get(route('sites.export', ['format' => 'csv']));
 
@@ -221,7 +229,8 @@ class SitesControllerTest extends TestCase
     public function test_sites_export_xlsx_downloads_file(): void
     {
         $user = User::factory()->create();
-        Site::factory()->count(3)->create();
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        Site::factory()->count(3)->create(['client_id' => $client->id]);
 
         $response = $this->actingAs($user)->get(route('sites.export', ['format' => 'xlsx']));
 
