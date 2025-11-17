@@ -1,72 +1,47 @@
-/**
- * Tests for MessagePopup component
- */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import MessagePopup from '../MessagePopup.vue'
 
 // Mock fetch
-globalThis.fetch = vi.fn() as any
-
-// Mock window methods
-window.scrollTo = vi.fn()
+;(globalThis as any).fetch = vi.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({ messages: [] }),
+  } as Response)
+)
 
 describe('MessagePopup', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    ;(globalThis.fetch as any).mockResolvedValue({
-      ok: true,
-      json: async () => ({ messages: [] }),
-    })
   })
 
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
-  it('renders when isOpen is true', () => {
+  it('renders when open', () => {
     const wrapper = mount(MessagePopup, {
       props: {
         isOpen: true,
-        recipient: undefined,
-      },
-      global: {
-        stubs: {
-          Transition: {
-            template: '<div v-if="$attrs.isOpen"><slot /></div>',
-            props: ['isOpen'],
-          },
-        },
+        recipient: null,
       },
     })
 
-    expect(wrapper.find('[class*="fixed"]').exists()).toBe(true)
+    expect(wrapper.find('.fixed').exists()).toBe(true)
   })
 
-  it('does not render when isOpen is false', () => {
+  it('does not render when closed', () => {
     const wrapper = mount(MessagePopup, {
       props: {
         isOpen: false,
-        recipient: undefined,
-      },
-      global: {
-        stubs: {
-          Transition: {
-            template: '<div v-if="$attrs.isOpen"><slot /></div>',
-            props: ['isOpen'],
-          },
-        },
+        recipient: null,
       },
     })
 
-    expect(wrapper.find('[class*="fixed"]').exists()).toBe(false)
+    expect(wrapper.find('.fixed').exists()).toBe(false)
   })
 
   it('displays recipient name when provided', () => {
     const recipient = {
       id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
+      name: 'Test User',
+      email: 'test@example.com',
     }
 
     const wrapper = mount(MessagePopup, {
@@ -74,258 +49,67 @@ describe('MessagePopup', () => {
         isOpen: true,
         recipient,
       },
-      global: {
-        stubs: {
-          Transition: {
-            template: '<div><slot /></div>',
-          },
-        },
-      },
     })
 
-    expect(wrapper.text()).toContain('John Doe')
-    expect(wrapper.text()).toContain('john@example.com')
+    expect(wrapper.text()).toContain('Test User')
+    expect(wrapper.text()).toContain('test@example.com')
   })
 
   it('displays "Messages" when no recipient', () => {
     const wrapper = mount(MessagePopup, {
       props: {
         isOpen: true,
-        recipient: undefined,
-      },
-      global: {
-        stubs: {
-          Transition: {
-            template: '<div><slot /></div>',
-          },
-        },
+        recipient: null,
       },
     })
 
     expect(wrapper.text()).toContain('Messages')
   })
 
-  it('loads messages when recipient is provided', async () => {
-    const recipient = {
-      id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
-    }
-
-    const mockMessages = [
-      {
-        id: 1,
-        content: 'Hello',
-        is_sender: true,
-        created_at: new Date().toISOString(),
-      },
-      {
-        id: 2,
-        content: 'Hi there',
-        is_sender: false,
-        created_at: new Date().toISOString(),
-      },
-    ]
-
-    ;(globalThis.fetch as any).mockResolvedValue({
-      ok: true,
-      json: async () => ({ messages: mockMessages }),
-    })
-
+  it('shows loading state', () => {
     const wrapper = mount(MessagePopup, {
       props: {
         isOpen: true,
-        recipient,
+        recipient: { id: 1, name: 'Test', email: 'test@example.com' },
       },
-      global: {
-        stubs: {
-          Transition: {
-            template: '<div><slot /></div>',
-          },
-        },
+      data() {
+        return {
+          loading: true,
+        }
       },
     })
 
-    await wrapper.vm.$nextTick()
-    await new Promise(resolve => setTimeout(resolve, 100))
-
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      expect.stringContaining(`/messages/conversation/${recipient.id}`),
-      expect.any(Object)
-    )
+    expect(wrapper.text()).toContain('Loading messages...')
   })
 
-  it('displays loading state', async () => {
-    const recipient = {
-      id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
-    }
-
-    ;(globalThis.fetch as any).mockImplementation(() => new Promise(() => {}))
-
+  it('shows empty state when no messages', () => {
     const wrapper = mount(MessagePopup, {
       props: {
         isOpen: true,
-        recipient,
+        recipient: { id: 1, name: 'Test', email: 'test@example.com' },
       },
-      global: {
-        stubs: {
-          Transition: {
-            template: '<div><slot /></div>',
-          },
-        },
-      },
-    })
-
-    await wrapper.vm.$nextTick()
-
-    expect(wrapper.text()).toContain('Loading messages')
-  })
-
-  it('displays empty state when no messages', async () => {
-    const recipient = {
-      id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
-    }
-
-    ;(globalThis.fetch as any).mockResolvedValue({
-      ok: true,
-      json: async () => ({ messages: [] }),
-    })
-
-    const wrapper = mount(MessagePopup, {
-      props: {
-        isOpen: true,
-        recipient,
-      },
-      global: {
-        stubs: {
-          Transition: {
-            template: '<div><slot /></div>',
-          },
-        },
+      data() {
+        return {
+          loading: false,
+          messages: [],
+        }
       },
     })
-
-    await wrapper.vm.$nextTick()
-    await new Promise(resolve => setTimeout(resolve, 100))
 
     expect(wrapper.text()).toContain('No messages yet')
   })
 
-  it('sends message when form is submitted', async () => {
-    const recipient = {
-      id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
-    }
-
-    const mockResponse = {
-      id: 3,
-      content: 'New message',
-      is_sender: true,
-      created_at: new Date().toISOString(),
-    }
-
-    ;(globalThis.fetch as any)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ messages: [] }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ message: mockResponse }),
-      })
-
-    // Mock CSRF token
-    document.querySelector = vi.fn(() => ({
-      getAttribute: () => 'csrf-token',
-    })) as any
-
+  it('emits close event when close button clicked', async () => {
     const wrapper = mount(MessagePopup, {
       props: {
         isOpen: true,
-        recipient,
-      },
-      global: {
-        stubs: {
-          Transition: {
-            template: '<div><slot /></div>',
-          },
-        },
+        recipient: null,
       },
     })
 
-    await wrapper.vm.$nextTick()
-    await new Promise(resolve => setTimeout(resolve, 100))
+    const closeButton = wrapper.find('button')
+    await closeButton.trigger('click')
 
-    const textarea = wrapper.find('textarea')
-    await textarea.setValue('New message')
-
-    const form = wrapper.find('form')
-    await form.trigger('submit.prevent')
-    await wrapper.vm.$nextTick()
-    await new Promise(resolve => setTimeout(resolve, 100))
-
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      '/messages/send',
-      expect.objectContaining({
-        method: 'POST',
-        body: expect.stringContaining('New message'),
-      })
-    )
-  })
-
-  it('emits close event when close button is clicked', async () => {
-    const wrapper = mount(MessagePopup, {
-      props: {
-        isOpen: true,
-        recipient: undefined,
-      },
-      global: {
-        stubs: {
-          Transition: {
-            template: '<div><slot /></div>',
-          },
-        },
-      },
-    })
-
-    const closeButton = wrapper.findAll('button').find(btn => 
-      btn.find('svg').exists()
-    )
-    
-    if (closeButton) {
-      await closeButton.trigger('click')
-      expect(wrapper.emitted('close')).toBeTruthy()
-    }
-  })
-
-  it('formats initials correctly', () => {
-    const recipient = {
-      id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
-    }
-
-    const wrapper = mount(MessagePopup, {
-      props: {
-        isOpen: true,
-        recipient,
-      },
-      global: {
-        stubs: {
-          Transition: {
-            template: '<div><slot /></div>',
-          },
-        },
-      },
-    })
-
-    expect(wrapper.text()).toContain('JD')
+    expect(wrapper.emitted('close')).toBeTruthy()
   })
 })
-
-

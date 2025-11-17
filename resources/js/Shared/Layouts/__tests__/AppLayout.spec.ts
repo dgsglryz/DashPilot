@@ -22,7 +22,7 @@ vi.mock('@inertiajs/vue3', () => ({
     get: vi.fn(),
     post: vi.fn(),
   },
-  route: global.route,
+  route: (globalThis as any).route || vi.fn(),
 }))
 
 // Mock axios
@@ -52,7 +52,7 @@ const mockRoute = vi.fn((name?: string) => {
 })
 
 // Mock route().current() function
-const mockRouteCurrent = vi.fn(() => null)
+const mockRouteCurrent = vi.fn<() => string | null>(() => null)
 
 describe('AppLayout', () => {
   beforeEach(() => {
@@ -65,8 +65,8 @@ describe('AppLayout', () => {
     Storage.prototype.removeItem = vi.fn()
     
     // Mock global.route function
-    global.route = mockRoute as any
-    ;(global.route as any).current = mockRouteCurrent
+    ;(globalThis as any).route = mockRoute as any
+    ;((globalThis as any).route as any).current = mockRouteCurrent
     
     // Mock window.location
     Object.defineProperty(window, 'location', {
@@ -1261,7 +1261,7 @@ describe('AppLayout', () => {
   /**
    * Cleanup tests
    */
-  it('removes keyboard event listener on unmount', () => {
+  it('removes keyboard event listener on unmount', async () => {
     const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener')
     
     const wrapper = mount(AppLayout, {
