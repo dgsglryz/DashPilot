@@ -160,15 +160,18 @@ class TasksControllerTest extends TestCase
         ]);
     }
 
-    public function test_task_destroy_deletes_task(): void
+    public function test_task_destroy_moves_task_to_cancelled(): void
     {
         $user = User::factory()->create();
-        $task = Task::factory()->create();
+        $task = Task::factory()->create(['status' => 'pending']);
 
         $response = $this->actingAs($user)->delete(route('tasks.destroy', $task));
 
         $response->assertRedirect(route('tasks.index'));
-        $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'status' => 'cancelled',
+        ]);
     }
 
     public function test_tasks_index_filters_by_status(): void

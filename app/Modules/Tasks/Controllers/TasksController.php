@@ -259,7 +259,7 @@ class TasksController extends Controller
     }
 
     /**
-     * Remove the specified task from the database.
+     * Cancel the specified task instead of permanently deleting it.
      *
      * @param Request $request
      * @param Task $task
@@ -269,16 +269,21 @@ class TasksController extends Controller
     public function destroy(Request $request, Task $task): RedirectResponse
     {
         $taskTitle = $task->title;
-        $task->delete();
+        $previousStatus = $task->status;
+
+        // Move the task into the cancelled column so it remains visible on the board
+        $task->status = 'cancelled';
+        $task->completed_at = null;
+        $task->save();
 
         ActivityLog::create([
             'user_id' => $request->user()->id,
-            'action' => 'task_deleted',
-            'description' => "Deleted task: {$taskTitle}",
+            'action' => 'task_cancelled',
+            'description' => "Cancelled task (delete action) from {$previousStatus} to cancelled: {$taskTitle}",
         ]);
 
         return redirect()->route('tasks.index')
-            ->with('success', 'Task deleted successfully.');
+            ->with('success', 'Task has been moved to the Cancelled column.');
     }
 
     /**

@@ -164,10 +164,14 @@ const updateTaskStatus = (taskId: number, newStatus: string): void => {
 };
 
 /**
- * Delete task
+ * Cancel task through the delete action so it moves into the Cancelled column
  */
-const deleteTask = (task: Task): void => {
-    if (!confirm(`Are you sure you want to delete "${task.title}"?`)) {
+const cancelTask = (task: Task): void => {
+    if (
+        !confirm(
+            `Are you sure you want to cancel "${task.title}"? This will move it to the Cancelled column.`,
+        )
+    ) {
         return;
     }
 
@@ -472,7 +476,7 @@ const columns = [
                                     <PencilIcon class="h-4 w-4" />
                                 </Link>
                                 <button
-                                    @click="deleteTask(task)"
+                                    @click="cancelTask(task)"
                                     class="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-500/10 hover:text-red-400"
                                 >
                                     <TrashIcon class="h-4 w-4" />
