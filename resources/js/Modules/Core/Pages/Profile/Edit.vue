@@ -13,7 +13,6 @@ defineProps<{
 
 <template>
     <Head title="Profile - DashPilot" />
-    <title>Profile - DashPilot</title>
 
     <AuthenticatedLayout>
         <template #header>
