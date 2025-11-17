@@ -28,8 +28,8 @@ const submit = () => {
 </script>
 
 <template>
+    <title>Reset Password - DashPilot</title>
     <GuestLayout>
-        <title>Reset Password - DashPilot</title>
         <Head title="Reset Password" />
 
         <form @submit.prevent="submit">

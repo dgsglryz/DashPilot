@@ -20,8 +20,8 @@ const submit = () => {
 </script>
 
 <template>
+    <title>Confirm Password - DashPilot</title>
     <GuestLayout>
-        <title>Confirm Password - DashPilot</title>
         <Head title="Confirm Password" />
 
         <div class="mb-4 text-sm text-gray-600">
