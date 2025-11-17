@@ -8,24 +8,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'],
-      exclude: [
-        'node_modules/',
-        'tests/',
-        '**/*.spec.ts',
-        '**/*.test.ts',
-        '**/__tests__/**',
-        'vite.config.*',
-        'vitest.config.*',
-        'tailwind.config.*',
-        'postcss.config.*',
-        'eslint.config.*',
-        'playwright.config.*',
-      ],
-      include: ['resources/js/**/*.{ts,vue}'],
-    },
+    // Only run unit tests (spec.ts files), exclude e2e tests
+    include: ['**/__tests__/**/*.spec.ts', 'resources/js/**/*.spec.ts'],
+    exclude: ['node_modules', 'tests/e2e/**', '**/*.e2e.spec.ts'],
+    // Coverage disabled - only backend coverage is tracked
+    // Frontend tests run but coverage is not calculated
   },
   resolve: {
     alias: {
