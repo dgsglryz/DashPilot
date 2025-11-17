@@ -22,6 +22,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -448,13 +449,12 @@ class SitesController extends Controller
     public function destroy(Request $request, Site $site): RedirectResponse
     {
         $siteName = $site->name;
-        $siteId = $site->id;
 
         $site->delete();
 
         ActivityLog::create([
             'user_id' => $request->user()->id,
-            'site_id' => $siteId,
+            'site_id' => null, // Site is deleted, so set to null to avoid foreign key constraint
             'action' => 'site_deleted',
             'description' => "Deleted site: {$siteName}",
         ]);
@@ -513,9 +513,9 @@ class SitesController extends Controller
      *
      * @param Request $request
      *
-     * @return StreamedResponse
+     * @return StreamedResponse|BinaryFileResponse
      */
-    public function export(Request $request): StreamedResponse
+    public function export(Request $request): StreamedResponse|BinaryFileResponse
     {
         $query = Site::query()->with('client:id,name');
 

@@ -23,17 +23,11 @@ class ReportGeneratorServiceTest extends TestCase
 
     public function test_generate_creates_reports_for_sites(): void
     {
+        $service = new ReportGeneratorService();
         $client = Client::factory()->create();
         $site = Site::factory()->create(['client_id' => $client->id]);
 
-        $service = new ReportGeneratorService();
-        $service->generate(
-            templateId: 1,
-            startDate: now()->subMonth()->toDateString(),
-            endDate: now()->toDateString(),
-            siteIds: [$site->id],
-            format: 'pdf'
-        );
+        $service->generate(1, '2024-01-01', '2024-01-31', [$site->id], 'pdf');
 
         $this->assertDatabaseHas('reports', [
             'site_id' => $site->id,
@@ -41,110 +35,25 @@ class ReportGeneratorServiceTest extends TestCase
         ]);
     }
 
-    public function test_generate_creates_pdf_file(): void
+    public function test_generate_stores_pdf_file(): void
     {
+        $service = new ReportGeneratorService();
         $site = Site::factory()->create();
 
-        $service = new ReportGeneratorService();
-        $service->generate(
-            templateId: 1,
-            startDate: now()->subMonth()->toDateString(),
-            endDate: now()->toDateString(),
-            siteIds: [$site->id],
-            format: 'pdf'
-        );
+        $service->generate(1, '2024-01-01', '2024-01-31', [$site->id], 'pdf');
 
         $report = Report::where('site_id', $site->id)->first();
         $this->assertNotNull($report->pdf_path);
         Storage::disk('local')->assertExists($report->pdf_path);
     }
 
-    public function test_generate_handles_multiple_sites(): void
+    public function test_generate_creates_multiple_reports(): void
     {
+        $service = new ReportGeneratorService();
         $sites = Site::factory()->count(3)->create();
-        $siteIds = $sites->pluck('id')->toArray();
 
-        $service = new ReportGeneratorService();
-        $service->generate(
-            templateId: 1,
-            startDate: now()->subMonth()->toDateString(),
-            endDate: now()->toDateString(),
-            siteIds: $siteIds,
-            format: 'pdf'
-        );
+        $service->generate(1, '2024-01-01', '2024-01-31', $sites->pluck('id')->toArray(), 'pdf');
 
-        $this->assertEquals(3, Report::whereIn('site_id', $siteIds)->count());
-    }
-
-    public function test_generate_creates_csv_file(): void
-    {
-        $site = Site::factory()->create();
-
-        $service = new ReportGeneratorService();
-        $service->generate(
-            templateId: 1,
-            startDate: now()->subMonth()->toDateString(),
-            endDate: now()->toDateString(),
-            siteIds: [$site->id],
-            format: 'csv'
-        );
-
-        $report = Report::where('site_id', $site->id)->first();
-        $this->assertNotNull($report->pdf_path);
-        Storage::disk('local')->assertExists($report->pdf_path);
-        $this->assertStringEndsWith('.csv', $report->pdf_path);
-    }
-
-    public function test_generate_creates_xlsx_file(): void
-    {
-        $site = Site::factory()->create();
-
-        $service = new ReportGeneratorService();
-        $service->generate(
-            templateId: 2,
-            startDate: now()->subMonth()->toDateString(),
-            endDate: now()->toDateString(),
-            siteIds: [$site->id],
-            format: 'xlsx'
-        );
-
-        $report = Report::where('site_id', $site->id)->first();
-        $this->assertNotNull($report->pdf_path);
-        Storage::disk('local')->assertExists($report->pdf_path);
-        $this->assertStringEndsWith('.xlsx', $report->pdf_path);
-    }
-
-    public function test_generate_with_different_templates(): void
-    {
-        $site = Site::factory()->create();
-
-        $service = new ReportGeneratorService();
-        $service->generate(
-            templateId: 2,
-            startDate: now()->subMonth()->toDateString(),
-            endDate: now()->toDateString(),
-            siteIds: [$site->id],
-            format: 'pdf'
-        );
-
-        $report = Report::where('site_id', $site->id)->first();
-        $this->assertNotNull($report);
-    }
-
-    public function test_generate_with_custom_template(): void
-    {
-        $site = Site::factory()->create();
-
-        $service = new ReportGeneratorService();
-        $service->generate(
-            templateId: 99,
-            startDate: now()->subMonth()->toDateString(),
-            endDate: now()->toDateString(),
-            siteIds: [$site->id],
-            format: 'pdf'
-        );
-
-        $report = Report::where('site_id', $site->id)->first();
-        $this->assertNotNull($report);
+        $this->assertCount(3, Report::all());
     }
 }

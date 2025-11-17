@@ -115,7 +115,7 @@ describe('QuickActionsDropdown', () => {
     expect(actions.length).toBeGreaterThan(0)
   })
 
-  it('shows correct favorite label when not favorited', () => {
+  it('shows correct favorite label when not favorited', async () => {
     const wrapper = mount(QuickActionsDropdown, {
       props: {
         siteId: 1,
@@ -131,10 +131,14 @@ describe('QuickActionsDropdown', () => {
       },
     })
 
+    // Open dropdown first
+    await wrapper.find('button').trigger('click')
+    await wrapper.vm.$nextTick()
+
     expect(wrapper.text()).toContain('Mark as favorite')
   })
 
-  it('shows correct favorite label when favorited', () => {
+  it('shows correct favorite label when favorited', async () => {
     const wrapper = mount(QuickActionsDropdown, {
       props: {
         siteId: 1,
@@ -149,6 +153,10 @@ describe('QuickActionsDropdown', () => {
         },
       },
     })
+
+    // Open dropdown first
+    await wrapper.find('button').trigger('click')
+    await wrapper.vm.$nextTick()
 
     expect(wrapper.text()).toContain('Remove from favorites')
   })

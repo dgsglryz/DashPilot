@@ -10,13 +10,17 @@ vi.mock('@inertiajs/vue3', () => ({
     get: vi.fn(),
     post: vi.fn(),
   },
-  route: (globalThis as any).route || vi.fn(),
+  route: vi.fn((name: string) => `/${name}`),
   Link: {
     name: 'Link',
     template: '<a><slot /></a>',
     props: ['href'],
   },
 }))
+
+
+// Mock route function globally
+(globalThis as any).route = vi.fn((name: string) => `/${name}`)
 
 // Mock components
 vi.mock('@/Shared/Layouts/AppLayout.vue', () => ({
@@ -53,21 +57,19 @@ vi.mock('@/Shared/Components/Pagination.vue', () => ({
 
 describe('Sites Index', () => {
   const defaultProps = {
-    sites: {
-      data: [
-        {
-          id: 1,
-          name: 'Test Site',
-          url: 'https://test.com',
-          platform: 'wordpress',
-          status: 'healthy',
-          uptime: 99.5,
-          responseTime: 200,
-          lastChecked: new Date().toISOString(),
-          is_favorited: false,
-        },
-      ],
-    },
+    sites: [
+      {
+        id: 1,
+        name: 'Test Site',
+        url: 'https://test.com',
+        platform: 'wordpress',
+        status: 'healthy',
+        uptime: 99.5,
+        responseTime: 200,
+        lastChecked: new Date().toISOString(),
+        is_favorited: false,
+      },
+    ],
     stats: {
       healthy: 10,
       warning: 2,
@@ -90,7 +92,9 @@ describe('Sites Index', () => {
       props: defaultProps as any,
       global: {
         stubs: {
-          AppLayout: true,
+          AppLayout: {
+            template: '<div><slot /></div>',
+          },
           Link: true,
           QuickActionsDropdown: true,
           Breadcrumbs: true,
@@ -107,7 +111,9 @@ describe('Sites Index', () => {
       props: defaultProps as any,
       global: {
         stubs: {
-          AppLayout: true,
+          AppLayout: {
+            template: '<div><slot /></div>',
+          },
           Link: true,
           QuickActionsDropdown: true,
           Breadcrumbs: true,
@@ -127,7 +133,9 @@ describe('Sites Index', () => {
       props: defaultProps as any,
       global: {
         stubs: {
-          AppLayout: true,
+          AppLayout: {
+            template: '<div><slot /></div>',
+          },
           Link: true,
           QuickActionsDropdown: true,
           Breadcrumbs: true,
@@ -136,7 +144,9 @@ describe('Sites Index', () => {
       },
     })
 
-    expect(wrapper.find('[data-testid="sites-table"]').exists()).toBe(true)
+    // Table exists (check for table element)
+    const table = wrapper.find('[data-testid="sites-table"]')
+    expect(table.exists()).toBe(true)
   })
 
   it('displays site name in table', () => {
@@ -144,7 +154,9 @@ describe('Sites Index', () => {
       props: defaultProps as any,
       global: {
         stubs: {
-          AppLayout: true,
+          AppLayout: {
+            template: '<div><slot /></div>',
+          },
           Link: true,
           QuickActionsDropdown: true,
           Breadcrumbs: true,
@@ -162,7 +174,9 @@ describe('Sites Index', () => {
       props: defaultProps as any,
       global: {
         stubs: {
-          AppLayout: true,
+          AppLayout: {
+            template: '<div><slot /></div>',
+          },
           Link: true,
           QuickActionsDropdown: true,
           Breadcrumbs: true,
@@ -179,7 +193,9 @@ describe('Sites Index', () => {
       props: defaultProps as any,
       global: {
         stubs: {
-          AppLayout: true,
+          AppLayout: {
+            template: '<div><slot /></div>',
+          },
           Link: true,
           QuickActionsDropdown: true,
           Breadcrumbs: true,

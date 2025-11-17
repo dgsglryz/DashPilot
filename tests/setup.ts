@@ -1,15 +1,17 @@
-import { expect, afterEach, vi, beforeEach } from "vitest";
+import { afterEach, vi, beforeEach } from "vitest";
 
 // Mock Inertia route function globally
-(globalThis as any).route = vi.fn((name: string, params?: any) => {
-    if (params) {
-        return `/${name}/${params}`;
-    }
-    return `/${name}`;
-});
+(globalThis as Record<string, unknown>).route = vi.fn(
+    (name: string, params?: Record<string, unknown>) => {
+        if (params) {
+            return `/${name}/${params}`;
+        }
+        return `/${name}`;
+    },
+);
 
 // Mock fetch globally
-(globalThis as any).fetch = vi.fn(() =>
+(globalThis as Record<string, unknown>).fetch = vi.fn(() =>
     Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ data: [] }),

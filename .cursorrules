@@ -314,15 +314,19 @@ DeliverWebhook::dispatch($webhook, $payload)
 - Background tasks in Jobs (implement ShouldQueue)
 - All dates use Carbon
 
-**Comments (MANDATORY):**
-- Every class must have PHPDoc comment explaining purpose
+**Comments (MANDATORY - ENGLISH ONLY):**
+- ALL comments, documentation, logs, commit messages, and code must be in ENGLISH ONLY
+- NO Turkish, NO other languages - ONLY English
+- Every class must have PHPDoc comment explaining purpose (in English)
 - Every public method must have PHPDoc with:
-  - Brief description of what it does
+  - Brief description of what it does (in English)
   - @param tags for all parameters
   - @return tag for return type
   - @throws tag if it throws exceptions
 - Complex logic must have inline comments in English
 - No commented-out code
+- All console.log, console.error, console.warn must be in English
+- All commit messages must be in English
 
 **Naming Conventions:**
 - Controllers: `SiteController` (singular, PascalCase)
@@ -343,10 +347,13 @@ DeliverWebhook::dispatch($webhook, $payload)
 - NO Options API allowed
 - Single File Components (.vue)
 
-**Comments (MANDATORY):**
-- Component purpose at top of script section
-- Complex computed properties must have comments
+**Comments (MANDATORY - ENGLISH ONLY):**
+- ALL comments, documentation, logs, and code must be in ENGLISH ONLY
+- NO Turkish, NO other languages - ONLY English
+- Component purpose at top of script section (in English)
+- Complex computed properties must have comments (in English)
 - Non-obvious logic explained in English
+- All console.log, console.error, console.warn must be in English
 
 **Naming Conventions:**
 - Components: PascalCase (e.g., `StatusBadge.vue`)

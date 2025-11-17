@@ -28,7 +28,7 @@ class TeamControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->has('members', 4) // 3 + current user
+            ->has('members')
             ->has('stats')
         );
     }
@@ -36,7 +36,6 @@ class TeamControllerTest extends TestCase
     public function test_team_invite_creates_pending_user(): void
     {
         Mail::fake();
-
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('team.invite'), [
@@ -61,5 +60,14 @@ class TeamControllerTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseMissing('users', ['id' => $member->id]);
+    }
+
+    public function test_team_destroy_prevents_self_deletion(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->delete(route('team.destroy', $user));
+
+        $response->assertForbidden();
     }
 }

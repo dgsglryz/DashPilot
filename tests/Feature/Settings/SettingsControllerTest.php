@@ -262,5 +262,55 @@ class SettingsControllerTest extends TestCase
         $this->user->refresh();
         $this->assertTrue($this->user->notification_settings['twoFactorEnabled'] ?? false);
     }
+
+    public function test_settings_test_webhook_delivers_payload(): void
+    {
+        \Illuminate\Support\Facades\Http::fake([
+            '*' => \Illuminate\Support\Facades\Http::response(['success' => true], 200),
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson(route('settings.test-webhook'), [
+                'webhook_url' => 'https://example.com/webhook',
+            ]);
+
+        $response->assertOk()
+            ->assertJsonStructure(['success', 'message', 'status_code']);
+    }
+
+    public function test_settings_revoke_session_deletes_session(): void
+    {
+        $sessionId = 'test-session-id';
+        \Illuminate\Support\Facades\DB::table('sessions')->insert([
+            'id' => $sessionId,
+            'user_id' => $this->user->id,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'test',
+            'payload' => 'test',
+            'last_activity' => now()->timestamp,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->delete(route('settings.sessions.destroy', $sessionId));
+
+        $response->assertRedirect();
+        $this->assertDatabaseMissing('sessions', ['id' => $sessionId]);
+    }
+
+    public function test_settings_update_thresholds_saves_monitoring_settings(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->post(route('settings.thresholds'), [
+                'checkInterval' => 10,
+                'timeout' => 15,
+                'uptimeThreshold' => 99.5,
+                'responseTimeThreshold' => 3000,
+            ]);
+
+        $response->assertRedirect();
+        $this->user->refresh();
+        $settings = $this->user->monitoring_settings;
+        $this->assertEquals(10, $settings['checkInterval']);
+    }
 }
 

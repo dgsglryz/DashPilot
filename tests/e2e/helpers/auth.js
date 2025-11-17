@@ -26,10 +26,28 @@ async function loginAsAdmin(
     page,
     { email = "admin@test.com", password = "password" } = {},
 ) {
-    await page.goto("/login");
+    // Try to navigate to dashboard first - if storage state exists, we'll be redirected there
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded", timeout: 30000 });
 
-    // Wait for DOM to be ready (faster than networkidle)
-    await page.waitForLoadState("domcontentloaded");
+    // Check if we're already authenticated (have sidebar/navigation)
+    try {
+        await page.waitForSelector('aside, nav[role="navigation"]', {
+            state: 'visible',
+            timeout: 5000,
+        });
+        // Already logged in via storage state, return early
+        return;
+    } catch {
+        // Not authenticated, need to login - redirect to login page
+        await page.goto("/login", { waitUntil: "networkidle", timeout: 30000 });
+    }
+
+    // Wait for Vue/Inertia to hydrate - check if input with id="email" exists
+    // This ensures Vue components are rendered before trying to find them
+    await page.waitForSelector('input#email', {
+        state: "visible",
+        timeout: 15000,
+    });
 
     // Get selectors using helper functions
     const emailSelector = getEmailInputSelector();
@@ -38,11 +56,11 @@ async function loginAsAdmin(
     // Wait for form inputs to be visible (reduced timeout)
     await page.waitForSelector(emailSelector, {
         state: "visible",
-        timeout: 10000,
+        timeout: 5000,
     });
     await page.waitForSelector(passwordSelector, {
         state: "visible",
-        timeout: 10000,
+        timeout: 5000,
     });
 
     // Fill login form

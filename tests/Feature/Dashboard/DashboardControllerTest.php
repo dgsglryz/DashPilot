@@ -63,4 +63,46 @@ class DashboardControllerTest extends TestCase
             ->where('featuredSites', fn ($sites) => count($sites) <= 10) // Should return up to 3 featured sites
         );
     }
+
+    public function test_dashboard_includes_favorited_sites(): void
+    {
+        $user = User::factory()->create();
+        Site::factory()->count(3)->create(['is_favorited' => true]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->has('favoritedSites')
+        );
+    }
+
+    public function test_dashboard_includes_activities(): void
+    {
+        $user = User::factory()->create();
+        ActivityLog::factory()->count(5)->create();
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->has('activities')
+        );
+    }
+
+    public function test_dashboard_includes_chart_data(): void
+    {
+        $user = User::factory()->create();
+        Site::factory()->count(3)->create();
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->has('chartData')
+            ->has('chartData.sitesByStatus')
+            ->has('chartData.alertFrequency')
+            ->has('chartData.uptimeTrend')
+        );
+    }
 }

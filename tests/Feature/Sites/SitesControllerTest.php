@@ -95,4 +95,138 @@ class SitesControllerTest extends TestCase
         $this->assertEquals($site->id, $pageData['props']['site']['id']);
         $this->assertEquals($site->name, $pageData['props']['site']['name']);
     }
+
+    public function test_sites_create_displays_form(): void
+    {
+        $user = User::factory()->create();
+        Client::factory()->count(3)->create();
+
+        $response = $this->actingAs($user)->get(route('sites.create'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->has('clients', 3)
+        );
+    }
+
+    public function test_sites_store_creates_new_site(): void
+    {
+        $user = User::factory()->create();
+        $client = Client::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('sites.store'), [
+            'name' => 'New Site',
+            'url' => 'https://example.com',
+            'type' => 'wordpress',
+            'client_id' => $client->id,
+            'status' => 'healthy',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('sites', [
+            'name' => 'New Site',
+            'url' => 'https://example.com',
+            'type' => 'wordpress',
+            'client_id' => $client->id,
+        ]);
+    }
+
+    public function test_sites_edit_displays_form(): void
+    {
+        $user = User::factory()->create();
+        $client = Client::factory()->create();
+        $site = Site::factory()->create(['client_id' => $client->id]);
+
+        $response = $this->actingAs($user)->get(route('sites.edit', $site));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->has('site')
+            ->where('site.id', $site->id)
+        );
+    }
+
+    public function test_sites_update_modifies_site(): void
+    {
+        $user = User::factory()->create();
+        $client = Client::factory()->create();
+        $site = Site::factory()->create(['name' => 'Old Name', 'client_id' => $client->id]);
+
+        $response = $this->actingAs($user)->put(route('sites.update', $site), [
+            'name' => 'Updated Name',
+            'url' => $site->url,
+            'type' => $site->type,
+            'status' => $site->status,
+            'client_id' => $client->id,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('sites', [
+            'id' => $site->id,
+            'name' => 'Updated Name',
+        ]);
+    }
+
+    public function test_sites_destroy_deletes_site(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create();
+
+        $response = $this->actingAs($user)->delete(route('sites.destroy', $site));
+
+        $response->assertRedirect(route('sites.index'));
+        $this->assertDatabaseMissing('sites', ['id' => $site->id]);
+        // Verify activity log was created (with null site_id since site is deleted)
+        $this->assertDatabaseHas('activity_logs', [
+            'action' => 'site_deleted',
+            'user_id' => $user->id,
+        ]);
+    }
+
+    public function test_sites_run_health_check_dispatches_job(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create();
+
+        \Illuminate\Support\Facades\Queue::fake();
+
+        $response = $this->actingAs($user)->post(route('sites.health-check', $site));
+
+        $response->assertRedirect();
+        \Illuminate\Support\Facades\Queue::assertPushed(\App\Modules\Sites\Jobs\CheckSiteHealth::class);
+    }
+
+    public function test_sites_toggle_favorite_updates_status(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create(['is_favorited' => false]);
+
+        $response = $this->actingAs($user)->post(route('sites.toggle-favorite', $site));
+
+        $response->assertRedirect();
+        $this->assertTrue($site->fresh()->is_favorited);
+    }
+
+    public function test_sites_export_csv_downloads_file(): void
+    {
+        $user = User::factory()->create();
+        Site::factory()->count(3)->create();
+
+        $response = $this->actingAs($user)->get(route('sites.export', ['format' => 'csv']));
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_sites_export_xlsx_downloads_file(): void
+    {
+        $user = User::factory()->create();
+        Site::factory()->count(3)->create();
+
+        $response = $this->actingAs($user)->get(route('sites.export', ['format' => 'xlsx']));
+
+        $response->assertOk();
+        // Excel::download returns BinaryFileResponse, not StreamedResponse
+        $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $response->headers->get('Content-Type'));
+    }
 }

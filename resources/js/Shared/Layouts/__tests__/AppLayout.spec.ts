@@ -9,24 +9,35 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import AppLayout from '../AppLayout.vue'
 
-// Mock Inertia
-const mockRouterVisit = vi.fn()
-vi.mock('@inertiajs/vue3', () => ({
-  Link: {
-    name: 'Link',
-    template: '<a><slot /></a>',
-    props: ['href', 'method', 'as'],
-  },
-  router: {
-    visit: mockRouterVisit,
-    get: vi.fn(),
-    post: vi.fn(),
-  },
-  route: (globalThis as any).route || vi.fn(),
-}))
+// Mock route function globally first
+const mockRoute = vi.fn((name: string) => `/${name}`)
+(globalThis as any).route = mockRoute
 
-// Mock axios
-const mockAxiosGet = vi.fn()
+// Mock Inertia - must define mocks inside factory function
+vi.mock('@inertiajs/vue3', () => {
+  const mockRouterVisit = vi.fn()
+  return {
+    Link: {
+      name: 'Link',
+      template: '<a><slot /></a>',
+      props: ['href', 'method', 'as'],
+    },
+    router: {
+      visit: mockRouterVisit,
+      get: vi.fn(),
+      post: vi.fn(),
+    },
+    route: mockRoute,
+  }
+})
+
+// Mock axios - use vi.hoisted for proper hoisting
+const { mockAxiosGet } = vi.hoisted(() => {
+  return {
+    mockAxiosGet: vi.fn(),
+  }
+})
+
 vi.mock('axios', () => ({
   default: {
     get: mockAxiosGet,
@@ -43,16 +54,10 @@ vi.mock('@/Shared/Components/CommandPalette.vue', () => ({
   },
 }))
 
-// Mock route function to return current route
-const mockRoute = vi.fn((name?: string) => {
-  if (name) {
-    return `/${name}`
-  }
-  return '/dashboard'
-})
-
 // Mock route().current() function
 const mockRouteCurrent = vi.fn<() => string | null>(() => null)
+// Add current method to route mock
+;(mockRoute as any).current = mockRouteCurrent
 
 describe('AppLayout', () => {
   beforeEach(() => {
@@ -485,7 +490,8 @@ describe('AppLayout', () => {
     await searchInput.trigger('keydown.enter')
     await nextTick()
     
-    expect(mockRouterVisit).toHaveBeenCalled()
+    const { router } = await import('@inertiajs/vue3')
+    expect(router.visit).toHaveBeenCalled()
     
     vi.useRealTimers()
   })
@@ -563,7 +569,8 @@ describe('AppLayout', () => {
       await suggestions[0].trigger('mousedown')
       await nextTick()
       
-      expect(mockRouterVisit).toHaveBeenCalled()
+      const { router } = await import('@inertiajs/vue3')
+    expect(router.visit).toHaveBeenCalled()
     }
     
     vi.useRealTimers()

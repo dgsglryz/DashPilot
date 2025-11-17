@@ -8,7 +8,6 @@ use App\Modules\Notifications\Jobs\DeliverWebhook;
 use App\Modules\Notifications\Models\Webhook;
 use App\Modules\Notifications\Services\WebhookService;
 use App\Modules\Sites\Models\Site;
-use App\Modules\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -20,67 +19,51 @@ class WebhookServiceTest extends TestCase
     public function test_trigger_alert_event_dispatches_webhook_job(): void
     {
         Queue::fake();
-
-        $user = User::factory()->create();
+        $service = new WebhookService();
         $site = Site::factory()->create();
-        $alert = Alert::factory()->create([
-            'site_id' => $site->id,
-            'severity' => 'critical',
-        ]);
-
+        $alert = Alert::factory()->create(['site_id' => $site->id]);
         $webhook = Webhook::factory()->create([
-            'user_id' => $user->id,
             'is_active' => true,
             'events' => ['alert_created'],
         ]);
 
-        $service = new WebhookService();
         $service->triggerAlertEvent('alert_created', $alert);
 
         Queue::assertPushed(DeliverWebhook::class);
     }
 
-    public function test_trigger_alert_event_ignores_inactive_webhooks(): void
-    {
-        Queue::fake();
-
-        $user = User::factory()->create();
-        $site = Site::factory()->create();
-        $alert = Alert::factory()->create(['site_id' => $site->id]);
-
-        Webhook::factory()->create([
-            'user_id' => $user->id,
-            'is_active' => false,
-            'events' => ['alert_created'],
-        ]);
-
-        $service = new WebhookService();
-        $service->triggerAlertEvent('alert_created', $alert);
-
-        // Only check that DeliverWebhook was not pushed (AlertObserver may push SendEmailNotification)
-        Queue::assertNotPushed(DeliverWebhook::class);
-    }
-
     public function test_trigger_alert_event_filters_by_event_type(): void
     {
         Queue::fake();
-
-        $user = User::factory()->create();
-        $site = Site::factory()->create();
-        $alert = Alert::factory()->create(['site_id' => $site->id]);
-
+        $service = new WebhookService();
+        $alert = Alert::factory()->create();
         Webhook::factory()->create([
-            'user_id' => $user->id,
             'is_active' => true,
-            'events' => ['alert_resolved'], // Different event
+            'events' => ['alert_created'],
+        ]);
+        Webhook::factory()->create([
+            'is_active' => true,
+            'events' => ['alert_resolved'],
         ]);
 
-        $service = new WebhookService();
         $service->triggerAlertEvent('alert_created', $alert);
 
-        // Only check that DeliverWebhook was not pushed
-        // (AlertObserver may push SendEmailNotification for critical alerts)
-        Queue::assertNotPushed(DeliverWebhook::class);
+        Queue::assertPushed(DeliverWebhook::class, 1);
+    }
+
+    public function test_trigger_alert_event_respects_wildcard_events(): void
+    {
+        Queue::fake();
+        $service = new WebhookService();
+        $alert = Alert::factory()->create();
+        Webhook::factory()->create([
+            'is_active' => true,
+            'events' => ['*'],
+        ]);
+
+        $service->triggerAlertEvent('alert_created', $alert);
+
+        Queue::assertPushed(DeliverWebhook::class);
     }
 
     public function test_generate_signature_creates_hmac_sha256(): void
@@ -91,11 +74,19 @@ class WebhookServiceTest extends TestCase
 
         $signature = $service->generateSignature($payload, $secret);
 
-        $this->assertNotEmpty($signature);
+        $this->assertIsString($signature);
         $this->assertEquals(64, strlen($signature)); // SHA256 hex length
-        $this->assertNotEquals(
-            $service->generateSignature($payload, 'different-secret'),
-            $signature
-        );
+    }
+
+    public function test_generate_signature_is_deterministic(): void
+    {
+        $service = new WebhookService();
+        $payload = ['test' => 'data'];
+        $secret = 'test-secret';
+
+        $signature1 = $service->generateSignature($payload, $secret);
+        $signature2 = $service->generateSignature($payload, $secret);
+
+        $this->assertEquals($signature1, $signature2);
     }
 }

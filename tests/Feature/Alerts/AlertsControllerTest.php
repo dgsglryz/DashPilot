@@ -85,4 +85,16 @@ class AlertsControllerTest extends TestCase
         $this->assertEquals('resolved', $alert->status);
         $this->assertEquals($user->id, $alert->resolved_by);
     }
+
+    public function test_alerts_export_generates_csv(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create();
+        Alert::factory()->count(3)->create(['site_id' => $site->id]);
+
+        $response = $this->actingAs($user)->get(route('alerts.export'));
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+    }
 }

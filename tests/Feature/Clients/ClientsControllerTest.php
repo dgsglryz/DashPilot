@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Clients;
 
 use App\Modules\Clients\Models\Client;
+use App\Modules\Sites\Models\Site;
 use App\Modules\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -158,6 +159,22 @@ class ClientsControllerTest extends TestCase
 
         $response->assertRedirect(route('clients.index'));
         $this->assertDatabaseMissing('clients', ['id' => $client->id]);
+    }
+
+    public function test_client_reports_displays_reports(): void
+    {
+        $user = User::factory()->create();
+        $client = Client::factory()->create();
+        $site = Site::factory()->create(['client_id' => $client->id]);
+        \App\Modules\Reports\Models\Report::factory()->create(['client_id' => $client->id, 'site_id' => $site->id]);
+
+        $response = $this->actingAs($user)->get(route('clients.reports', $client));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->has('reports')
+            ->has('client')
+        );
     }
 }
 

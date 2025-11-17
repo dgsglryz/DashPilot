@@ -28,12 +28,20 @@ describe('SEOScoreCard', () => {
   it('displays SEO issues when present', () => {
     const siteWithIssues = {
       ...mockSite,
-      seoIssues: ['Missing meta description', 'No SSL'],
+      seoIssues: [
+        { id: 1, title: 'Missing meta description', description: 'Add meta description' },
+        { id: 2, title: 'No SSL', description: 'Site should use HTTPS' },
+      ],
     }
 
     const wrapper = mount(SEOScoreCard, {
       props: {
         site: siteWithIssues,
+      },
+      global: {
+        stubs: {
+          HealthScoreModal: true,
+        },
       },
     })
 

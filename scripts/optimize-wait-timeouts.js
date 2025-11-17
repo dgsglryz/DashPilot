@@ -110,12 +110,12 @@ for (const filePath of testFiles) {
     writeFileSync(filePath, content, 'utf8');
     totalReplacements += fileReplacements;
     filesModified++;
-    console.log(`✓ Optimized ${filePath}: ${fileReplacements} replacements`);
+    console.log(`Optimized ${filePath}: ${fileReplacements} replacements`);
   }
 }
 
 console.log(`\n✅ Optimization complete!`);
 console.log(`   Files modified: ${filesModified}`);
 console.log(`   Total replacements: ${totalReplacements}`);
-console.log(`\n⚠️  Please review the changes and run tests to verify.`);
+console.log(`\nPlease review the changes and run tests to verify.`);
 
