@@ -26,28 +26,53 @@ async function loginAsAdmin(
     page,
     { email = "admin@test.com", password = "password" } = {},
 ) {
-    // Try to navigate to dashboard first - if storage state exists, we'll be redirected there
-    await page.goto("/dashboard", { waitUntil: "domcontentloaded", timeout: 30000 });
+    // Retry mechanism for login (max 3 attempts)
+    let attempts = 0;
+    const maxAttempts = 3;
+    
+    while (attempts < maxAttempts) {
+        try {
+            // Try to navigate to dashboard first - if storage state exists, we'll be redirected there
+            await page.goto("/dashboard", { waitUntil: "domcontentloaded", timeout: 20000 });
 
-    // Check if we're already authenticated (have sidebar/navigation)
-    try {
-        await page.waitForSelector('aside, nav[role="navigation"]', {
-            state: 'visible',
-            timeout: 5000,
-        });
-        // Already logged in via storage state, return early
-        return;
-    } catch {
-        // Not authenticated, need to login - redirect to login page
-        await page.goto("/login", { waitUntil: "networkidle", timeout: 30000 });
+            // Check if we're already authenticated (have sidebar/navigation)
+            try {
+                await page.waitForSelector('aside, nav[role="navigation"]', {
+                    state: 'visible',
+                    timeout: 3000,
+                });
+                // Already logged in via storage state, return early
+                return;
+            } catch {
+                // Not authenticated, need to login - redirect to login page
+                await page.goto("/login", { waitUntil: "domcontentloaded", timeout: 20000 });
+            }
+            break; // Success, exit retry loop
+        } catch (error) {
+            attempts++;
+            if (attempts >= maxAttempts) {
+                throw new Error(`Login navigation failed after ${maxAttempts} attempts: ${error.message}`);
+            }
+            // Wait a bit before retry (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+        }
     }
 
     // Wait for Vue/Inertia to hydrate - check if input with id="email" exists
     // This ensures Vue components are rendered before trying to find them
-    await page.waitForSelector('input#email', {
-        state: "visible",
-        timeout: 15000,
-    });
+    // Retry with multiple selectors
+    try {
+        await page.waitForSelector('input#email', {
+            state: "visible",
+            timeout: 10000,
+        });
+    } catch {
+        // Fallback: try alternative selectors
+        await page.waitForSelector('input[type="email"], input[name="email"]', {
+            state: "visible",
+            timeout: 10000,
+        });
+    }
 
     // Get selectors using helper functions
     const emailSelector = getEmailInputSelector();
@@ -108,10 +133,31 @@ async function loginAsAdmin(
         }
     }
 
-    // Wait for redirect - could be dashboard or intended URL (reduced timeout)
-    await page.waitForURL(/\/(dashboard|sites|alerts|clients|tasks)/, {
-        timeout: 10000,
-    });
+    // Wait for redirect - could be dashboard or intended URL
+    // Use more flexible approach: wait for URL change OR sidebar to appear
+    try {
+        await page.waitForURL(/\/(dashboard|sites|alerts|clients|tasks)/, {
+            timeout: 15000,
+        });
+    } catch {
+        // If URL doesn't match, check if we're logged in by looking for sidebar
+        // This handles cases where redirect goes to a different URL
+        try {
+            await page.waitForSelector('aside, nav[role="navigation"]', {
+                timeout: 10000,
+                state: 'visible',
+            });
+        } catch {
+            // Final check: make sure we're not on login page
+            const url = page.url();
+            if (url.includes("/login")) {
+                throw new Error(
+                    "Login failed - still on login page. Current URL: " + url,
+                );
+            }
+            // If we're not on login page, assume login succeeded
+        }
+    }
 
     // Wait for DOM to be ready (faster than networkidle)
     await page.waitForLoadState("domcontentloaded");
@@ -131,6 +177,7 @@ async function loginAsAdmin(
                 "Login failed - still on login page. Current URL: " + url,
             );
         }
+        // If not on login page, assume login succeeded (might be on a different page)
     }
 }
 

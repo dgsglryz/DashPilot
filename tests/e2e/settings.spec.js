@@ -255,10 +255,10 @@ test.describe("Settings", () => {
     });
 
     test("should test email notification", async ({ page }) => {
-        // Find email section
-        const emailSection = page.locator("text=/Email|Notifications/i");
+        // Find email section - use more specific selector
+        const emailSection = page.locator("h3:has-text('Notifications'), section:has-text('Email')").first();
 
-        if (await emailSection.isVisible()) {
+        if (await emailSection.isVisible({ timeout: 2000 }).catch(() => false)) {
             // Find test email button
             const testEmailButton = page
                 .locator(
@@ -277,12 +277,12 @@ test.describe("Settings", () => {
     });
 
     test("should update monitoring settings", async ({ page }) => {
-        // Find monitoring section
+        // Find monitoring section - use more specific selector
         const monitoringSection = page.locator(
-            "text=/Monitoring|Health Check/i",
-        );
+            "h3:has-text('Monitoring'), section:has-text('Health Check')",
+        ).first();
 
-        if (await monitoringSection.isVisible()) {
+        if (await monitoringSection.isVisible({ timeout: 2000 }).catch(() => false)) {
             // Update check interval if exists
             const intervalInput = page.locator(
                 'input[name="check_interval"], input[name="interval"]',

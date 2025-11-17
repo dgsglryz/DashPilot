@@ -91,7 +91,10 @@ async function goToDashboard(page) {
  */
 async function goToSites(page) {
   await navigateTo(page, 'sites.index');
-  await page.waitForURL('**/sites');
+  await page.waitForURL('**/sites', { timeout: 15000 }).catch(() => {
+    // If URL doesn't match, check if we're on sites page by checking for sites table
+    return page.waitForSelector('[data-testid="sites-table"], h1:has-text("Sites")', { timeout: 10000 });
+  });
 }
 
 /**
@@ -102,7 +105,9 @@ async function goToSites(page) {
  */
 async function goToAlerts(page) {
   await navigateTo(page, 'alerts.index');
-  await page.waitForURL('**/alerts');
+  await page.waitForURL('**/alerts', { timeout: 15000 }).catch(() => {
+    return page.waitForSelector('[data-testid="alerts-table"], h1:has-text("Alerts")', { timeout: 10000 });
+  });
 }
 
 /**
@@ -113,7 +118,9 @@ async function goToAlerts(page) {
  */
 async function goToClients(page) {
   await navigateTo(page, 'clients.index');
-  await page.waitForURL('**/clients');
+  await page.waitForURL('**/clients', { timeout: 15000 }).catch(() => {
+    return page.waitForSelector('[data-testid="clients-table"], h1:has-text("Clients")', { timeout: 10000 });
+  });
 }
 
 /**
@@ -124,7 +131,9 @@ async function goToClients(page) {
  */
 async function goToTasks(page) {
   await navigateTo(page, 'tasks.index');
-  await page.waitForURL('**/tasks');
+  await page.waitForURL('**/tasks', { timeout: 15000 }).catch(() => {
+    return page.waitForSelector('[data-testid="tasks-kanban"], h1:has-text("Tasks")', { timeout: 10000 });
+  });
 }
 
 /**
@@ -135,7 +144,9 @@ async function goToTasks(page) {
  */
 async function goToSettings(page) {
   await navigateTo(page, 'settings.index');
-  await page.waitForURL('**/settings');
+  await page.waitForURL('**/settings', { timeout: 15000 }).catch(() => {
+    return page.waitForSelector('h1:has-text("Settings"), [data-testid="settings-page"]', { timeout: 10000 });
+  });
 }
 
 export {

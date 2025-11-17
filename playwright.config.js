@@ -24,13 +24,13 @@ export default defineConfig({
     // Retry failed tests (0 retries for maximum speed)
     retries: 0,
 
-    // Parallel workers (16 workers for maximum parallelization)
-    // Use 16 workers locally for speed, 4 in CI for stability
-    // Note: If system locks up, reduce to 8-12 workers
-    workers: process.env.CI ? 4 : (process.env.WORKERS ? parseInt(process.env.WORKERS) : 16),
+    // Parallel workers (8 workers - reduced to prevent server overload)
+    // Use 8 workers locally for balance between speed and stability, 4 in CI
+    // Note: 16 workers was causing server overload and login timeouts
+    workers: process.env.CI ? 4 : (process.env.WORKERS ? parseInt(process.env.WORKERS) : 8),
 
-    // Maximum failures before stopping test run (stop early to save time)
-    maxFailures: 10, // Stop after 10 failures to save time
+    // Maximum failures before stopping test run (run entire suite to see all failures)
+    maxFailures: undefined,
 
     // Reporter configuration
     reporter: [
@@ -54,6 +54,11 @@ export default defineConfig({
 
         // Viewport size (smaller for faster rendering)
         viewport: { width: 1280, height: 720 },
+
+        // Reuse authenticated storage state if available
+        ...(existsSync("./tests/e2e/.auth/storage-state.json")
+            ? { storageState: "./tests/e2e/.auth/storage-state.json" }
+            : {}),
 
         // Action timeout (aggressive for speed)
         actionTimeout: 5000,

@@ -16,7 +16,6 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
@@ -81,17 +80,21 @@ class DatabaseSeeder extends Seeder
         foreach ($blueprints as $index => $blueprint) {
             $client = $clients[$index % $clientCount];
 
-            $site = Site::factory()
-                ->for($client)
-                ->state(array_merge($blueprint, [
-                    'client_id' => $client->id,
-                    'last_checked_at' => now()->subMinutes(random_int(5, 90)),
-                    'last_backup_at' => now()->subHours(random_int(8, 96)),
-                    'ssl_expires_at' => now()->addMonths(random_int(1, 12)),
-                ]))
-                ->create();
+            $siteSeed = Site::factory()->makeOne(array_merge($blueprint, [
+                'client_id' => $client->id,
+                'last_checked_at' => now()->subMinutes(random_int(5, 90)),
+                'last_backup_at' => now()->subHours(random_int(8, 96)),
+                'ssl_expires_at' => now()->addMonths(random_int(1, 12)),
+            ]));
 
-            $this->seedSiteOperationalData($site, $developers);
+            $site = Site::query()->updateOrCreate(
+                ['url' => $siteSeed->url],
+                $siteSeed->getAttributes(),
+            );
+
+            if ($site->wasRecentlyCreated) {
+                $this->seedSiteOperationalData($site, $developers);
+            }
         }
     }
 
@@ -254,23 +257,25 @@ class DatabaseSeeder extends Seeder
      */
     private function ensureDemoAccount(): void
     {
+        // Note: User model has 'password' => 'hashed' cast, so we pass plain password
+        // The model will automatically hash it when saving
         User::query()->updateOrCreate(
             ['email' => 'demo@dashpilot.test'],
             [
-            'name' => 'Demo Admin',
-                'password' => Hash::make('Password123'),
+                'name' => 'Demo Admin',
+                'password' => 'Password123',
                 'role' => 'admin',
                 'status' => 'active',
                 'email_verified_at' => now(),
             ],
         );
 
-        // E2E test kullanıcısı oluştur
+        // E2E test user
         User::query()->updateOrCreate(
             ['email' => 'admin@test.com'],
             [
                 'name' => 'Test Admin',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role' => 'admin',
                 'status' => 'active',
                 'email_verified_at' => now(),
