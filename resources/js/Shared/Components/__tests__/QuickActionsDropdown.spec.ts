@@ -37,10 +37,10 @@ Object.assign(navigator, {
 })
 
 // Mock window.open
-window.open = vi.fn()
+globalThis.window.open = vi.fn()
 
 // Mock confirm
-window.confirm = vi.fn(() => true)
+globalThis.window.confirm = vi.fn(() => true)
 
 describe('QuickActionsDropdown', () => {
   beforeEach(() => {
