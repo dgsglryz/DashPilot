@@ -118,7 +118,8 @@ class LiquidEditorService
             throw new \RuntimeException('Shopify store URL is not configured for this site.');
         }
 
-        $cacheKey = sprintf('shopify.%d.file.%s', $site->id, md5($filePath));
+        // Using SHA256 instead of MD5 for cache key (better security practice)
+        $cacheKey = sprintf('shopify.%d.file.%s', $site->id, hash('sha256', $filePath));
 
         return Cache::remember($cacheKey, 300, function () use ($site, $filePath) {
             $logger = app(LoggingService::class);
@@ -161,7 +162,8 @@ class LiquidEditorService
 
         // In production, this would call Shopify Admin API to update the file
         // For demo, we just cache it
-        $cacheKey = sprintf('shopify.%d.file.%s', $site->id, md5($filePath));
+        // Using SHA256 instead of MD5 for cache key (better security practice)
+        $cacheKey = sprintf('shopify.%d.file.%s', $site->id, hash('sha256', $filePath));
         Cache::put($cacheKey, $content, 3600);
 
             $logger->logServiceMethod(LiquidEditorService::class, 'saveFileContent', [

@@ -159,7 +159,8 @@ class ActivityController extends Controller
     private function getUserAvatarUrl(string $email, string $name): string
     {
         // Use DiceBear Avataaars for consistent avatars
-        $seed = md5($email);
+        // Using SHA256 instead of MD5 for better security (even though this is non-sensitive)
+        $seed = hash('sha256', $email);
         return 'https://api.dicebear.com/7.x/avataaars/svg?seed='.$seed.'&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf';
     }
 }

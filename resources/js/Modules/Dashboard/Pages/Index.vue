@@ -126,12 +126,22 @@ const isLiveMode = ref(true);
  * Simulates real-time data updates
  * In production, this would fetch from Laravel backend via Inertia
  */
+/**
+ * Generate a secure random number between 0 and 1
+ * Uses crypto.getRandomValues() for security-sensitive contexts
+ */
+const secureRandom = (): number => {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    return array[0] / (0xFFFFFFFF + 1);
+};
+
 const updateLiveData = () => {
     if (isLiveMode.value) {
         // Simulate minor fluctuations in metrics
         liveStats.value.avgUptime = Math.min(
             100,
-            props.stats.avgUptime + Math.random() * 0.2,
+            props.stats.avgUptime + secureRandom() * 0.2,
         );
     }
 };
