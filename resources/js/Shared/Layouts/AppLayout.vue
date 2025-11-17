@@ -361,6 +361,7 @@ onUnmounted(() => {
     <div class="flex min-h-screen bg-gray-950">
         <aside
             class="hidden w-64 flex-shrink-0 border-r border-gray-800 bg-gray-900 lg:flex lg:flex-col"
+            aria-label="Main navigation sidebar"
         >
             <div class="flex h-16 items-center border-b border-gray-800 px-6">
                 <Link href="/dashboard" class="flex items-center gap-3">
@@ -378,7 +379,7 @@ onUnmounted(() => {
                 </Link>
             </div>
 
-            <nav class="flex-1 space-y-1 px-4 py-6 overflow-y-auto">
+            <nav class="flex-1 space-y-1 px-4 py-6 overflow-y-auto" aria-label="Primary navigation">
                 <Link
                     v-for="item in navigation"
                     :key="item.name"
@@ -665,6 +666,7 @@ onUnmounted(() => {
             <aside
                 class="absolute inset-y-0 left-0 w-64 bg-gray-900 p-6 shadow-xl"
                 @click.stop
+                aria-label="Mobile navigation menu"
             >
                 <div class="flex items-center justify-between">
                     <div>
@@ -694,7 +696,7 @@ onUnmounted(() => {
                     </button>
                 </div>
 
-                <nav class="mt-6 space-y-2">
+                <nav class="mt-6 space-y-2" aria-label="Mobile navigation links">
                     <Link
                         v-for="item in navigation"
                         :key="item.name"

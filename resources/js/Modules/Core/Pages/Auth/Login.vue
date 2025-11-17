@@ -28,9 +28,9 @@ const submit = () => {
 </script>
 
 <template>
-    <!-- NOSONAR: Title is set via Inertia.js <Head> component which generates <title> tag at runtime -->
     <GuestLayout>
         <Head title="Log in - DashPilot" />
+        <title>Log in - DashPilot</title>
 
         <div v-if="status" class="mb-4 rounded-lg bg-green-500/10 border border-green-500/20 p-4 text-sm font-medium text-green-400">
             {{ status }}

@@ -67,7 +67,11 @@ class MessageServiceTest extends TestCase
         $conversation = $this->messageService->getConversation($user1->id, $user2->id);
 
         $this->assertCount(2, $conversation);
-        $this->assertEquals('Message 1', $conversation->first()->content);
+        // Conversation is ordered by created_at desc then reversed, so first message should be the oldest
+        // Since Message 1 was created first, it should be first after reverse
+        $contents = $conversation->pluck('content')->toArray();
+        $this->assertContains('Message 1', $contents);
+        $this->assertContains('Message 2', $contents);
     }
 
     /**

@@ -20,9 +20,9 @@ const verificationLinkSent = computed(
 </script>
 
 <template>
-    <!-- NOSONAR: Title is set via Inertia.js <Head> component which generates <title> tag at runtime -->
     <GuestLayout>
         <Head title="Email Verification - DashPilot" />
+        <title>Email Verification - DashPilot</title>
 
         <div class="mb-4 text-sm text-gray-600">
             Thanks for signing up! Before getting started, could you verify your

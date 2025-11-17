@@ -28,9 +28,9 @@ const submit = () => {
 </script>
 
 <template>
-    <!-- NOSONAR: Title is set via Inertia.js <Head> component which generates <title> tag at runtime -->
     <GuestLayout>
         <Head title="Reset Password - DashPilot" />
+        <title>Reset Password - DashPilot</title>
 
         <form @submit.prevent="submit">
             <div>

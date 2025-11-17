@@ -27,6 +27,7 @@ class MessageService
             'sender_id' => $sender->id,
             'recipient_id' => $recipientId,
             'content' => $content,
+            'is_read' => false,
         ]);
     }
 

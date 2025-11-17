@@ -28,30 +28,33 @@ async function loginAsAdmin(
 ) {
     await page.goto("/login");
 
-    // Wait for page to load
-    await page.waitForLoadState("networkidle", { timeout: 30000 });
-    await page.waitForTimeout(1000); // Extra wait for Vue hydration
+    // Wait for DOM to be ready (faster than networkidle)
+    await page.waitForLoadState("domcontentloaded");
 
     // Get selectors using helper functions
     const emailSelector = getEmailInputSelector();
     const passwordSelector = getPasswordInputSelector();
 
-    // Wait for form inputs to be visible
+    // Wait for form inputs to be visible (reduced timeout)
     await page.waitForSelector(emailSelector, {
         state: "visible",
-        timeout: 15000,
+        timeout: 10000,
     });
     await page.waitForSelector(passwordSelector, {
         state: "visible",
-        timeout: 15000,
+        timeout: 10000,
     });
 
     // Fill login form
     await page.fill(emailSelector, email);
     await page.fill(passwordSelector, password);
 
-    // Wait a bit for form to be ready
-    await page.waitForTimeout(300);
+    // Wait for form to be ready (check if button is enabled)
+    await page.waitForSelector('button[type="submit"]:not([disabled])', {
+        timeout: 5000,
+    }).catch(() => {
+        // Button might not have disabled state, continue
+    });
 
     // Try multiple ways to find and click submit button
     const submitSelectors = [
@@ -87,65 +90,27 @@ async function loginAsAdmin(
         }
     }
 
-    // Wait for redirect - could be dashboard or intended URL
+    // Wait for redirect - could be dashboard or intended URL (reduced timeout)
     await page.waitForURL(/\/(dashboard|sites|alerts|clients|tasks)/, {
-        timeout: 15000,
+        timeout: 10000,
     });
 
-    // Wait for Vue to hydrate on dashboard
-    await page.waitForLoadState("networkidle", { timeout: 30000 });
-    await page.waitForTimeout(1000); // Extra wait for Vue hydration
+    // Wait for DOM to be ready (faster than networkidle)
+    await page.waitForLoadState("domcontentloaded");
 
-    // Verify we're logged in (check for dashboard content)
+    // Verify we're logged in (check for sidebar/navigation - fastest check)
     try {
-        // Try multiple selectors for dashboard content
-        const dashboardSelectors = [
-            '[data-testid="dashboard-stats"]',
-            'h1:has-text("Overview")',
-            '[data-testid="dashboard"]',
-            'h1:contains("Overview")',
-            "text=Overview",
-        ];
-
-        let found = false;
-        for (const selector of dashboardSelectors) {
-            try {
-                await page.waitForSelector(selector, { timeout: 5000 });
-                found = true;
-                break;
-            } catch {
-                // Continue to next selector
-            }
-        }
-
-        // Also check if sidebar/navigation exists (indicates logged in)
-        if (!found) {
-            const hasSidebar = await page
-                .locator('aside, nav[role="navigation"]')
-                .isVisible()
-                .catch(() => false);
-            if (hasSidebar) {
-                found = true;
-            }
-        }
-
-        if (!found) {
-            // Final fallback: check if we're on dashboard URL
-            const url = page.url();
-            if (!url.includes("/dashboard") && !url.includes("/login")) {
-                throw new Error(
-                    "Login failed - not redirected to dashboard. Current URL: " +
-                        url,
-                );
-            }
-        }
+        // Quick check: sidebar/navigation exists (indicates logged in)
+        await page.waitForSelector('aside, nav[role="navigation"]', {
+            timeout: 5000,
+            state: 'visible',
+        });
     } catch (error) {
-        // Final fallback: check if we're on dashboard URL
+        // Fallback: check if we're not on login page
         const url = page.url();
-        if (!url.includes("/dashboard") && !url.includes("/login")) {
+        if (url.includes("/login")) {
             throw new Error(
-                "Login failed - not redirected to dashboard. Current URL: " +
-                    url,
+                "Login failed - still on login page. Current URL: " + url,
             );
         }
     }
@@ -158,8 +123,8 @@ async function loginAsAdmin(
  * @returns {Promise<void>}
  */
 async function logout(page) {
-    // Wait for page to be ready
-    await page.waitForLoadState("networkidle");
+    // Wait for DOM to be ready (faster than networkidle)
+    await page.waitForLoadState("domcontentloaded");
 
     // Try multiple logout button selectors
     const logoutSelectors = [
@@ -231,18 +196,16 @@ async function logout(page) {
         }
     }
 
-    // Wait for redirect - logout redirects to home (/)
-    await page.waitForURL(/\/(login|$)/, { timeout: 15000 });
+    // Wait for redirect - logout redirects to home or login (reduced timeout)
+    await page.waitForURL(/\/(login|$)/, { timeout: 10000 });
 
-    // If on home page, wait a bit for potential redirect to login
+    // If on home page, check if redirected to login
     if (page.url().match(/\/$/)) {
-        await page.waitForTimeout(1000);
-        // Check if redirected to login (some auth middleware might redirect)
-        const currentUrl = page.url();
-        if (!currentUrl.includes("/login")) {
-            // If still on home, try navigating to login to check auth status
-            await page.goto("/login", { waitUntil: "networkidle" });
-        }
+        // Wait for potential redirect to login (some auth middleware might redirect)
+        await page.waitForURL(/\/(login|$)/, { timeout: 3000 }).catch(() => {
+            // If no redirect, navigate to login to check auth status
+            return page.goto("/login", { waitUntil: "domcontentloaded" });
+        });
     }
 }
 

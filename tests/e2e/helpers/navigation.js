@@ -68,8 +68,8 @@ async function navigateTo(page, routeName) {
     await page.goto(url);
   }
   
-  // Wait for navigation to complete
-  await page.waitForLoadState('networkidle');
+  // Wait for navigation to complete (faster than networkidle)
+  await page.waitForLoadState('domcontentloaded');
 }
 
 /**

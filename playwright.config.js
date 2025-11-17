@@ -12,24 +12,27 @@ export default defineConfig({
   // Test directory
   testDir: './tests/e2e',
 
-  // Test timeout (45 seconds per test for slower operations)
-  timeout: 45 * 1000,
+  // Test timeout (30 seconds per test - optimized for faster feedback)
+  timeout: 30 * 1000,
 
-  // Expect timeout (5 seconds for assertions)
+  // Expect timeout (3 seconds for assertions - faster failure detection)
   expect: {
-    timeout: 5000
+    timeout: 3000
   },
 
   // Retry failed tests (2 retries in CI, 0 locally for faster feedback)
   retries: process.env.CI ? 2 : 0,
 
-  // Parallel workers (1 in CI for stability, auto locally)
-  // Increased workers for better performance
-  workers: process.env.CI ? 2 : 4,
+  // Parallel workers (optimized for performance)
+  // Use 50% of CPU cores locally, 2 in CI for stability
+  workers: process.env.CI ? 2 : '50%',
+
+  // Maximum failures before stopping test run (fail fast)
+  maxFailures: process.env.CI ? undefined : 5,
 
   // Reporter configuration
   reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['list']
   ],
 
@@ -38,30 +41,37 @@ export default defineConfig({
     // Base URL for all tests
     baseURL: process.env.APP_URL || 'http://localhost:8000',
 
-    // Screenshot on failure
+    // Screenshot on failure only (saves disk space and time)
     screenshot: 'only-on-failure',
 
-    // Video on failure
+    // Video on failure only (saves disk space and time)
     video: 'retain-on-failure',
 
-    // Trace on first retry
+    // Trace on first retry only (saves disk space)
     trace: 'on-first-retry',
 
-    // Viewport size
-    viewport: { width: 1920, height: 1080 },
+    // Viewport size (smaller for faster rendering)
+    viewport: { width: 1280, height: 720 },
 
-    // Action timeout
-    actionTimeout: 10000,
+    // Action timeout (reduced for faster failure detection)
+    actionTimeout: 8000,
 
-    // Navigation timeout
-    navigationTimeout: 30000,
+    // Navigation timeout (reduced for faster failure detection)
+    navigationTimeout: 20000,
+
+    // Ignore HTTPS errors (useful for local development)
+    ignoreHTTPSErrors: true,
   },
 
   // Test projects (browsers to test)
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        ...devices['Desktop Chrome'],
+        // Use authenticated storage state from global setup (reuses login session)
+        storageState: './tests/e2e/.auth/storage-state.json',
+      },
     },
     // Uncomment for multi-browser testing (adds time but increases coverage)
     // {

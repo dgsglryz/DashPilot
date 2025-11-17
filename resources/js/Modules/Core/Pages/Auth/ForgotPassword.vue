@@ -20,9 +20,9 @@ const submit = () => {
 </script>
 
 <template>
-    <!-- NOSONAR: Title is set via Inertia.js <Head> component which generates <title> tag at runtime -->
     <GuestLayout>
         <Head title="Forgot Password - DashPilot" />
+        <title>Forgot Password - DashPilot</title>
 
         <div class="mb-4 text-sm text-gray-600">
             Forgot your password? No problem. Just let us know your email

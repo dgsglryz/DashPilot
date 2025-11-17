@@ -12,8 +12,8 @@ defineProps<{
 </script>
 
 <template>
-    <!-- NOSONAR: Title is set via Inertia.js <Head> component which generates <title> tag at runtime -->
     <Head title="Profile - DashPilot" />
+    <title>Profile - DashPilot</title>
 
     <AuthenticatedLayout>
         <template #header>

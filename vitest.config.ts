@@ -8,6 +8,24 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'lcov'],
+      exclude: [
+        'node_modules/',
+        'tests/',
+        '**/*.spec.ts',
+        '**/*.test.ts',
+        '**/__tests__/**',
+        'vite.config.*',
+        'vitest.config.*',
+        'tailwind.config.*',
+        'postcss.config.*',
+        'eslint.config.*',
+        'playwright.config.*',
+      ],
+      include: ['resources/js/**/*.{ts,vue}'],
+    },
   },
   resolve: {
     alias: {

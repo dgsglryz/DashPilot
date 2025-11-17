@@ -20,9 +20,9 @@ const submit = () => {
 </script>
 
 <template>
-    <!-- NOSONAR: Title is set via Inertia.js <Head> component which generates <title> tag at runtime -->
     <GuestLayout>
         <Head title="Confirm Password - DashPilot" />
+        <title>Confirm Password - DashPilot</title>
 
         <div class="mb-4 text-sm text-gray-600">
             This is a secure area of the application. Please confirm your

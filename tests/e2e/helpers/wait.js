@@ -61,12 +61,14 @@ async function waitForErrorMessage(page, message = null) {
 /**
  * Wait for loading spinner to disappear
  * 
+ * Optimized version: uses domcontentloaded instead of networkidle for faster execution
+ * 
  * @param {import('@playwright/test').Page} page - Playwright page object
- * @param {number} timeout - Timeout in milliseconds (default: 10000)
+ * @param {number} timeout - Timeout in milliseconds (default: 5000)
  * @returns {Promise<void>}
  */
-async function waitForLoadingToComplete(page, timeout = 10000) {
-  // Wait for common loading indicators to disappear
+async function waitForLoadingToComplete(page, timeout = 5000) {
+  // Wait for common loading indicators to disappear (with shorter timeout)
   const loadingSelectors = [
     '[data-testid="loading"]',
     '.loading',
@@ -74,16 +76,17 @@ async function waitForLoadingToComplete(page, timeout = 10000) {
     '[aria-busy="true"]',
   ];
   
-  for (const selector of loadingSelectors) {
-    try {
-      await page.waitForSelector(selector, { state: 'hidden', timeout: 2000 });
-    } catch {
-      // Ignore if selector doesn't exist
-    }
-  }
+  // Wait for any loading indicators to disappear (parallel check)
+  await Promise.allSettled(
+    loadingSelectors.map(selector =>
+      page.waitForSelector(selector, { state: 'hidden', timeout: 2000 }).catch(() => {
+        // Ignore if selector doesn't exist
+      })
+    )
+  );
   
-  // Wait for network to be idle
-  await page.waitForLoadState('networkidle', { timeout });
+  // Wait for DOM to be ready (faster than networkidle)
+  await page.waitForLoadState('domcontentloaded', { timeout });
 }
 
 /**
@@ -113,15 +116,18 @@ async function waitForTableData(page, tableSelector = 'table', minRows = 1) {
 /**
  * Wait for Vue/Inertia page to be fully loaded and hydrated
  * 
+ * Optimized version: uses domcontentloaded instead of networkidle for faster execution
+ * 
  * @param {import('@playwright/test').Page} page - Playwright page object
- * @param {number} timeout - Timeout in milliseconds (default: 15000)
+ * @param {number} timeout - Timeout in milliseconds (default: 10000)
  * @returns {Promise<void>}
  */
-async function waitForPageReady(page, timeout = 15000) {
-  // Wait for network to be idle (initial load complete)
-  await page.waitForLoadState('networkidle', { timeout });
+async function waitForPageReady(page, timeout = 10000) {
+  // Wait for DOM to be ready (faster than networkidle)
+  await page.waitForLoadState('domcontentloaded', { timeout });
   
   // Wait for Vue/Inertia to hydrate by checking if Inertia is available
+  // Use shorter timeout for faster failure detection
   await page.waitForFunction(
     () => {
       // Check if Inertia is loaded (window.Inertia or __INERTIA__)
@@ -133,11 +139,75 @@ async function waitForPageReady(page, timeout = 15000) {
         document.querySelector('[data-inertia]') !== null
       );
     },
-    { timeout: 10000 }
+    { timeout: 5000 }
   ).catch(() => {
-    // If Inertia check fails, just wait a bit more for hydration
-    return page.waitForTimeout(500);
+    // If Inertia check fails, check for sidebar/navigation as fallback
+    return page.waitForSelector('aside, nav[role="navigation"]', {
+      timeout: 2000,
+      state: 'visible',
+    }).catch(() => {
+      // If that also fails, page might not be fully loaded, but continue anyway
+    });
   });
+}
+
+/**
+ * Wait for debounce/input delay (replaces waitForTimeout for inputs)
+ * 
+ * Waits for input to be stable and potential debounce to complete.
+ * Uses faster wait strategies instead of fixed timeout.
+ * 
+ * @param {import('@playwright/test').Page} page - Playwright page object
+ * @param {number} timeout - Maximum wait time in milliseconds (default: 500)
+ * @returns {Promise<void>}
+ */
+async function waitForDebounce(page, timeout = 500) {
+  // Wait for DOM to be ready (faster than fixed timeout)
+  await page.waitForLoadState('domcontentloaded', { timeout });
+  
+  // Wait a very short time for any pending operations (minimal)
+  await new Promise(resolve => setTimeout(resolve, 100));
+}
+
+/**
+ * Wait for UI update after action (replaces waitForTimeout for UI updates)
+ * 
+ * Waits for UI to update after an action (click, type, etc.)
+ * Uses element visibility checks instead of fixed timeout.
+ * 
+ * @param {import('@playwright/test').Page} page - Playwright page object
+ * @param {string} selector - Selector to wait for (optional)
+ * @param {number} timeout - Maximum wait time in milliseconds (default: 500)
+ * @returns {Promise<void>}
+ */
+async function waitForUIUpdate(page, selector = null, timeout = 500) {
+  if (selector) {
+    // Wait for specific element to appear/change
+    await page.waitForSelector(selector, { 
+      state: 'visible', 
+      timeout: Math.min(timeout, 3000) 
+    }).catch(() => {
+      // If selector not found, continue anyway (might not be necessary)
+    });
+  } else {
+    // Wait for DOM to be ready (faster than fixed timeout)
+    await page.waitForLoadState('domcontentloaded', { timeout: 200 });
+  }
+}
+
+/**
+ * Fast wait - minimal delay for animations/interactions
+ * 
+ * Only use when absolutely necessary. Prefer waitForSelector or waitForLoadState.
+ * 
+ * @param {import('@playwright/test').Page} page - Playwright page object
+ * @param {number} ms - Milliseconds to wait (should be <= 200)
+ * @returns {Promise<void>}
+ */
+async function fastWait(page, ms = 100) {
+  // Only allow very short waits (max 200ms)
+  const actualMs = Math.min(ms, 200);
+  await new Promise(resolve => setTimeout(resolve, actualMs));
 }
 
 export {
@@ -147,5 +217,8 @@ export {
   waitForLoadingToComplete,
   waitForTableData,
   waitForPageReady,
+  waitForDebounce,
+  waitForUIUpdate,
+  fastWait,
 };
 

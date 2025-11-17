@@ -106,9 +106,15 @@ export async function getSubmitButtonInForm(page, formSelector = null) {
  * @returns {Promise<void>}
  */
 export async function waitForFormReady(page, formSelector = 'form', timeout = 15000) {
-  await page.waitForLoadState('networkidle', { timeout });
+  // Wait for DOM to be ready (faster than networkidle)
+  await page.waitForLoadState('domcontentloaded', { timeout });
   await page.waitForSelector(formSelector, { state: 'visible', timeout });
-  // Additional wait for Vue components to render
-  await page.waitForTimeout(500);
+  // Wait for form inputs to be interactive (replaces waitForTimeout)
+  await page.waitForSelector(`${formSelector} input, ${formSelector} button`, { 
+    state: 'visible', 
+    timeout: 3000 
+  }).catch(() => {
+    // If inputs not found, continue anyway
+  });
 }
 
