@@ -139,7 +139,7 @@ class SearchController extends Controller
 
         $filteredPages = array_filter($pageSuggestions, function ($page) use ($query) {
             $labelMatch = stripos($page['label'], $query) !== false;
-            $keywordMatch = isset($page['keywords']) && 
+            $keywordMatch = isset($page['keywords']) &&
                 collect($page['keywords'])->some(fn($k) => stripos($k, $query) !== false);
             return $labelMatch || $keywordMatch;
         });

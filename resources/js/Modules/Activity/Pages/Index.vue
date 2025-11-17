@@ -291,7 +291,7 @@ const filteredActivities = computed(() => {
     const matchesSearch = !searchQuery.value || 
       activity.action.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       activity.description.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchesSite = !filterSite.value || activity.site?.id === parseInt(filterSite.value)
+    const matchesSite = !filterSite.value || activity.site?.id === Number.parseInt(filterSite.value)
     const matchesAction = !filterAction.value || activity.action.includes(filterAction.value)
     
     return matchesSearch && matchesSite && matchesAction

@@ -705,7 +705,7 @@ const loadSamplePayload = () => {
 const testWebhook = async () => {
   if (!selectedWebhookForTest.value || selectedWebhookForTest.value === '') return
   
-  const webhook = webhooks.value[parseInt(selectedWebhookForTest.value)]
+  const webhook = webhooks.value[Number.parseInt(selectedWebhookForTest.value)]
   if (!webhook || !webhook.url) {
     toast.error('Please select a valid webhook')
     return

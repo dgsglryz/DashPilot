@@ -163,8 +163,8 @@ import AppLayout from '@/Shared/Layouts/AppLayout.vue'
 import AlertCard from '@/Modules/Alerts/Components/AlertCard.vue'
 import Breadcrumbs from '@/Shared/Components/Breadcrumbs.vue'
 import Pagination from '@/Shared/Components/Pagination.vue'
-import { ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
-import { 
+import {
+  ArrowDownTrayIcon,
   MagnifyingGlassIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
