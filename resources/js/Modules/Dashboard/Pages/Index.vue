@@ -128,8 +128,8 @@ const isLiveMode = ref(true);
  */
 const secureRandom = (): number => {
     const array = new Uint32Array(1);
-    crypto.getRandomValues(array);
-    return array[0] / (0xFFFFFFFF + 1);
+    globalThis.crypto.getRandomValues(array);
+    return array[0] / (0xffffffff + 1);
 };
 
 const updateLiveData = () => {
@@ -270,7 +270,6 @@ onMounted(() => {
                             image-query="financial charts and analytics on laptop screen"
                             :href="route('revenue.index')"
                         />
-
                     </div>
 
                     <!-- Calendar Widget -->
@@ -462,26 +461,59 @@ onMounted(() => {
                         </h3>
                         <p class="text-sm text-gray-400">Runbook snapshot</p>
                         <div class="mt-4 space-y-3">
-                            <div class="rounded-lg border border-gray-700 bg-gray-900/50 p-4">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-medium text-gray-300">Health Checks</span>
-                                    <span class="text-xs text-green-400">Running</span>
+                            <div
+                                class="rounded-lg border border-gray-700 bg-gray-900/50 p-4"
+                            >
+                                <div
+                                    class="flex items-center justify-between mb-2"
+                                >
+                                    <span
+                                        class="text-sm font-medium text-gray-300"
+                                        >Health Checks</span
+                                    >
+                                    <span class="text-xs text-green-400"
+                                        >Running</span
+                                    >
                                 </div>
-                                <div class="text-xs text-gray-400">125 sites checked in last 5 min</div>
+                                <div class="text-xs text-gray-400">
+                                    125 sites checked in last 5 min
+                                </div>
                             </div>
-                            <div class="rounded-lg border border-gray-700 bg-gray-900/50 p-4">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-medium text-gray-300">Queue Workers</span>
-                                    <span class="text-xs text-green-400">Active</span>
+                            <div
+                                class="rounded-lg border border-gray-700 bg-gray-900/50 p-4"
+                            >
+                                <div
+                                    class="flex items-center justify-between mb-2"
+                                >
+                                    <span
+                                        class="text-sm font-medium text-gray-300"
+                                        >Queue Workers</span
+                                    >
+                                    <span class="text-xs text-green-400"
+                                        >Active</span
+                                    >
                                 </div>
-                                <div class="text-xs text-gray-400">3 workers processing jobs</div>
+                                <div class="text-xs text-gray-400">
+                                    3 workers processing jobs
+                                </div>
                             </div>
-                            <div class="rounded-lg border border-gray-700 bg-gray-900/50 p-4">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-medium text-gray-300">Cache Status</span>
-                                    <span class="text-xs text-green-400">Healthy</span>
+                            <div
+                                class="rounded-lg border border-gray-700 bg-gray-900/50 p-4"
+                            >
+                                <div
+                                    class="flex items-center justify-between mb-2"
+                                >
+                                    <span
+                                        class="text-sm font-medium text-gray-300"
+                                        >Cache Status</span
+                                    >
+                                    <span class="text-xs text-green-400"
+                                        >Healthy</span
+                                    >
                                 </div>
-                                <div class="text-xs text-gray-400">Redis cache operational</div>
+                                <div class="text-xs text-gray-400">
+                                    Redis cache operational
+                                </div>
                             </div>
                         </div>
                         <dl class="mt-4 space-y-2 text-sm text-gray-300">
