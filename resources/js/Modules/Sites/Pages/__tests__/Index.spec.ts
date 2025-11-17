@@ -2,6 +2,34 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import Index from "../Index.vue";
 
+// Type definitions for test props
+interface Site {
+    id: number;
+    name: string;
+    url: string;
+    platform: string;
+    status: string;
+    uptime: number;
+    responseTime: number;
+    lastChecked: string;
+    is_favorited: boolean;
+}
+
+interface TestProps {
+    sites: Site[];
+    stats: {
+        healthy: number;
+        warning: number;
+        critical: number;
+        total: number;
+    };
+    filters: {
+        query: string;
+        platform: string;
+        status: string;
+    };
+}
+
 // Mock Inertia
 vi.mock("@inertiajs/vue3", () => ({
     router: {
@@ -15,10 +43,12 @@ vi.mock("@inertiajs/vue3", () => ({
         template: "<a><slot /></a>",
         props: ["href"],
     },
-}))
+}));
 
 // Mock route function globally
-(globalThis as any).route = vi.fn((name: string) => `/${name}`);
+(globalThis as unknown as { route: (name: string) => string }).route = vi.fn(
+    (name: string) => `/${name}`,
+);
 
 // Mock components
 vi.mock("@/Shared/Layouts/AppLayout.vue", () => ({
@@ -54,7 +84,7 @@ vi.mock("@/Shared/Components/Pagination.vue", () => ({
 }));
 
 describe("Sites Index", () => {
-    const defaultProps = {
+    const defaultProps: TestProps = {
         sites: [
             {
                 id: 1,
@@ -87,7 +117,7 @@ describe("Sites Index", () => {
 
     it("renders page title", () => {
         const wrapper = mount(Index, {
-            props: defaultProps as any,
+            props: defaultProps,
             global: {
                 stubs: {
                     AppLayout: {
@@ -106,7 +136,7 @@ describe("Sites Index", () => {
 
     it("displays site statistics", () => {
         const wrapper = mount(Index, {
-            props: defaultProps as any,
+            props: defaultProps,
             global: {
                 stubs: {
                     AppLayout: {
@@ -128,7 +158,7 @@ describe("Sites Index", () => {
 
     it("renders sites table", () => {
         const wrapper = mount(Index, {
-            props: defaultProps as any,
+            props: defaultProps,
             global: {
                 stubs: {
                     AppLayout: {
@@ -149,7 +179,7 @@ describe("Sites Index", () => {
 
     it("displays site name in table", () => {
         const wrapper = mount(Index, {
-            props: defaultProps as any,
+            props: defaultProps,
             global: {
                 stubs: {
                     AppLayout: {
@@ -169,7 +199,7 @@ describe("Sites Index", () => {
 
     it("renders search input", () => {
         const wrapper = mount(Index, {
-            props: defaultProps as any,
+            props: defaultProps,
             global: {
                 stubs: {
                     AppLayout: {
@@ -190,7 +220,7 @@ describe("Sites Index", () => {
 
     it("renders add site button", () => {
         const wrapper = mount(Index, {
-            props: defaultProps as any,
+            props: defaultProps,
             global: {
                 stubs: {
                     AppLayout: {

@@ -70,11 +70,11 @@ describe('AppLayout', () => {
     Storage.prototype.removeItem = vi.fn()
     
     // Mock global.route function
-    ;(globalThis as any).route = mockRoute as any
-    ;((globalThis as any).route as any).current = mockRouteCurrent
+    const globalRoute = (globalThis as any).route = mockRoute
+    globalRoute.current = mockRouteCurrent
     
-    // Mock window.location
-    Object.defineProperty(window, 'location', {
+    // Mock globalThis.location
+    Object.defineProperty(globalThis, 'location', {
       value: {
         pathname: '/dashboard',
       },
@@ -378,10 +378,11 @@ describe('AppLayout', () => {
   it('shows loading state while searching', async () => {
     vi.useFakeTimers()
     
-    // Make axios call take time
-    mockAxiosGet.mockImplementation(() => new Promise(resolve => {
+    // Make axios call take time - extract nested function to reduce nesting
+    const delayedResponse = () => new Promise(resolve => {
       setTimeout(() => resolve({ data: { results: [] } }), 100)
-    }))
+    })
+    mockAxiosGet.mockImplementation(delayedResponse)
     
     const wrapper = mount(AppLayout, {
       global: {
