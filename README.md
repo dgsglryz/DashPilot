@@ -4,6 +4,10 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 
 ## Latest Updates
 
+- **Nov 16** – **WHAT THE DIFF INTEGRATION**: Automated PR summaries and code change analysis:
+    - ✅ **What The Diff GitHub App** - Automatically generates AI-powered summaries for pull requests
+    - ✅ **Code Change Analysis** - Intelligent diff analysis and change explanations
+    - ✅ **PR Comments** - Automatic comments on pull requests with detailed change summaries
 - **Nov 16** – **NODE.JS VERSION UPDATE**: Updated to Node.js 20.19+ requirement for Vite 7 compatibility:
     - ✅ **package.json** - Updated engines to require Node.js >=20.19.0 and npm >=10.0.0
     - ✅ **Dockerfile** - Updated to install Node.js 20 LTS via NodeSource repository
