@@ -42,24 +42,22 @@ const props = withDefaults(
 const imageError = ref(false);
 
 /**
- * Generate Unsplash image URL based on query
+ * Generate a local hero image URL based on query
  */
 const imageUrl = computed(() => {
     if (imageError.value) {
         return '/placeholder.svg?height=160&width=400';
     }
     
-    // Map queries to Unsplash image IDs for consistent, relevant images
+    // Map descriptive queries to curated local artwork for consistency
     const imageMap: Record<string, string> = {
-        'person working on laptop with multiple website dashboards': '1521791055366-0d553872125f',
-        'smiling professional woman in red sweater': '1494790108375-be55c52b42c6',
-        'financial charts and analytics on laptop screen': '1460925891237-14d9a24401e9',
-        'multiple website dashboards and analytics screens': '1551288049-bebda4e38f71',
+        'person working on laptop with multiple website dashboards': '/images/cards/sites-card.svg',
+        'smiling professional woman in red sweater': '/images/cards/seo-card.svg',
+        'financial charts and analytics on laptop screen': '/images/cards/revenue-card.svg',
+        'multiple website dashboards and analytics screens': '/images/cards/sites-card.svg',
     };
     
-    const imageId = imageMap[props.imageQuery] || '1521791055366-0d553872125f';
-    
-    return `https://images.unsplash.com/photo-${imageId}?auto=format&fit=crop&w=800&q=80`;
+    return imageMap[props.imageQuery] ?? '/images/cards/sites-card.svg';
 });
 
 /**

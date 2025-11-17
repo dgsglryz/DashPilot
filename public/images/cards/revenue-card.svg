@@ -1,0 +1,24 @@
+<svg width="640" height="320" viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="revenueGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="revenueAccent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="320" rx="28" fill="url(#revenueGradient)"/>
+  <path d="M60 240C110 210 150 250 200 220C250 190 280 220 320 200C360 180 400 210 440 190C480 170 510 190 560 170" fill="none" stroke="url(#revenueAccent)" stroke-width="12" stroke-linecap="round" opacity="0.45"/>
+  <rect x="420" y="60" width="150" height="180" rx="20" fill="#052e2b" opacity="0.65"/>
+  <rect x="450" y="90" width="30" height="120" rx="8" fill="#34d399"/>
+  <rect x="490" y="70" width="30" height="140" rx="8" fill="#22d3ee" opacity="0.85"/>
+  <rect x="530" y="110" width="30" height="100" rx="8" fill="#10b981" opacity="0.65"/>
+  <circle cx="170" cy="110" r="70" fill="url(#revenueAccent)" opacity="0.2"/>
+  <circle cx="250" cy="180" r="120" fill="url(#revenueAccent)" opacity="0.18"/>
+  <text x="80" y="240" fill="#ecfccb" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="700">$</text>
+  <text x="120" y="240" fill="#bbf7d0" font-family="Inter, Arial, sans-serif" font-size="40" font-weight="600">Revenue</text>
+  <text x="80" y="280" fill="#a7f3d0" font-family="Inter, Arial, sans-serif" font-size="18">Monthly Shopify performance snapshot</text>
+</svg>
+
