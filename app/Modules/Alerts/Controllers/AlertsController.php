@@ -28,14 +28,8 @@ class AlertsController extends Controller
         $perPage = $request->integer('per_page', 20);
         $user = $request->user();
         
-        // Admin users see all alerts, others see only their assigned clients
-        $alertsQuery = Alert::with(['site:id,name,url', 'resolver:id,name', 'acknowledger:id,name']);
-        
-        if ($user->role !== 'admin') {
-            $alertsQuery->whereHas('site.client', function ($q) use ($user) {
-                $q->where('assigned_developer_id', $user->id);
-            });
-        }
+        $alertsQuery = Alert::with(['site:id,name,url', 'resolver:id,name', 'acknowledger:id,name'])
+            ->forUser($user);
         
         $alerts = $alertsQuery->latest('created_at')
             ->paginate($perPage)
@@ -55,12 +49,7 @@ class AlertsController extends Controller
             });
 
         // Get stats using database queries, filtered by user's assigned clients (or all for admin)
-        $user = $request->user();
-        $statsQuery = Alert::query();
-        
-        if ($user->role !== 'admin') {
-            $statsQuery->whereHas('site.client', fn ($q) => $q->where('assigned_developer_id', $user->id));
-        }
+        $statsQuery = Alert::query()->forUser($user);
         
         $stats = [
             'critical' => (clone $statsQuery)->where('severity', 'critical')->where('status', '!=', 'resolved')->count(),
@@ -83,15 +72,8 @@ class AlertsController extends Controller
         $this->authorize('viewAny', Alert::class);
         
         $user = $request->user();
-        
-        // Scope to user's assigned clients (admin sees all)
-        $query = Alert::where('is_read', false);
-        
-        if ($user->role !== 'admin') {
-            $query->whereHas('site.client', function ($q) use ($user) {
-                $q->where('assigned_developer_id', $user->id);
-            });
-        }
+        $query = Alert::where('is_read', false)
+            ->forUser($user);
         
         $query->update(['is_read' => true]);
 
@@ -155,17 +137,10 @@ class AlertsController extends Controller
         $this->authorize('viewAny', Alert::class);
         
         $user = $request->user();
-        
-        // Filter alerts to only show those for sites belonging to user's assigned clients
         $query = Alert::with(['site:id,name', 'resolver:id,name', 'acknowledger:id,name'])
             ->where('created_at', '>=', now()->subDays(30))
-            ->latest('created_at');
-        
-        if ($user->role !== 'admin') {
-            $query->whereHas('site.client', function ($q) use ($user) {
-                $q->where('assigned_developer_id', $user->id);
-            });
-        }
+            ->latest('created_at')
+            ->forUser($user);
 
         $filename = 'alerts_'.now()->format('Y-m-d_His').'.csv';
 

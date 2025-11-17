@@ -39,6 +39,13 @@ class Webhook extends Model
         'last_triggered_at' => 'datetime',
     ];
 
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'events' => '[]',
+    ];
+
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');

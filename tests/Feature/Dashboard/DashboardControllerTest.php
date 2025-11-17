@@ -25,12 +25,14 @@ class DashboardControllerTest extends TestCase
     public function test_dashboard_displays_stats(): void
     {
         $user = User::factory()->create();
+        $client = \App\Modules\Clients\Models\Client::factory()->create(['assigned_developer_id' => $user->id]);
 
-        $healthySites = Site::factory()->count(5)->create(['status' => 'healthy']);
-        $warningSites = Site::factory()->count(2)->create(['status' => 'warning']);
-        $alerts = Alert::factory()->count(3)->create(['is_resolved' => false]);
-        Report::factory()->create(['uptime_percentage' => 99.5]);
-        ActivityLog::factory()->create();
+        $healthySites = Site::factory()->count(5)->create(['status' => 'healthy', 'client_id' => $client->id]);
+        $warningSites = Site::factory()->count(2)->create(['status' => 'warning', 'client_id' => $client->id]);
+        $site1 = $healthySites->first();
+        $alerts = Alert::factory()->count(3)->create(['is_resolved' => false, 'site_id' => $site1->id]);
+        Report::factory()->create(['uptime_percentage' => 99.5, 'client_id' => $client->id, 'site_id' => $site1->id]);
+        ActivityLog::factory()->create(['site_id' => $site1->id]);
 
         $response = $this->actingAs($user)->get(route('dashboard'));
 

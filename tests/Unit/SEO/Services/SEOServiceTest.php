@@ -29,6 +29,7 @@ class SEOServiceTest extends TestCase
                 'page_speed' => 4.2,
                 'has_viewport_tag' => false,
                 'missing_alt_tags' => 6,
+                'has_amp' => false,
             ], 200),
         ]);
 
@@ -36,8 +37,8 @@ class SEOServiceTest extends TestCase
 
         $result = $service->analyze($site);
 
-        $this->assertSame(23, $result['score']); // 100 -10 -15 -20 -10 -10 -12
-        $this->assertCount(6, $result['issues']);
+        $this->assertSame(18, $result['score']); // 100 -10 -15 -20 -10 -10 -12 -5
+        $this->assertCount(7, $result['issues']);
 
         // Cache hit second time (no additional HTTP call)
         $service->analyze($site);

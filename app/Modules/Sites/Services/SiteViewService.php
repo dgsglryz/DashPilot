@@ -37,11 +37,7 @@ class SiteViewService
         }
 
         if ($request->filled('query')) {
-            $search = $request->string('query')->toString();
-            $query->where(function (Builder $inner) use ($search): void {
-                $inner->where('name', 'like', "%{$search}%")
-                    ->orWhere('url', 'like', "%{$search}%");
-            });
+            $query->search($request->string('query')->toString());
         }
     }
 
@@ -174,6 +170,7 @@ class SiteViewService
         };
     }
 }
+
 
 
 

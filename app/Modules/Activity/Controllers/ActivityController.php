@@ -28,17 +28,9 @@ class ActivityController extends Controller
      */
     public function index(Request $request): Response
     {
-        // Authorization: Users can view activity for their assigned clients
         $user = $request->user();
-        
-        $query = $this->filteredActivityQuery($request, ['site:id,name,url,thumbnail_url', 'user:id,name,email']);
-        
-        // Scope to user's assigned clients (admin sees all)
-        if ($user->role !== 'admin') {
-            $query->whereHas('site.client', function ($q) use ($user) {
-                $q->where('assigned_developer_id', $user->id);
-            });
-        }
+        $query = $this->filteredActivityQuery($request, ['site:id,name,url,thumbnail_url', 'user:id,name,email'])
+            ->forUser($user);
 
         $activities = $query->paginate(20)->through(function (ActivityLog $log) {
             return [
@@ -62,12 +54,7 @@ class ActivityController extends Controller
         });
 
         // Scope stats to user's assigned clients
-        $statsQuery = ActivityLog::query();
-        if ($user->role !== 'admin') {
-            $statsQuery->whereHas('site.client', function ($q) use ($user) {
-                $q->where('assigned_developer_id', $user->id);
-            });
-        }
+        $statsQuery = ActivityLog::query()->forUser($user);
         
         $stats = [
             'total' => (clone $statsQuery)->count(),
@@ -77,13 +64,10 @@ class ActivityController extends Controller
         ];
 
         // Scope sites to user's assigned clients
-        $sitesQuery = Site::query();
-        if ($user->role !== 'admin') {
-            $sitesQuery->whereHas('client', function ($q) use ($user) {
-                $q->where('assigned_developer_id', $user->id);
-            });
-        }
-        $sites = $sitesQuery->orderBy('name')->get(['id', 'name']);
+        $sites = Site::query()
+            ->forUser($user)
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         return Inertia::render('Activity/Pages/Index', [
             'activities' => $activities,
@@ -108,15 +92,8 @@ class ActivityController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $user = $request->user();
-        
-        $query = $this->filteredActivityQuery($request, ['site:id,name,url', 'user:id,name,email']);
-        
-        // Scope to user's assigned clients (admin sees all)
-        if ($user->role !== 'admin') {
-            $query->whereHas('site.client', function ($q) use ($user) {
-                $q->where('assigned_developer_id', $user->id);
-            });
-        }
+        $query = $this->filteredActivityQuery($request, ['site:id,name,url', 'user:id,name,email'])
+            ->forUser($user);
 
         $filename = 'activity_logs_'.now()->format('Y-m-d_His').'.csv';
 

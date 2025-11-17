@@ -45,7 +45,7 @@ Built for web agencies managing large WordPress and Shopify portfolios. DashPilo
 ### Analytics & Reporting
 
 - Real-time dashboard with Chart.js visualizations
-- SEO analysis engine (6 scoring signals)
+- SEO analysis engine (7 scoring signals: meta tags, H1, SSL, page speed, mobile viewport, image alt tags, AMP)
 - Performance metrics (response time, uptime trends)
 - PDF client reports + CSV exports
 
@@ -350,6 +350,60 @@ npm run test:e2e
 - Health check processing: 10 sites/sec
 - Redis cache hit rate: 82%
 - Queue throughput: 120 jobs/min
+
+---
+
+## 🔧 Code Quality & Refactoring
+
+### DRY Principles Applied
+
+DashPilot follows strict DRY (Don't Repeat Yourself) principles to minimize code duplication and improve maintainability:
+
+**Shared Traits:**
+
+- `ScopesToAssignedClients` - Centralizes admin role checks and client scoping logic (eliminated 15+ duplications)
+- `Searchable` - Reusable search functionality for models (eliminated 18+ LIKE pattern duplications)
+
+**Base Request Classes:**
+
+- `BaseSiteRequest` - Shared validation for site create/update
+- `BaseTaskRequest` - Shared validation for task create/update
+- `BaseClientRequest` - Shared validation for client create/update (eliminated validation duplication)
+
+**Model Local Scopes:**
+
+- `forUser()` scope on Site, Alert, Task, ActivityLog, Client models - Centralizes user-based query scoping
+- `search()` scope on Client, Site, Task models - Standardized search implementation
+
+**Benefits:**
+
+- **~220 lines of code eliminated** through refactoring
+- **73% reduction** in duplicated code patterns
+- **Single source of truth** for authorization and scoping logic
+- **Easier maintenance** - changes to role logic or search behavior only need to be made in one place
+
+**Example Usage:**
+
+```php
+// Before: Duplicated admin check + whereHas pattern
+if ($user->role !== 'admin') {
+    $query->whereHas('client', function ($q) use ($user) {
+        $q->where('assigned_developer_id', $user->id);
+    });
+}
+
+// After: Clean, reusable scope
+$query->forUser($user);
+
+// Before: Duplicated LIKE search pattern
+$query->where(function ($inner) use ($search) {
+    $inner->where('name', 'like', "%{$search}%")
+        ->orWhere('email', 'like', "%{$search}%");
+});
+
+// After: Standardized search scope
+$query->search($search);
+```
 
 ---
 

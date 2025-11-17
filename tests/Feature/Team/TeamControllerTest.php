@@ -21,7 +21,7 @@ class TeamControllerTest extends TestCase
 
     public function test_team_index_displays_members(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         User::factory()->count(3)->create();
 
         $response = $this->actingAs($user)->get(route('team.index'));
@@ -36,7 +36,7 @@ class TeamControllerTest extends TestCase
     public function test_team_invite_creates_pending_user(): void
     {
         Mail::fake();
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($user)->post(route('team.invite'), [
             'name' => 'New Member',
@@ -53,7 +53,7 @@ class TeamControllerTest extends TestCase
 
     public function test_team_destroy_removes_member(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         $member = User::factory()->create();
 
         $response = $this->actingAs($user)->delete(route('team.destroy', $member));

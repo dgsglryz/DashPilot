@@ -37,20 +37,9 @@ class TasksController extends Controller
         $this->authorize('viewAny', Task::class);
         
         $user = $request->user();
-        $query = Task::query()->with(['assignee:id,name,email', 'site:id,name', 'client:id,name']);
-        
-        // Scope to user's assigned clients (admin sees all)
-        if ($user->role !== 'admin') {
-            $query->where(function ($q) use ($user) {
-                $q->where('assigned_to', $user->id)
-                    ->orWhereHas('client', function ($clientQ) use ($user) {
-                        $clientQ->where('assigned_developer_id', $user->id);
-                    })
-                    ->orWhereHas('site.client', function ($siteQ) use ($user) {
-                        $siteQ->where('assigned_developer_id', $user->id);
-                    });
-            });
-        }
+        $query = Task::query()
+            ->with(['assignee:id,name,email', 'site:id,name', 'client:id,name'])
+            ->forUser($user);
 
         // Filter by status
         if ($request->filled('status') && $request->string('status')->toString() !== 'all') {
@@ -74,11 +63,7 @@ class TasksController extends Controller
 
         // Search
         if ($request->filled('query')) {
-            $search = $request->string('query')->toString();
-            $query->where(function ($inner) use ($search): void {
-                $inner->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
+            $query->search($request->string('query')->toString());
         }
 
         $perPage = $request->integer('per_page', 20);

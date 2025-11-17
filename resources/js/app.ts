@@ -68,20 +68,25 @@ createInertiaApp({
  * Resolve the module path for an Inertia page component.
  * Tries multiple common paths to locate the Vue component file.
  *
- * @param name - The page component name
+ * @param name - The page component name (e.g., "Sites/Pages/Index", "Alerts/Pages/Index")
  * @returns The resolved path to the component
  * @throws Error if the page component is not found
  */
 function resolveModulePath(name: string): string {
+    // Convert "Sites/Pages/Index" to "./Modules/Sites/Pages/Index.vue"
     const guesses = [
-        `./Modules/${name}.vue`,
-        `./Modules/Core/Pages/${name}.vue`,
+        `./Modules/${name}.vue`, // Primary path: ./Modules/Sites/Pages/Index.vue
+        `./Modules/Core/Pages/${name}.vue`, // Core pages fallback
     ];
 
     const match = guesses.find((path) => pages[path] !== undefined);
 
     if (!match) {
-        throw new Error(`Page not found: ${name}`);
+        // Log available pages for debugging
+        const availablePages = Object.keys(pages).slice(0, 10);
+        console.error(`Page not found: ${name}`);
+        console.error('Available pages (first 10):', availablePages);
+        throw new Error(`Page not found: ${name}. Check console for available pages.`);
     }
 
     return match;

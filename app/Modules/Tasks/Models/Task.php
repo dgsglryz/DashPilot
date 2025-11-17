@@ -6,6 +6,8 @@ namespace App\Modules\Tasks\Models;
 use App\Modules\Clients\Models\Client;
 use App\Modules\Sites\Models\Site;
 use App\Modules\Users\Models\User;
+use App\Shared\Traits\Searchable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Task extends Model
 {
-    use HasFactory;
+    use HasFactory, Searchable;
 
     /**
      * @var array<int, string>
@@ -56,5 +58,40 @@ class Task extends Model
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    /**
+     * Scope a query to only include tasks accessible to a user.
+     * Admin users see all tasks, others see tasks assigned to them or for their assigned clients.
+     *
+     * @param Builder $query
+     * @param User $user
+     * @return Builder
+     */
+    public function scopeForUser(Builder $query, User $user): Builder
+    {
+        if ($user->role === 'admin') {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($user) {
+            $q->where('assigned_to', $user->id)
+                ->orWhereHas('client', function ($clientQ) use ($user) {
+                    $clientQ->where('assigned_developer_id', $user->id);
+                })
+                ->orWhereHas('site.client', function ($siteQ) use ($user) {
+                    $siteQ->where('assigned_developer_id', $user->id);
+                });
+        });
+    }
+
+    /**
+     * Get the list of fields that should be searchable.
+     *
+     * @return array<int, string>
+     */
+    protected function getSearchableFields(): array
+    {
+        return ['title', 'description'];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Modules\Alerts\Models;
 
 use App\Modules\Sites\Models\Site;
 use App\Modules\Users\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -70,5 +71,24 @@ class Alert extends Model
     public function acknowledger(): BelongsTo
     {
         return $this->belongsTo(User::class, 'acknowledged_by');
+    }
+
+    /**
+     * Scope a query to only include alerts accessible to a user.
+     * Admin users see all alerts, others see only alerts for sites belonging to their assigned clients.
+     *
+     * @param Builder $query
+     * @param User $user
+     * @return Builder
+     */
+    public function scopeForUser(Builder $query, User $user): Builder
+    {
+        if ($user->role === 'admin') {
+            return $query;
+        }
+
+        return $query->whereHas('site.client', function ($q) use ($user) {
+            $q->where('assigned_developer_id', $user->id);
+        });
     }
 }

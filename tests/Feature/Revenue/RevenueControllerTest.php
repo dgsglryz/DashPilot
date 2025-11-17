@@ -37,9 +37,10 @@ class RevenueControllerTest extends TestCase
     public function test_revenue_index_includes_woocommerce_sites(): void
     {
         $user = User::factory()->create();
-        Site::factory()->create(['type' => 'shopify']);
-        Site::factory()->create(['type' => 'woocommerce']);
-        Site::factory()->create(['type' => 'wordpress']);
+        $client = \App\Modules\Clients\Models\Client::factory()->create(['assigned_developer_id' => $user->id]);
+        Site::factory()->create(['type' => 'shopify', 'client_id' => $client->id]);
+        Site::factory()->create(['type' => 'woocommerce', 'client_id' => $client->id]);
+        Site::factory()->create(['type' => 'wordpress', 'client_id' => $client->id]);
 
         $response = $this->actingAs($user)->get(route('revenue.index'));
 
@@ -51,7 +52,8 @@ class RevenueControllerTest extends TestCase
     public function test_revenue_index_calculates_stats(): void
     {
         $user = User::factory()->create();
-        Site::factory()->count(2)->create(['type' => 'shopify']);
+        $client = \App\Modules\Clients\Models\Client::factory()->create(['assigned_developer_id' => $user->id]);
+        Site::factory()->count(2)->create(['type' => 'shopify', 'client_id' => $client->id]);
 
         $response = $this->actingAs($user)->get(route('revenue.index'));
 

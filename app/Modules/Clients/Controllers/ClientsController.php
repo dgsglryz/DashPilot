@@ -42,24 +42,16 @@ class ClientsController extends Controller
         $this->authorize('viewAny', Client::class);
         
         $user = $request->user();
-        $query = Client::query()->with(['assignedDeveloper:id,name,email', 'sites:id,client_id,status']);
-        
-        // Scope to user's assigned clients (admin sees all)
-        if ($user->role !== 'admin') {
-            $query->where('assigned_developer_id', $user->id);
-        }
+        $query = Client::query()
+            ->with(['assignedDeveloper:id,name,email', 'sites:id,client_id,status'])
+            ->forUser($user);
 
         if ($request->filled('status') && $request->string('status')->toString() !== 'all') {
             $query->where('status', $request->string('status')->toString());
         }
 
         if ($request->filled('query')) {
-            $search = $request->string('query')->toString();
-            $query->where(function ($inner) use ($search): void {
-                $inner->where('name', 'like', "%{$search}%")
-                    ->orWhere('company', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            });
+            $query->search($request->string('query')->toString());
         }
 
         $clients = $query

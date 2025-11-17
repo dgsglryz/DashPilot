@@ -44,16 +44,10 @@ class SitesController extends Controller
     {
         $this->authorize('viewAny', Site::class);
         
-        // Admin users see all sites, others see only their assigned clients
         $user = $request->user();
         $query = Site::query()
-            ->with(['client:id,name', 'checks' => fn ($q) => $q->latest()->take(5)]);
-        
-        if ($user->role !== 'admin') {
-            $query->whereHas('client', function ($q) use ($user) {
-                $q->where('assigned_developer_id', $user->id);
-            });
-        }
+            ->with(['client:id,name', 'checks' => fn ($q) => $q->latest()->take(5)])
+            ->forUser($user);
 
         $this->siteViewService->applyFilters($query, $request);
 
@@ -400,14 +394,9 @@ class SitesController extends Controller
         $this->authorize('viewAny', Site::class);
         
         $user = $request->user();
-        $query = Site::query()->with('client:id,name');
-        
-        // Filter sites to only show those belonging to user's assigned clients
-        if ($user->role !== 'admin') {
-            $query->whereHas('client', function ($q) use ($user) {
-                $q->where('assigned_developer_id', $user->id);
-            });
-        }
+        $query = Site::query()
+            ->with('client:id,name')
+            ->forUser($user);
 
         if ($request->has('ids') && is_array($request->input('ids'))) {
             $ids = array_map('intval', $request->input('ids'));

@@ -78,10 +78,10 @@ const onImageError = () => {
             <img
                 :src="imageUrl"
                 :alt="title"
-                class="h-full w-full object-cover opacity-50 transition-opacity group-hover:opacity-60"
+                class="h-full w-full object-contain opacity-80 transition-opacity group-hover:opacity-90"
                 @error="onImageError"
             />
-            <div class="absolute inset-0 bg-gradient-to-t from-gray-800 via-gray-800/50 to-transparent"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-gray-800/90 via-gray-800/40 to-transparent"></div>
             <div class="absolute inset-x-0 bottom-0 p-4">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">

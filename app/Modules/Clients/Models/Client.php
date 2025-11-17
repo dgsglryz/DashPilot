@@ -7,6 +7,8 @@ use App\Modules\Reports\Models\Report;
 use App\Modules\Sites\Models\Site;
 use App\Modules\Tasks\Models\Task;
 use App\Modules\Users\Models\User;
+use App\Shared\Traits\Searchable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Client extends Model
 {
-    use HasFactory;
+    use HasFactory, Searchable;
 
     /**
      * @var array<int, string>
@@ -75,5 +77,44 @@ class Client extends Model
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
+    }
+
+    /**
+     * Scope a query to only include clients assigned to a specific developer.
+     *
+     * @param Builder $query
+     * @param int $developerId
+     * @return Builder
+     */
+    public function scopeForDeveloper(Builder $query, int $developerId): Builder
+    {
+        return $query->where('assigned_developer_id', $developerId);
+    }
+
+    /**
+     * Scope a query to only include clients accessible to a user.
+     * Admin users see all clients, others see only their assigned clients.
+     *
+     * @param Builder $query
+     * @param User $user
+     * @return Builder
+     */
+    public function scopeForUser(Builder $query, User $user): Builder
+    {
+        if ($user->role === 'admin') {
+            return $query;
+        }
+
+        return $query->forDeveloper($user->id);
+    }
+
+    /**
+     * Get the list of fields that should be searchable.
+     *
+     * @return array<int, string>
+     */
+    protected function getSearchableFields(): array
+    {
+        return ['name', 'company', 'email'];
     }
 }

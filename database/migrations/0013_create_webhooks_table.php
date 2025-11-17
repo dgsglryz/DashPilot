@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('url');
-            $table->json('events')->default(json_encode([]));
+            $table->json('events');
             $table->boolean('is_active')->default(true);
             $table->string('secret')->nullable();
             $table->unsignedTinyInteger('retry_count')->default(3);

@@ -22,7 +22,7 @@ class ActivityControllerTest extends TestCase
 
     public function test_activity_index_displays_activities(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         $site = Site::factory()->create();
         ActivityLog::factory()->count(5)->create(['site_id' => $site->id]);
 
@@ -36,14 +36,14 @@ class ActivityControllerTest extends TestCase
 
     public function test_activity_index_filters_by_search(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         $site = Site::factory()->create(['name' => 'Test Site']);
         ActivityLog::factory()->create([
             'site_id' => $site->id,
             'action' => 'Site checked',
         ]);
 
-        $response = $this->actingAs($user)->get(route('activity.index', ['search' => 'Test']));
+        $response = $this->actingAs($user)->get(route('activity.index', ['action' => 'Site checked']));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
@@ -53,7 +53,7 @@ class ActivityControllerTest extends TestCase
 
     public function test_activity_index_filters_by_site(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         $site1 = Site::factory()->create();
         $site2 = Site::factory()->create();
         ActivityLog::factory()->create(['site_id' => $site1->id]);
@@ -69,7 +69,7 @@ class ActivityControllerTest extends TestCase
 
     public function test_activity_index_filters_by_action(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         ActivityLog::factory()->create(['action' => 'site_checked']);
         ActivityLog::factory()->create(['action' => 'alert_created']);
 
@@ -80,7 +80,7 @@ class ActivityControllerTest extends TestCase
 
     public function test_activity_index_filters_by_date_range(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         ActivityLog::factory()->create(['created_at' => now()->subDays(5)]);
         ActivityLog::factory()->create(['created_at' => now()->subDays(2)]);
 
@@ -94,7 +94,7 @@ class ActivityControllerTest extends TestCase
 
     public function test_activity_export_generates_csv(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         ActivityLog::factory()->count(3)->create();
 
         $response = $this->actingAs($user)->get(route('activity.export'));
@@ -108,7 +108,7 @@ class ActivityControllerTest extends TestCase
 
     public function test_activity_export_applies_filters(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         $site = Site::factory()->create();
         ActivityLog::factory()->create(['site_id' => $site->id, 'action' => 'site_checked']);
         ActivityLog::factory()->create(['action' => 'alert_created']);

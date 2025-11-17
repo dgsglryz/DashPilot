@@ -107,6 +107,11 @@ class SEOService
             $issues[] = sprintf('%d images missing alt text.', $missingAlt);
         }
 
+        if (empty($payload['has_amp'])) {
+            $score -= 5;
+            $issues[] = 'AMP (Accelerated Mobile Pages) not detected.';
+        }
+
         return [
             'score' => max(0, $score),
             'issues' => $issues,

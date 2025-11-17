@@ -116,7 +116,7 @@ class SitesControllerTest extends TestCase
     public function test_sites_store_creates_new_site(): void
     {
         $user = User::factory()->create();
-        $client = Client::factory()->create();
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
 
         $response = $this->actingAs($user)->post(route('sites.store'), [
             'name' => 'New Site',
