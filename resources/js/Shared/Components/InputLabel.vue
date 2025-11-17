@@ -1,12 +1,12 @@
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
     value?: string;
     for?: string;
 }>();
 </script>
 
 <template>
-    <label :for="for" class="block text-sm font-medium text-gray-700">
+    <label :for="props.for" class="block text-sm font-medium text-gray-700">
         <span v-if="value">{{ value }}</span>
         <span v-else><slot /></span>
     </label>
