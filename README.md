@@ -85,7 +85,8 @@ Built for web agencies managing large WordPress and Shopify portfolios. DashPilo
 |                    | Shopify REST/GraphQL | Orders/products/analytics     |
 | **Infrastructure** | Docker Compose       | Multi-container stack         |
 |                    | GitHub Actions       | CI/CD pipeline                |
-| **Dev Tools**      | What The Diff        | AI-powered code review        |
+| **Dev Tools**      | v0.dev               | AI-powered UI design          |
+|                    | What The Diff        | AI-powered code review        |
 |                    | SonarCloud           | Code quality + security       |
 
 ---
@@ -413,6 +414,7 @@ Released under the [MIT License](LICENSE).
 
 - Laravel, Vue, Inertia, and Tailwind communities
 - Shopify & WordPress ecosystem maintainers
+- v0.dev for AI-powered UI design
 - SonarCloud + GitHub Actions for CI tooling
 - What The Diff for AI-powered code review
 
