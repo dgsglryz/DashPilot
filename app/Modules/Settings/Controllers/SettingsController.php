@@ -5,6 +5,7 @@ namespace App\Modules\Settings\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Notifications\Models\Webhook;
+use App\Shared\Rules\BlockPrivateIpRule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -83,7 +84,7 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'webhooks' => ['array'],
             'webhooks.*.name' => ['nullable', 'string', 'max:255'],
-            'webhooks.*.url' => ['required', 'url'],
+            'webhooks.*.url' => ['required', 'url', 'starts_with:https://', new BlockPrivateIpRule()],
             'webhooks.*.events' => ['array'],
             'webhooks.*.events.*' => ['string'],
         ]);
@@ -117,7 +118,11 @@ class SettingsController extends Controller
             return back()->with('error', 'Current password is incorrect.');
         }
 
-        $user->update(['password' => $data['newPassword']]);
+        // Hash the password before storing
+        $user->update(['password' => Hash::make($data['newPassword'])]);
+
+        // Logout other devices to force re-authentication with new password
+        Auth::logoutOtherDevices($data['newPassword']);
 
         return back()->with('success', 'Password updated.');
     }
@@ -204,7 +209,7 @@ class SettingsController extends Controller
     public function testWebhook(Request $request): \Illuminate\Http\JsonResponse
     {
         $validated = $request->validate([
-            'webhook_url' => ['required', 'url'],
+            'webhook_url' => ['required', 'url', 'starts_with:https://', new BlockPrivateIpRule()],
             'payload' => ['nullable', 'array'],
         ]);
 

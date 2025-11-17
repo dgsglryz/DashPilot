@@ -91,8 +91,11 @@ class DeliverWebhook implements ShouldQueue
             $statusCode = $response->status();
             $responseBody = $response->body();
 
-            // Log the attempt
-            $this->logAttempt($attemptNumber, $success, $statusCode, $responseBody);
+            // Sanitize response body before logging (remove sensitive data)
+            $sanitizedBody = $this->sanitizeResponseBody($responseBody);
+
+            // Log the attempt (use sanitized body)
+            $this->logAttempt($attemptNumber, $success, $statusCode, $sanitizedBody);
 
             // Log via LoggingService
             $logger->logWebhookDelivery(
@@ -143,6 +146,33 @@ class DeliverWebhook implements ShouldQueue
 
             throw $e;
         }
+    }
+
+    /**
+     * Sanitize response body to remove potentially sensitive data.
+     *
+     * @param string $body Raw response body
+     * @return string Sanitized response body
+     */
+    private function sanitizeResponseBody(string $body): string
+    {
+        // Truncate to 500 chars max to prevent log bloat
+        $truncated = substr($body, 0, 500);
+
+        // Remove common sensitive patterns (passwords, tokens, keys)
+        $patterns = [
+            '/"password"\s*:\s*"[^"]*"/i' => '"password":"***"',
+            '/"token"\s*:\s*"[^"]*"/i' => '"token":"***"',
+            '/"api_key"\s*:\s*"[^"]*"/i' => '"api_key":"***"',
+            '/"access_token"\s*:\s*"[^"]*"/i' => '"access_token":"***"',
+            '/"secret"\s*:\s*"[^"]*"/i' => '"secret":"***"',
+        ];
+
+        foreach ($patterns as $pattern => $replacement) {
+            $truncated = preg_replace($pattern, $replacement, $truncated);
+        }
+
+        return $truncated;
     }
 
     /**

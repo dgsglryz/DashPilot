@@ -22,12 +22,19 @@ class ReportsController extends Controller
     /**
      * Display report templates and recent activity.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        // Filter sites to only show those belonging to user's assigned clients
+        $sites = Site::whereHas('client', function ($q) use ($request) {
+            $q->where('assigned_developer_id', $request->user()->id);
+        })
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return Inertia::render('Reports/Pages/Index', [
             'reportTemplates' => $this->templates(),
-            'recentReports' => $this->recentReports(),
-            'sites' => Site::orderBy('name')->get(['id', 'name']),
+            'recentReports' => $this->recentReports($request),
+            'sites' => $sites,
         ]);
     }
 
@@ -50,9 +57,29 @@ class ReportsController extends Controller
         // Filter out 'all' if specific sites are selected
         $siteIds = array_filter($siteIds, fn($id) => $id !== 'all');
         
-        // If no specific sites selected or only 'all' was selected, use all sites
+        // If no specific sites selected or only 'all' was selected, use all sites for user's assigned clients
         if (empty($siteIds)) {
-            $siteIds = Site::pluck('id')->map(fn ($id) => (string) $id)->all();
+            $siteIds = Site::whereHas('client', function ($q) use ($request) {
+                $q->where('assigned_developer_id', $request->user()->id);
+            })
+                ->pluck('id')
+                ->map(fn ($id) => (string) $id)
+                ->all();
+        } else {
+            // Verify all requested sites belong to user's assigned clients
+            $validSiteIds = Site::whereHas('client', function ($q) use ($request) {
+                $q->where('assigned_developer_id', $request->user()->id);
+            })
+                ->whereIn('id', array_map('intval', $siteIds))
+                ->pluck('id')
+                ->map(fn ($id) => (string) $id)
+                ->all();
+
+            if (count($validSiteIds) !== count($siteIds)) {
+                abort(403, 'Unauthorized access to one or more sites.');
+            }
+
+            $siteIds = $validSiteIds;
         }
 
         $generator->generate(
@@ -71,6 +98,8 @@ class ReportsController extends Controller
      */
     public function generateForSite(Request $request, Site $site, ReportGeneratorService $generator): JsonResponse
     {
+        $this->authorize('view', $site);
+
         $validated = $request->validate([
             'templateId' => ['nullable', 'integer'],
             'startDate' => ['required', 'date'],
@@ -110,8 +139,20 @@ class ReportsController extends Controller
      */
     public function download(Report $report)
     {
+        $this->authorize('view', $report);
+
         if (!$report->pdf_path || !Storage::disk('local')->exists($report->pdf_path)) {
             return back()->with('error', 'Report file is not available.');
+        }
+
+        // Prevent path traversal attacks
+        if (!str_starts_with($report->pdf_path, 'reports/')) {
+            abort(404, 'Invalid file path.');
+        }
+
+        // Block any path traversal attempts
+        if (str_contains($report->pdf_path, '..')) {
+            abort(404, 'Invalid file path.');
         }
 
         return Storage::download($report->pdf_path, basename($report->pdf_path));
@@ -122,6 +163,8 @@ class ReportsController extends Controller
      */
     public function destroy(Report $report): RedirectResponse
     {
+        $this->authorize('delete', $report);
+
         if ($report->pdf_path) {
             Storage::disk('local')->delete($report->pdf_path);
         }
@@ -181,11 +224,15 @@ class ReportsController extends Controller
     /**
      * Fetch recent reports for the table.
      *
+     * @param Request $request
      * @return array<int, array<string, mixed>>
      */
-    private function recentReports(): array
+    private function recentReports(Request $request): array
     {
         return Report::with('site')
+            ->whereHas('site.client', function ($q) use ($request) {
+                $q->where('assigned_developer_id', $request->user()->id);
+            })
             ->latest('generated_at')
             ->limit(10)
             ->get()

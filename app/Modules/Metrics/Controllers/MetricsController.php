@@ -271,7 +271,7 @@ class MetricsController extends Controller
             return 0.0;
         }
 
-        $passing = $query->clone()->where('status', '!=', SiteCheck::STATUS_FAIL)->count();
+        $passing = (clone $query)->where('status', '!=', SiteCheck::STATUS_FAIL)->count();
 
         return round(($passing / $total) * 100, 2);
     }

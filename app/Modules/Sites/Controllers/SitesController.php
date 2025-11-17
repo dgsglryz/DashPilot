@@ -47,7 +47,11 @@ class SitesController extends Controller
      */
     public function index(Request $request): Response
     {
+        // Filter sites to only show those belonging to user's assigned clients
         $query = Site::query()
+            ->whereHas('client', function ($q) use ($request) {
+                $q->where('assigned_developer_id', $request->user()->id);
+            })
             ->with(['client:id,name', 'checks' => fn ($q) => $q->latest()->take(5)]);
 
         $this->applySiteFilters($query, $request);
@@ -103,6 +107,7 @@ class SitesController extends Controller
      */
     public function show(Site $site): Response
     {
+        $this->authorize('view', $site);
         $site->load(['client:id,name,email,company', 'alerts' => function ($query) {
             $query->latest()->limit(5);
         }]);
@@ -343,6 +348,7 @@ class SitesController extends Controller
      */
     public function edit(Site $site): Response
     {
+        $this->authorize('update', $site);
         $site->load('client:id,name,company');
 
         return Inertia::render('Sites/Pages/Edit', [
@@ -356,10 +362,10 @@ class SitesController extends Controller
                 'industry' => $site->industry,
                 'region' => $site->region,
                 'wp_api_url' => $site->wp_api_url,
-                'wp_api_key' => $site->wp_api_key,
+                'has_wp_api_key' => !empty($site->wp_api_key),
                 'shopify_store_url' => $site->shopify_store_url,
-                'shopify_api_key' => $site->shopify_api_key,
-                'shopify_access_token' => $site->shopify_access_token,
+                'has_shopify_api_key' => !empty($site->shopify_api_key),
+                'has_shopify_access_token' => !empty($site->shopify_access_token),
             ],
             'clients' => $this->clientOptions(),
         ]);
@@ -375,7 +381,24 @@ class SitesController extends Controller
      */
     public function update(UpdateSiteRequest $request, Site $site): RedirectResponse
     {
-        $site->update($request->validated());
+        $this->authorize('update', $site);
+
+        $validated = $request->validated();
+        $updateData = $validated;
+
+        // Only update API keys if they are provided (not empty)
+        // This allows users to keep existing keys by leaving fields blank
+        if (empty($validated['wp_api_key'])) {
+            unset($updateData['wp_api_key']);
+        }
+        if (empty($validated['shopify_api_key'])) {
+            unset($updateData['shopify_api_key']);
+        }
+        if (empty($validated['shopify_access_token'])) {
+            unset($updateData['shopify_access_token']);
+        }
+
+        $site->update($updateData);
 
         ActivityLog::create([
             'user_id' => $request->user()->id,
@@ -399,6 +422,8 @@ class SitesController extends Controller
      */
     public function destroy(Request $request, Site $site): RedirectResponse
     {
+        $this->authorize('delete', $site);
+
         $siteName = $site->name;
 
         $site->delete();
@@ -425,6 +450,8 @@ class SitesController extends Controller
      */
     public function runHealthCheck(Request $request, Site $site): RedirectResponse
     {
+        $this->authorize('view', $site);
+
         CheckSiteHealth::dispatch($site);
 
         ActivityLog::create([
@@ -447,6 +474,8 @@ class SitesController extends Controller
      */
     public function toggleFavorite(Request $request, Site $site): RedirectResponse
     {
+        $this->authorize('view', $site);
+
         $site->update(['is_favorited' => !$site->is_favorited]);
 
         ActivityLog::create([
@@ -468,7 +497,12 @@ class SitesController extends Controller
      */
     public function export(Request $request): StreamedResponse|BinaryFileResponse
     {
-        $query = Site::query()->with('client:id,name');
+        // Filter sites to only show those belonging to user's assigned clients
+        $query = Site::query()
+            ->whereHas('client', function ($q) use ($request) {
+                $q->where('assigned_developer_id', $request->user()->id);
+            })
+            ->with('client:id,name');
 
         if ($request->has('ids') && is_array($request->input('ids'))) {
             $ids = array_map('intval', $request->input('ids'));

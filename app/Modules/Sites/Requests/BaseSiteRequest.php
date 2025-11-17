@@ -33,9 +33,9 @@ abstract class BaseSiteRequest extends FormRequest
             'status' => ['required', 'string', Rule::in(['healthy', 'warning', 'critical', 'offline'])],
             'industry' => ['nullable', 'string', 'max:255'],
             'region' => ['nullable', 'string', 'max:255'],
-            'wp_api_url' => ['nullable', 'string', 'url', 'max:255'],
+            'wp_api_url' => ['nullable', 'string', 'url', 'starts_with:https://', 'max:255'],
             'wp_api_key' => ['nullable', 'string', 'max:255'],
-            'shopify_store_url' => ['nullable', 'string', 'url', 'max:255'],
+            'shopify_store_url' => ['nullable', 'string', 'url', 'starts_with:https://', 'regex:/^https:\/\/[a-zA-Z0-9-]+\.myshopify\.com/', 'max:255'],
             'shopify_api_key' => ['nullable', 'string', 'max:255'],
             'shopify_access_token' => ['nullable', 'string', 'max:255'],
         ];

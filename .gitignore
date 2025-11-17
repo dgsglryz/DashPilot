@@ -30,6 +30,7 @@ Thumbs.db
 /playwright-report/
 *.webm
 /tests/e2e/.auth/
+coverage.xml
 
 # Documentation files (only README.md should be committed per .cursorrules)
 *.md

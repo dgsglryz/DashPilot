@@ -23,9 +23,13 @@ class LiquidEditorController extends Controller
     /**
      * Render the editor shell.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        // Filter sites to only show Shopify sites belonging to user's assigned clients
         $sites = Site::where('type', 'shopify')
+            ->whereHas('client', function ($q) use ($request) {
+                $q->where('assigned_developer_id', $request->user()->id);
+            })
             ->orderBy('name')
             ->get(['id', 'name', 'url']);
 
@@ -41,6 +45,7 @@ class LiquidEditorController extends Controller
     public function files(Site $site): JsonResponse
     {
         $this->ensureShopifySite($site);
+        $this->authorize('view', $site);
 
         return response()->json([
             'files' => $this->fileTree(),
@@ -53,6 +58,7 @@ class LiquidEditorController extends Controller
     public function file(Request $request, Site $site): JsonResponse
     {
         $this->ensureShopifySite($site);
+        $this->authorize('view', $site);
 
         $request->validate([
             'path' => ['required', 'string'],
@@ -69,6 +75,7 @@ class LiquidEditorController extends Controller
     public function save(Request $request, Site $site): JsonResponse
     {
         $this->ensureShopifySite($site);
+        $this->authorize('update', $site);
 
         $data = $request->validate([
             'path' => ['required', 'string'],

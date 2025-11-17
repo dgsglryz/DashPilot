@@ -29,7 +29,9 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/api/search', [\App\Modules\Dashboard\Controllers\SearchController::class, 'search'])->name('search');
+    Route::get('/api/search', [\App\Modules\Dashboard\Controllers\SearchController::class, 'search'])
+        ->middleware('throttle:60,1')
+        ->name('search');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('/metrics', [MetricsController::class, 'index'])->name('metrics.index');

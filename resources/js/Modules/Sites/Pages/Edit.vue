@@ -28,10 +28,10 @@ type Site = {
     industry: string | null;
     region: string | null;
     wp_api_url: string | null;
-    wp_api_key: string | null;
+    has_wp_api_key: boolean;
     shopify_store_url: string | null;
-    shopify_api_key: string | null;
-    shopify_access_token: string | null;
+    has_shopify_api_key: boolean;
+    has_shopify_access_token: boolean;
 };
 
 const props = defineProps<{
@@ -48,10 +48,10 @@ const form = useForm({
     industry: props.site.industry,
     region: props.site.region,
     wp_api_url: props.site.wp_api_url,
-    wp_api_key: props.site.wp_api_key,
+    wp_api_key: '', // Never send existing key to frontend
     shopify_store_url: props.site.shopify_store_url,
-    shopify_api_key: props.site.shopify_api_key,
-    shopify_access_token: props.site.shopify_access_token,
+    shopify_api_key: '', // Never send existing key to frontend
+    shopify_access_token: '', // Never send existing token to frontend
 });
 
 /**
@@ -304,9 +304,9 @@ const submit = (): void => {
                             <input
                                 id="wp_api_key"
                                 v-model="form.wp_api_key"
-                                type="text"
+                                type="password"
                                 class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="API key (optional)"
+                                :placeholder="site.has_wp_api_key ? 'Leave blank to keep current key' : 'API key (optional)'"
                             />
                         </div>
                     </div>
@@ -342,9 +342,9 @@ const submit = (): void => {
                             <input
                                 id="shopify_api_key"
                                 v-model="form.shopify_api_key"
-                                type="text"
+                                type="password"
                                 class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="API key"
+                                :placeholder="site.has_shopify_api_key ? 'Leave blank to keep current key' : 'API key'"
                             />
                         </div>
 
@@ -358,9 +358,9 @@ const submit = (): void => {
                             <input
                                 id="shopify_access_token"
                                 v-model="form.shopify_access_token"
-                                type="text"
+                                type="password"
                                 class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Access token"
+                                :placeholder="site.has_shopify_access_token ? 'Leave blank to keep current token' : 'Access token'"
                             />
                         </div>
                     </div>
