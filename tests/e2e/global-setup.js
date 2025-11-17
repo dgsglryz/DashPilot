@@ -61,7 +61,7 @@ async function globalSetup(config) {
     await context.close();
     await browser.close();
 
-    console.log(`✓ Authenticated storage state saved to ${storageStatePath}`);
+    console.log(`Authenticated storage state saved to ${storageStatePath}`);
   } catch (error) {
     console.warn(`Warning: Could not create authenticated storage state: ${error.message}`);
     console.warn('Tests will need to login individually (slower).');
