@@ -259,7 +259,7 @@ class SitesController extends Controller
                 'has_shopify_api_key' => !empty($site->shopify_api_key),
                 'has_shopify_access_token' => !empty($site->shopify_access_token),
             ],
-            'clients' => $this->clientOptions(),
+            'clients' => $this->siteViewService->clientOptions(),
         ]);
     }
 

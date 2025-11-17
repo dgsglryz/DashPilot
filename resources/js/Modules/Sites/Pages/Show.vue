@@ -517,7 +517,6 @@ const handleReportGenerate = async (payload) => {
         }
         showReportModal.value = false;
     } catch (error) {
-        console.error("Failed to generate site report:", error);
         toast.error("Failed to generate report. Please try again.");
     } finally {
         isGeneratingReport.value = false;

@@ -105,7 +105,7 @@ class SearchController extends Controller
             ['type' => 'page', 'label' => 'Reports', 'route' => 'reports.index', 'params' => [], 'icon' => 'DocumentChartBarIcon', 'keywords' => ['reports', 'pdf']],
             ['type' => 'page', 'label' => 'Metrics', 'route' => 'metrics.index', 'params' => [], 'icon' => 'ChartBarIcon', 'keywords' => ['metrics', 'analytics', 'performance', 'seo']],
             ['type' => 'page', 'label' => 'Team', 'route' => 'team.index', 'params' => [], 'icon' => 'UsersIcon', 'keywords' => ['team', 'members']],
-            ['type' => 'page', 'label' => 'Tasks', 'route' => 'tasks.index', 'params' => [], 'icon' => 'DocumentTextIcon', 'keywords' => ['tasks', 'todos']],
+            ['type' => 'page', 'label' => 'Tasks', 'route' => 'tasks.index', 'params' => [], 'icon' => 'DocumentTextIcon', 'keywords' => ['tasks', 'assignments', 'work items']],
             ['type' => 'page', 'label' => 'Activity', 'route' => 'activity.index', 'params' => [], 'icon' => 'ClockIcon', 'keywords' => ['activity', 'history']],
             ['type' => 'page', 'label' => 'Revenue', 'route' => 'revenue.index', 'params' => [], 'icon' => 'CurrencyDollarIcon', 'keywords' => ['revenue', 'finance']],
             ['type' => 'page', 'label' => 'Settings', 'route' => 'settings.index', 'params' => [], 'icon' => 'Cog6ToothIcon', 'keywords' => ['settings', 'preferences']],

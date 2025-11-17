@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Shopify;
 
+use App\Modules\Clients\Models\Client;
 use App\Modules\Shopify\Models\LiquidSnippet;
 use App\Modules\Sites\Models\Site;
 use App\Modules\Users\Models\User;
@@ -24,8 +25,9 @@ class LiquidEditorControllerTest extends TestCase
     public function test_liquid_editor_index_displays_shopify_sites(): void
     {
         $user = User::factory()->create();
-        Site::factory()->count(3)->create(['type' => 'shopify']);
-        Site::factory()->count(2)->create(['type' => 'wordpress']);
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        Site::factory()->count(3)->create(['type' => 'shopify', 'client_id' => $client->id]);
+        Site::factory()->count(2)->create(['type' => 'wordpress', 'client_id' => $client->id]);
 
         $response = $this->actingAs($user)->get(route('shopify.editor'));
 
@@ -39,7 +41,8 @@ class LiquidEditorControllerTest extends TestCase
     public function test_liquid_editor_files_returns_file_tree(): void
     {
         $user = User::factory()->create();
-        $site = Site::factory()->create(['type' => 'shopify']);
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        $site = Site::factory()->create(['type' => 'shopify', 'client_id' => $client->id]);
 
         $response = $this->actingAs($user)->getJson(route('shopify.editor.files', $site));
 
@@ -53,7 +56,8 @@ class LiquidEditorControllerTest extends TestCase
     public function test_liquid_editor_files_rejects_non_shopify_site(): void
     {
         $user = User::factory()->create();
-        $site = Site::factory()->create(['type' => 'wordpress']);
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        $site = Site::factory()->create(['type' => 'wordpress', 'client_id' => $client->id]);
 
         $response = $this->actingAs($user)->getJson(route('shopify.editor.files', $site));
 
@@ -63,7 +67,8 @@ class LiquidEditorControllerTest extends TestCase
     public function test_liquid_editor_file_returns_file_content(): void
     {
         $user = User::factory()->create();
-        $site = Site::factory()->create(['type' => 'shopify']);
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        $site = Site::factory()->create(['type' => 'shopify', 'client_id' => $client->id]);
 
         $response = $this->actingAs($user)->getJson(route('shopify.editor.file', $site) . '?path=templates/index.liquid');
 
@@ -74,7 +79,8 @@ class LiquidEditorControllerTest extends TestCase
     public function test_liquid_editor_file_validates_path(): void
     {
         $user = User::factory()->create();
-        $site = Site::factory()->create(['type' => 'shopify']);
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        $site = Site::factory()->create(['type' => 'shopify', 'client_id' => $client->id]);
 
         $response = $this->actingAs($user)->getJson(route('shopify.editor.file', $site));
 
@@ -85,7 +91,8 @@ class LiquidEditorControllerTest extends TestCase
     {
         Storage::fake('local');
         $user = User::factory()->create();
-        $site = Site::factory()->create(['type' => 'shopify']);
+        $client = Client::factory()->create(['assigned_developer_id' => $user->id]);
+        $site = Site::factory()->create(['type' => 'shopify', 'client_id' => $client->id]);
 
         $response = $this->actingAs($user)->postJson(route('shopify.editor.save', $site), [
             'path' => 'templates/index.liquid',
