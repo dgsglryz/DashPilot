@@ -14,6 +14,8 @@
         "test:unit:ui": "vitest --ui",
         "test:unit:coverage": "vitest --coverage",
         "test:e2e": "playwright test",
+        "test:e2e:fast": "NODE_OPTIONS='--max-old-space-size=4096' playwright test",
+        "test:e2e:workers": "NODE_OPTIONS='--max-old-space-size=4096' playwright test --workers=16",
         "test:e2e:ui": "playwright test --ui",
         "test:e2e:headed": "playwright test --headed",
         "test:e2e:debug": "playwright test --debug",

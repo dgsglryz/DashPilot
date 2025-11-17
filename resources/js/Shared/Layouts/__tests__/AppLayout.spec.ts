@@ -9,13 +9,21 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import AppLayout from '../AppLayout.vue'
 
-// Mock route function globally first
-const mockRoute = vi.fn((name: string) => `/${name}`)
-(globalThis as any).route = mockRoute
+// Mock route and router visit functions - use vi.hoisted for proper hoisting
+const { mockRoute, mockRouterVisit } = vi.hoisted(() => {
+  const route = vi.fn((name: string) => `/${name}`)
+  const routerVisit = vi.fn()
+  return {
+    mockRoute: route,
+    mockRouterVisit: routerVisit,
+  }
+})
+
+// Set global route
+;(globalThis as any).route = mockRoute
 
 // Mock Inertia - must define mocks inside factory function
 vi.mock('@inertiajs/vue3', () => {
-  const mockRouterVisit = vi.fn()
   return {
     Link: {
       name: 'Link',
@@ -58,6 +66,7 @@ vi.mock('@/Shared/Components/CommandPalette.vue', () => ({
 const mockRouteCurrent = vi.fn<() => string | null>(() => null)
 // Add current method to route mock
 ;(mockRoute as any).current = mockRouteCurrent
+;(globalThis as any).route = mockRoute
 
 describe('AppLayout', () => {
   beforeEach(() => {
