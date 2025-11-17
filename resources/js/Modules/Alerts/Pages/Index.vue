@@ -256,7 +256,7 @@ const isExporting = ref(false)
  */
 const exportAlerts = () => {
   isExporting.value = true
-  window.location.href = route('alerts.export')
+  globalThis.location.href = route('alerts.export')
   setTimeout(() => {
     isExporting.value = false
   }, 2000)

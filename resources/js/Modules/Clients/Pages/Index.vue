@@ -92,7 +92,7 @@ const applyFilters = (): void => {
         route('clients.index'),
         {
             query: searchQuery.value || undefined,
-            status: filterStatus.value !== 'all' ? filterStatus.value : undefined,
+            status: filterStatus.value === 'all' ? undefined : filterStatus.value,
         },
         {
             preserveState: true,
