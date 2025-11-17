@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Test results and reports (should not be committed)
+/test-results/
+/playwright-report/
+*.webm

@@ -1,63 +1,42 @@
 # Page snapshot
 
 ```yaml
-- generic [ref=e1]:
-  - generic [ref=e3]:
-    - link [ref=e5] [cursor=pointer]:
-      - /url: /
-      - img [ref=e6]
-    - generic [ref=e9]:
-      - generic [ref=e10]:
-        - generic [ref=e11]: Email
-        - textbox "Email" [ref=e12]: invalid@test.com
-      - generic [ref=e13]:
-        - generic [ref=e14]: Password
-        - textbox "Password" [active] [ref=e15]: wrongpassword
-      - generic [ref=e17]:
-        - checkbox "Remember me" [ref=e18]
-        - generic [ref=e19]: Remember me
-      - generic [ref=e20]:
-        - link "Forgot password?" [ref=e22] [cursor=pointer]:
-          - /url: http://localhost:8000/forgot-password
-        - generic [ref=e23]:
-          - link "Don't have an account? Sign up" [ref=e24] [cursor=pointer]:
-            - /url: http://localhost:8000/register
-          - button "Log in" [ref=e25] [cursor=pointer]
-  - generic [ref=e26]:
-    - generic [ref=e28]:
-      - generic [ref=e30]:
-        - generic [ref=e31] [cursor=pointer]:
+- generic [active]:
+  - generic [ref=e1]:
+    - generic [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e6] [cursor=pointer]:
           - text: 
           - generic: Request
         - text: 
-        - generic [ref=e32] [cursor=pointer]:
+        - generic [ref=e7] [cursor=pointer]:
           - text: 
           - generic: Timeline
         - text: 
-        - generic [ref=e33] [cursor=pointer]:
+        - generic [ref=e8] [cursor=pointer]:
           - text: 
           - generic: Views
-          - generic [ref=e34]: "1"
-        - generic [ref=e35] [cursor=pointer]:
+          - generic [ref=e9]: "1"
+        - generic [ref=e10] [cursor=pointer]:
           - text: 
           - generic: Queries
-          - generic [ref=e36]: "1"
+          - generic [ref=e11]: "1"
         - text:   
-      - generic [ref=e37]:
-        - generic [ref=e39] [cursor=pointer]:
+      - generic [ref=e12]:
+        - generic [ref=e14] [cursor=pointer]:
           - generic: 
-        - generic [ref=e42] [cursor=pointer]:
+        - generic [ref=e17] [cursor=pointer]:
           - generic: 
-        - generic [ref=e43] [cursor=pointer]:
+        - generic [ref=e18] [cursor=pointer]:
           - generic: 
-          - generic: 106ms
-        - generic [ref=e44]:
+          - generic: 58.64ms
+        - generic [ref=e19]:
           - generic: 
           - generic: 2MB
-        - generic [ref=e45]:
+        - generic [ref=e20]:
           - generic: 
           - generic: 12.x
-        - generic [ref=e46] [cursor=pointer]:
+        - generic [ref=e21] [cursor=pointer]:
           - generic: 
           - generic: GET login
     - text:                  

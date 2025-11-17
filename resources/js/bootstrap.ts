@@ -1,12 +1,12 @@
-import axios from 'axios';
+import axios, { AxiosResponse, AxiosError } from 'axios';
 globalThis.axios = axios;
 
 globalThis.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 // Axios response interceptor for error logging
 globalThis.axios.interceptors.response.use(
-    (response) => response,
-    async (error) => {
+    (response: AxiosResponse) => response,
+    async (error: AxiosError) => {
         // Log HTTP errors to backend
         if (error.response) {
             const status = error.response.status;

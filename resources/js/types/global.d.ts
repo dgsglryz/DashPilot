@@ -8,6 +8,11 @@ declare global {
         axios: AxiosInstance;
     }
 
+    // Extend globalThis namespace to include axios
+    namespace globalThis {
+        var axios: AxiosInstance;
+    }
+
     const route: typeof ziggyRoute;
 }
 

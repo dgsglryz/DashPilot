@@ -1,7 +1,7 @@
 # Page snapshot
 
 ```yaml
-- generic [ref=e1]:
+- generic [active] [ref=e1]:
   - generic [ref=e3]:
     - link [ref=e5] [cursor=pointer]:
       - /url: /
@@ -12,7 +12,7 @@
         - textbox "Email" [ref=e12]: admin@test.com
       - generic [ref=e13]:
         - generic [ref=e14]: Password
-        - textbox "Password" [active] [ref=e15]: password
+        - textbox "Password" [ref=e15]: password
       - generic [ref=e17]:
         - checkbox "Remember me" [ref=e18]
         - generic [ref=e19]: Remember me
@@ -22,7 +22,7 @@
         - generic [ref=e23]:
           - link "Don't have an account? Sign up" [ref=e24] [cursor=pointer]:
             - /url: http://localhost:8000/register
-          - button "Log in" [ref=e25] [cursor=pointer]
+          - button "Log in" [disabled] [ref=e25]
   - generic [ref=e26]:
     - generic [ref=e28]:
       - generic [ref=e30]:
@@ -50,7 +50,7 @@
           - generic: 
         - generic [ref=e43] [cursor=pointer]:
           - generic: 
-          - generic: 30.19ms
+          - generic: 782ms
         - generic [ref=e44]:
           - generic: 
           - generic: 2MB
