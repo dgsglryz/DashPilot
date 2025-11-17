@@ -21,6 +21,7 @@ const submit = () => {
 
 <template>
     <GuestLayout>
+        <title>Confirm Password - DashPilot</title>
         <Head title="Confirm Password" />
 
         <div class="mb-4 text-sm text-gray-600">

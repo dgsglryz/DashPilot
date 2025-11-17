@@ -12,6 +12,7 @@ defineProps<{
 </script>
 
 <template>
+    <title>Profile - DashPilot</title>
     <Head title="Profile" />
 
     <AuthenticatedLayout>

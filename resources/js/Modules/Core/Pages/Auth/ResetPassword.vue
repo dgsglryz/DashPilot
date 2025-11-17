@@ -29,6 +29,7 @@ const submit = () => {
 
 <template>
     <GuestLayout>
+        <title>Reset Password - DashPilot</title>
         <Head title="Reset Password" />
 
         <form @submit.prevent="submit">

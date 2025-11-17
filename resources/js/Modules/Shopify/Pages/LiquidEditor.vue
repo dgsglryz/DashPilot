@@ -322,12 +322,12 @@ watch(
   { immediate: true }
 )
 
-watch(() => selectedSiteId.value, () => {
+watch(() => selectedSiteId.value, (newValue, oldValue) => {
   if (hasChanges.value) {
     const confirmDiscard = confirm('You have unsaved changes. Discard them?')
-    if (!confirmDiscard) {
-      // Reset selection
-      selectedSiteId.value = selectedSiteId.value
+    if (!confirmDiscard && oldValue !== undefined) {
+      // Reset selection to previous value
+      selectedSiteId.value = oldValue
     }
   }
 })
