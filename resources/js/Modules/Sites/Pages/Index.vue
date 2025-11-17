@@ -26,14 +26,15 @@
                         <ArrowDownTrayIcon class="h-4 w-4" />
                         {{ isExporting ? "Exporting..." : "Export" }}
                     </button>
-                    <Link
-                        :href="route('sites.create')"
+                    <button
+                        type="button"
                         data-testid="add-site-button"
                         class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                        @click="showCreateModal = true"
                     >
                         <PlusIcon class="w-5 h-5" />
                         Add Site
-                    </Link>
+                    </button>
                 </div>
             </div>
 
@@ -453,6 +454,13 @@
                     :total="sites.total"
                 />
             </div>
+
+            <CreateSiteModal
+                :show="showCreateModal"
+                :clients="clients"
+                @close="showCreateModal = false"
+                @created="handleSiteCreated"
+            />
         </div>
     </AppLayout>
 </template>
@@ -476,6 +484,7 @@ import QuickActionsDropdown from "@/Shared/Components/QuickActionsDropdown.vue";
 import Breadcrumbs from "@/Shared/Components/Breadcrumbs.vue";
 import Pagination from "@/Shared/Components/Pagination.vue";
 import { useToast } from "@/Shared/Composables/useToast";
+import CreateSiteModal from "@/Modules/Sites/Components/CreateSiteModal.vue";
 
 /**
  * Component props from Inertia
@@ -490,6 +499,10 @@ const props = defineProps({
     stats: {
         type: Object,
         required: true,
+    },
+    clients: {
+        type: Array,
+        default: () => [],
     },
     filters: {
         type: Object,
@@ -510,6 +523,7 @@ const filterStatus = ref(props.filters?.status ?? "all");
 const suggestionOpen = ref(false);
 const selectedSites = ref<number[]>([]);
 const isExporting = ref(false);
+const showCreateModal = ref(false);
 const toast = useToast();
 
 /**
@@ -720,6 +734,15 @@ const onSearchBlur = () => {
     globalThis.setTimeout(() => {
         suggestionOpen.value = false;
     }, 120);
+};
+
+const handleSiteCreated = () => {
+    showCreateModal.value = false;
+    toast.success("Site created successfully");
+    router.reload({
+        only: ["sites", "stats"],
+        preserveScroll: true,
+    });
 };
 
 watch([filterPlatform, filterStatus], () => {

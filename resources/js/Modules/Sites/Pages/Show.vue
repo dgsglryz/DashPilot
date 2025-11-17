@@ -77,6 +77,15 @@
                             <PlayIcon class="h-4 w-4" />
                             Run Health Check
                         </Link>
+                        <button
+                            type="button"
+                            data-testid="generate-site-report"
+                            class="inline-flex items-center justify-center gap-2 rounded-full bg-purple-600 px-4 py-1.5 text-white transition hover:bg-purple-700"
+                            @click="showReportModal = true"
+                        >
+                            <DocumentArrowDownIcon class="h-4 w-4" />
+                            Generate Report
+                        </button>
                         <Link
                             :href="route('sites.index')"
                             class="inline-flex items-center justify-center gap-2 rounded-full border border-gray-600/60 px-4 py-1.5 text-gray-200 transition hover:border-white/60 hover:text-white"
@@ -369,21 +378,32 @@
                     </p>
                 </div>
             </div>
+
+            <GenerateSiteReportModal
+                :show="showReportModal"
+                :site="site"
+                :loading="isGeneratingReport"
+                @close="showReportModal = false"
+                @generate="handleReportGenerate"
+            />
         </section>
     </AppLayout>
 </template>
 
 <script setup lang="ts">
 // @ts-nocheck
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { Link } from "@inertiajs/vue3";
+import axios from "axios";
 import AppLayout from "@/Shared/Layouts/AppLayout.vue";
 import PerformanceChart from "@/Shared/Components/PerformanceChart.vue";
 import SEOScoreCard from "@/Modules/Sites/Components/SEOScoreCard.vue";
 import UptimeChart from "@/Modules/Metrics/Components/UptimeChart.vue";
 import ResponseTimeChart from "@/Modules/Metrics/Components/ResponseTimeChart.vue";
 import Breadcrumbs from "@/Shared/Components/Breadcrumbs.vue";
-import { ArrowLeftIcon, PlayIcon } from "@heroicons/vue/24/outline";
+import { ArrowLeftIcon, PlayIcon, DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
+import GenerateSiteReportModal from "@/Modules/Sites/Components/GenerateSiteReportModal.vue";
+import { useToast } from "@/Shared/Composables/useToast";
 
 const props = defineProps({
     site: {
@@ -479,4 +499,28 @@ const formatRelativeTime = (timestamp) => {
 };
 
 const { site, alerts, tasks, activity, reports, chart } = props;
+
+const showReportModal = ref(false);
+const isGeneratingReport = ref(false);
+const toast = useToast();
+
+const handleReportGenerate = async (payload) => {
+    isGeneratingReport.value = true;
+    try {
+        const response = await axios.post(
+            route("sites.reports.generate", props.site.id),
+            payload,
+        );
+        toast.success("Report generated successfully");
+        if (response.data?.downloadUrl) {
+            globalThis.open(response.data.downloadUrl, "_blank");
+        }
+        showReportModal.value = false;
+    } catch (error) {
+        console.error("Failed to generate site report:", error);
+        toast.error("Failed to generate report. Please try again.");
+    } finally {
+        isGeneratingReport.value = false;
+    }
+};
 </script>

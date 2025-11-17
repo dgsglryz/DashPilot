@@ -137,11 +137,40 @@ class SearchController extends Controller
             ['type' => 'page', 'label' => 'Settings', 'route' => 'settings.index', 'params' => [], 'icon' => 'Cog6ToothIcon', 'keywords' => ['settings', 'setting', 'preferences', 'config', 'configuration']],
         ];
 
-        $filteredPages = array_filter($pageSuggestions, function ($page) use ($query) {
-            $labelMatch = stripos($page['label'], $query) !== false;
-            $keywordMatch = isset($page['keywords']) &&
-                collect($page['keywords'])->some(fn($k) => stripos($k, $query) !== false);
-            return $labelMatch || $keywordMatch;
+        $normalizedQuery = mb_strtolower($query);
+        $queryTokens = array_values(array_filter(preg_split('/\s+/', $normalizedQuery)));
+
+        $filteredPages = array_filter($pageSuggestions, function ($page) use ($normalizedQuery, $queryTokens) {
+            $label = mb_strtolower($page['label']);
+            $labelMatch = str_contains($label, $normalizedQuery) || str_contains($normalizedQuery, $label);
+
+            if ($labelMatch) {
+                return true;
+            }
+
+            if (!isset($page['keywords'])) {
+                return false;
+            }
+
+            foreach ($page['keywords'] as $keyword) {
+                $needle = mb_strtolower($keyword);
+
+                if (str_contains($needle, $normalizedQuery) || str_contains($normalizedQuery, $needle)) {
+                    return true;
+                }
+
+                foreach ($queryTokens as $token) {
+                    if ($token === '') {
+                        continue;
+                    }
+
+                    if (str_contains($needle, $token) || str_contains($token, $needle)) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         });
 
         $results = array_merge($results, array_values($filteredPages));

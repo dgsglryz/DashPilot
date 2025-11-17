@@ -221,6 +221,7 @@ onMounted(() => {
                                 },
                             ]"
                             image-query="person working on laptop with multiple website dashboards"
+                            :href="route('sites.index')"
                         />
 
                         <!-- SEO Performance Card -->

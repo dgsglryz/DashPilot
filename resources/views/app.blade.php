@@ -3,6 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
@@ -12,7 +13,7 @@
 
         <!-- Scripts -->
         @routes
-        @if(app()->environment('production'))
+        @if(app()->environment('production') && !app()->runningUnitTests() && file_exists(public_path('build/manifest.json')))
             @php
                 $manifest = json_decode(file_get_contents(public_path('build/manifest.json')), true);
                 $entry = $manifest['resources/js/app.ts'] ?? null;

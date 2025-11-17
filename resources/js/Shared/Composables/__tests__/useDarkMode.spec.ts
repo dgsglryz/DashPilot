@@ -45,7 +45,8 @@ describe('useDarkMode', () => {
     })
 
     const wrapper = mount(TestComponent)
-    const { toggleDarkMode } = wrapper.vm
+    const vm = wrapper.vm as unknown as { toggleDarkMode: () => void }
+    const { toggleDarkMode } = vm
 
     const initialState = document.documentElement.classList.contains('dark')
     toggleDarkMode()
@@ -62,7 +63,8 @@ describe('useDarkMode', () => {
     })
 
     const wrapper = mount(TestComponent)
-    const { setDarkMode } = wrapper.vm
+    const vm = wrapper.vm as unknown as { setDarkMode: (value: boolean) => void }
+    const { setDarkMode } = vm
 
     setDarkMode(true)
     expect(document.documentElement.classList.contains('dark')).toBe(true)
@@ -77,8 +79,8 @@ describe('useDarkMode', () => {
     const globalRef = globalThis as GlobalWithDom
     const originalWindow = globalRef.window
     const originalDocument = globalRef.document
-    delete globalRef.window
-    delete globalRef.document
+    Reflect.deleteProperty(globalRef, 'window')
+    Reflect.deleteProperty(globalRef, 'document')
 
     const TestComponent = createTestComponent(() => {
       const { isDark } = useDarkMode()

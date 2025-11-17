@@ -76,7 +76,10 @@
             >
               Resolve
             </button>
-            <button class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-lg transition-colors">
+            <button
+              class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-lg transition-colors"
+              @click="$emit('view-details', alert)"
+            >
               View Details
             </button>
           </div>
@@ -112,7 +115,7 @@ const props = defineProps({
 /**
  * Component emits
  */
-defineEmits(['acknowledge', 'resolve', 'view-site'])
+defineEmits(['acknowledge', 'resolve', 'view-site', 'view-details'])
 
 /**
  * Get severity icon component

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Reports\Models\Report;
 use App\Modules\Reports\Services\ReportGeneratorService;
 use App\Modules\Sites\Models\Site;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -63,6 +64,45 @@ class ReportsController extends Controller
         );
 
         return back()->with('success', 'Report queued successfully.');
+    }
+
+    /**
+     * Quickly generate a report for a single site and return a download link.
+     */
+    public function generateForSite(Request $request, Site $site, ReportGeneratorService $generator): JsonResponse
+    {
+        $validated = $request->validate([
+            'templateId' => ['nullable', 'integer'],
+            'startDate' => ['required', 'date'],
+            'endDate' => ['required', 'date', 'after_or_equal:startDate'],
+            'format' => ['nullable', 'in:pdf,csv,xlsx'],
+        ]);
+
+        $templateId = (int) ($validated['templateId'] ?? 1);
+        $format = $validated['format'] ?? 'pdf';
+
+        $generator->generate(
+            templateId: $templateId,
+            startDate: $validated['startDate'],
+            endDate: $validated['endDate'],
+            siteIds: [$site->id],
+            format: $format
+        );
+
+        $report = Report::where('site_id', $site->id)
+            ->latest('generated_at')
+            ->first();
+
+        if (!$report || !$report->pdf_path) {
+            return response()->json([
+                'message' => 'Report generated but file is not available yet.',
+            ], 202);
+        }
+
+        return response()->json([
+            'message' => 'Report generated successfully.',
+            'downloadUrl' => route('reports.download', $report),
+        ]);
     }
 
     /**

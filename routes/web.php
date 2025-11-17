@@ -49,6 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/reports/generate', [ReportsController::class, 'generate'])->name('reports.generate');
     Route::get('/reports/{report}/download', [ReportsController::class, 'download'])->name('reports.download');
     Route::delete('/reports/{report}', [ReportsController::class, 'destroy'])->name('reports.destroy');
+    Route::post('/sites/{site}/reports/quick-generate', [ReportsController::class, 'generateForSite'])->name('sites.reports.generate');
 
     Route::get('/team', [TeamController::class, 'index'])->name('team.index');
     Route::post('/team/invite', [TeamController::class, 'invite'])->name('team.invite');

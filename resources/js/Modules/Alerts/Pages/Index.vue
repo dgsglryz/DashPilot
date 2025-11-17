@@ -134,6 +134,7 @@
           @acknowledge="acknowledgeAlert"
           @resolve="resolveAlert"
           @view-site="viewSite"
+          @view-details="openAlertDetails"
         />
         
         <div v-if="filteredAlerts.length === 0" class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 p-12 text-center">
@@ -151,6 +152,15 @@
         :to="alerts.to"
         :total="alerts.total"
       />
+
+      <AlertDetailsModal
+        :is-open="showDetailsModal"
+        :alert="selectedAlert"
+        @close="closeAlertDetails"
+        @view-site="viewSite"
+        @acknowledge="acknowledgeAlert"
+        @resolve="resolveAlert"
+      />
     </div>
   </AppLayout>
 </template>
@@ -161,6 +171,7 @@ import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Shared/Layouts/AppLayout.vue'
 import AlertCard from '@/Modules/Alerts/Components/AlertCard.vue'
+import AlertDetailsModal from '@/Modules/Alerts/Components/AlertDetailsModal.vue'
 import Breadcrumbs from '@/Shared/Components/Breadcrumbs.vue'
 import Pagination from '@/Shared/Components/Pagination.vue'
 import {
@@ -196,6 +207,8 @@ const searchQuery = ref('')
 const filterSeverity = ref('all')
 const filterStatus = ref('all')
 const filterType = ref('all')
+const showDetailsModal = ref(false)
+const selectedAlert = ref(null)
 
 /**
  * Computed filtered alerts
@@ -244,6 +257,16 @@ const resolveAlert = (alertId) => {
  */
 const viewSite = (siteId) => {
   router.visit(`/sites/${siteId}`)
+}
+
+const openAlertDetails = (alert) => {
+  selectedAlert.value = alert
+  showDetailsModal.value = true
+}
+
+const closeAlertDetails = () => {
+  showDetailsModal.value = false
+  selectedAlert.value = null
 }
 
 /**
