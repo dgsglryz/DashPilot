@@ -34,7 +34,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-    (e: 'favorite-toggled'): void;
+    'favorite-toggled': () => void;
 }>();
 
 const toast = useToast();

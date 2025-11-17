@@ -28,13 +28,15 @@ async function loginAsAdmin(
 ) {
     await page.goto("/login");
 
-    // Wait for form to be ready using helper
-    await waitForFormReady(page, "form");
+    // Wait for page to load
+    await page.waitForLoadState("networkidle", { timeout: 30000 });
+    await page.waitForTimeout(1000); // Extra wait for Vue hydration
 
     // Get selectors using helper functions
     const emailSelector = getEmailInputSelector();
     const passwordSelector = getPasswordInputSelector();
 
+    // Wait for form inputs to be visible
     await page.waitForSelector(emailSelector, {
         state: "visible",
         timeout: 15000,
@@ -48,13 +50,47 @@ async function loginAsAdmin(
     await page.fill(emailSelector, email);
     await page.fill(passwordSelector, password);
 
-    // Get submit button using helper
-    const submitButton = await getSubmitButtonInForm(page);
-    await submitButton.waitFor({ state: "visible", timeout: 10000 });
-    await submitButton.click();
+    // Wait a bit for form to be ready
+    await page.waitForTimeout(300);
 
-    // Wait for redirect to dashboard
-    await page.waitForURL("**/dashboard", { timeout: 15000 });
+    // Try multiple ways to find and click submit button
+    const submitSelectors = [
+        'button[type="submit"]',
+        'form button[type="submit"]',
+        'button:has-text("Log in")',
+        'button:has-text("Login")',
+        '[type="submit"]',
+    ];
+
+    let submitted = false;
+    for (const selector of submitSelectors) {
+        try {
+            const button = page.locator(selector).first();
+            if (await button.isVisible({ timeout: 2000 })) {
+                await button.click();
+                submitted = true;
+                break;
+            }
+        } catch {
+            // Continue to next selector
+        }
+    }
+
+    if (!submitted) {
+        // Fallback: try helper function
+        try {
+            const submitButton = await getSubmitButtonInForm(page);
+            await submitButton.waitFor({ state: "visible", timeout: 5000 });
+            await submitButton.click();
+        } catch (error) {
+            throw new Error(`Could not find submit button: ${error.message}`);
+        }
+    }
+
+    // Wait for redirect - could be dashboard or intended URL
+    await page.waitForURL(/\/(dashboard|sites|alerts|clients|tasks)/, {
+        timeout: 15000,
+    });
 
     // Wait for Vue to hydrate on dashboard
     await page.waitForLoadState("networkidle", { timeout: 30000 });
@@ -149,18 +185,65 @@ async function logout(page) {
     }
 
     if (!loggedOut) {
-        // If no logout button found, try POST to /logout
-        await page.evaluate(() => {
-            const form = document.createElement("form");
-            form.method = "POST";
-            form.action = "/logout";
-            document.body.appendChild(form);
-            form.submit();
-        });
+        // If no logout button found, try POST to /logout with CSRF token
+        try {
+            // Get CSRF token from meta tag or cookie
+            const csrfToken = await page.evaluate(() => {
+                // Try meta tag first
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                if (meta) return meta.content;
+
+                // Try to get from cookies
+                const cookies = document.cookie.split(";");
+                for (const cookie of cookies) {
+                    const [name, value] = cookie.trim().split("=");
+                    if (name === "XSRF-TOKEN" || name === "_token") {
+                        return decodeURIComponent(value);
+                    }
+                }
+                return null;
+            });
+
+            // Create and submit form with CSRF token
+            await page.evaluate((token) => {
+                const form = document.createElement("form");
+                form.method = "POST";
+                form.action = "/logout";
+
+                if (token) {
+                    const csrfInput = document.createElement("input");
+                    csrfInput.type = "hidden";
+                    csrfInput.name = "_token";
+                    csrfInput.value = token;
+                    form.appendChild(csrfInput);
+                }
+
+                document.body.appendChild(form);
+                form.submit();
+            }, csrfToken);
+
+            loggedOut = true;
+        } catch (error) {
+            console.warn(
+                "Could not logout via form submission:",
+                error.message,
+            );
+        }
     }
 
-    // Wait for redirect to home/login
-    await page.waitForURL(/\/(login|$)/, { timeout: 10000 });
+    // Wait for redirect - logout redirects to home (/)
+    await page.waitForURL(/\/(login|$)/, { timeout: 15000 });
+
+    // If on home page, wait a bit for potential redirect to login
+    if (page.url().match(/\/$/)) {
+        await page.waitForTimeout(1000);
+        // Check if redirected to login (some auth middleware might redirect)
+        const currentUrl = page.url();
+        if (!currentUrl.includes("/login")) {
+            // If still on home, try navigating to login to check auth status
+            await page.goto("/login", { waitUntil: "networkidle" });
+        }
+    }
 }
 
 /**

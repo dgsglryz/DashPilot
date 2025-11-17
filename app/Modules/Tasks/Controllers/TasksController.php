@@ -378,5 +378,56 @@ class TasksController extends Controller
         return redirect()->route('tasks.index')
             ->with('success', 'Task deleted successfully.');
     }
+
+    /**
+     * Get all tasks assigned to a specific user.
+     *
+     * @param Request $request
+     * @param User $user
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getUserTasks(Request $request, User $user): \Illuminate\Http\JsonResponse
+    {
+        $tasks = Task::where('assigned_to', $user->id)
+            ->with(['site:id,name', 'client:id,name'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn (Task $task) => [
+                'id' => $task->id,
+                'title' => $task->title,
+                'description' => $task->description,
+                'status' => $task->status,
+                'priority' => $task->priority,
+                'dueDate' => $task->due_date?->toDateString(),
+                'completedAt' => $task->completed_at?->toIso8601String(),
+                'site' => $task->site ? [
+                    'id' => $task->site->id,
+                    'name' => $task->site->name,
+                ] : null,
+                'client' => $task->client ? [
+                    'id' => $task->client->id,
+                    'name' => $task->client->name,
+                ] : null,
+            ]);
+
+        $stats = [
+            'total' => $tasks->count(),
+            'pending' => $tasks->where('status', 'pending')->count(),
+            'in_progress' => $tasks->where('status', 'in_progress')->count(),
+            'completed' => $tasks->where('status', 'completed')->count(),
+            'urgent' => $tasks->where('priority', 'urgent')->count(),
+        ];
+
+        return response()->json([
+            'tasks' => $tasks,
+            'stats' => $stats,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
+        ]);
+    }
 }
 

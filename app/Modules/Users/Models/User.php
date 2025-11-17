@@ -6,6 +6,7 @@ namespace App\Modules\Users\Models;
 use App\Modules\Activity\Models\ActivityLog;
 use App\Modules\Alerts\Models\Alert;
 use App\Modules\Clients\Models\Client;
+use App\Modules\Messages\Models\Message;
 use App\Modules\Tasks\Models\Task;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -103,5 +104,25 @@ class User extends Authenticatable
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class);
+    }
+
+    /**
+     * Get all messages sent by this user.
+     *
+     * @return HasMany<Message>
+     */
+    public function sentMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    /**
+     * Get all messages received by this user.
+     *
+     * @return HasMany<Message>
+     */
+    public function receivedMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'recipient_id');
     }
 }

@@ -33,7 +33,7 @@ interface Command {
     description?: string;
     icon: typeof HomeIcon;
     category: string;
-    action: () => void;
+    action: () => void | Promise<void>;
     keywords?: string[];
 }
 
@@ -190,12 +190,12 @@ const commands = computed<Command[]>(() => {
  */
 const groupedCommands = computed(() => {
     const groups: Record<string, Command[]> = {};
-    commands.value.forEach((cmd) => {
+    for (const cmd of commands.value) {
         if (!groups[cmd.category]) {
             groups[cmd.category] = [];
         }
         groups[cmd.category].push(cmd);
-    });
+    }
     return groups;
 });
 

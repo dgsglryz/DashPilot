@@ -184,8 +184,8 @@ const applyFilters = (): void => {
         route('tasks.index'),
         {
             query: searchQuery.value || undefined,
-            status: filterStatus.value !== 'all' ? filterStatus.value : undefined,
-            priority: filterPriority.value !== 'all' ? filterPriority.value : undefined,
+            status: filterStatus.value === 'all' ? undefined : filterStatus.value,
+            priority: filterPriority.value === 'all' ? undefined : filterPriority.value,
             my_tasks: filterMyTasks.value || undefined,
             urgent: filterUrgent.value || undefined,
         },

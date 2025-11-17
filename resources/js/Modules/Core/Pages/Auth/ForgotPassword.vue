@@ -20,9 +20,8 @@ const submit = () => {
 </script>
 
 <template>
-    <title>Forgot Password - DashPilot</title>
     <GuestLayout>
-        <Head title="Forgot Password" />
+        <Head title="Forgot Password - DashPilot" />
 
         <div class="mb-4 text-sm text-gray-600">
             Forgot your password? No problem. Just let us know your email

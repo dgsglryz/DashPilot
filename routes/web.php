@@ -12,6 +12,7 @@ use App\Modules\Settings\Controllers\SettingsController;
 use App\Modules\Shopify\Controllers\LiquidEditorController;
 use App\Modules\Sites\Controllers\SitesController;
 use App\Modules\Tasks\Controllers\TasksController;
+use App\Modules\Messages\Controllers\MessagesController;
 use App\Modules\Team\Controllers\TeamController;
 use App\Modules\Users\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -53,6 +54,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/team/invite', [TeamController::class, 'invite'])->name('team.invite');
     Route::delete('/team/{user}', [TeamController::class, 'destroy'])->name('team.destroy');
 
+    Route::prefix('messages')->name('messages.')->group(function () {
+        Route::get('/conversation/{user}', [MessagesController::class, 'getConversation'])->name('conversation');
+        Route::post('/send', [MessagesController::class, 'send'])->name('send');
+        Route::get('/unread-count', [MessagesController::class, 'unreadCount'])->name('unread-count');
+        Route::get('/conversations', [MessagesController::class, 'conversations'])->name('conversations');
+    });
+
     Route::get('/sites/export', [SitesController::class, 'export'])->name('sites.export');
     Route::post('/sites/{site}/toggle-favorite', [SitesController::class, 'toggleFavorite'])->name('sites.toggle-favorite');
     Route::resource('sites', SitesController::class);
@@ -63,6 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('tasks', TasksController::class);
     Route::post('/tasks/{task}/status', [TasksController::class, 'updateStatus'])->name('tasks.status');
+    Route::get('/tasks/user/{user}', [TasksController::class, 'getUserTasks'])->name('tasks.user');
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile');

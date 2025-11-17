@@ -151,7 +151,6 @@ onMounted(() => {
 </script>
 
 <template>
-    <title>Dashboard - DashPilot</title>
     <Head title="Dashboard - DashPilot" />
 
     <AppLayout>

@@ -12,7 +12,22 @@
 
         <!-- Scripts -->
         @routes
-        @vite('resources/js/app.ts')
+        @if(app()->environment('production'))
+            @php
+                $manifest = json_decode(file_get_contents(public_path('build/manifest.json')), true);
+                $entry = $manifest['resources/js/app.ts'] ?? null;
+            @endphp
+            @if($entry)
+                @if(isset($entry['css']) && is_array($entry['css']))
+                    @foreach($entry['css'] as $css)
+                        <link rel="stylesheet" href="{{ asset('build/' . $css) }}">
+                    @endforeach
+                @endif
+                <script type="module" src="{{ asset('build/' . $entry['file']) }}"></script>
+            @endif
+        @else
+            @vite('resources/js/app.ts')
+        @endif
         @inertiaHead
         
         <!-- Alpine.js for lightweight interactions -->

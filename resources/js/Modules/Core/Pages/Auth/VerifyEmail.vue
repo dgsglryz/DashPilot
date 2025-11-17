@@ -21,8 +21,7 @@ const verificationLinkSent = computed(
 
 <template>
     <GuestLayout>
-        <title>Email Verification - DashPilot</title>
-        <Head title="Email Verification" />
+        <Head title="Email Verification - DashPilot" />
 
         <div class="mb-4 text-sm text-gray-600">
             Thanks for signing up! Before getting started, could you verify your

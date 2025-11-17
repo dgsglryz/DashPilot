@@ -28,9 +28,8 @@ const submit = () => {
 </script>
 
 <template>
-    <title>Log in - DashPilot</title>
     <GuestLayout>
-        <Head title="Log in" />
+        <Head title="Log in - DashPilot" />
 
         <div v-if="status" class="mb-4 rounded-lg bg-green-500/10 border border-green-500/20 p-4 text-sm font-medium text-green-400">
             {{ status }}

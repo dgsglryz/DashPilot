@@ -13,7 +13,7 @@ let initialized = false;
  * Initialize dark mode - always dark mode for this app
  */
 const initDarkMode = (): void => {
-    if (typeof window === 'undefined' || initialized) return;
+    if (typeof globalThis.window === 'undefined' || initialized) return;
     
     initialized = true;
     // Always dark mode - no toggle needed
@@ -53,7 +53,7 @@ const setDarkMode = (value: boolean): void => {
 
 export function useDarkMode() {
     // Initialize immediately if in browser
-    if (typeof window !== 'undefined' && !initialized) {
+    if (typeof globalThis.window !== 'undefined' && !initialized) {
         initDarkMode();
     }
     

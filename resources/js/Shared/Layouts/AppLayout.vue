@@ -119,7 +119,7 @@ onMounted(() => {
             const item: RecentItem = {
                 id: `${routeName}_${Date.now()}`,
                 label,
-                href: window.location.pathname,
+                href: globalThis.location.pathname,
                 icon,
                 timestamp: Date.now(),
             };
@@ -345,7 +345,6 @@ const handleKeyboardShortcuts = (e: KeyboardEvent): void => {
             }
         };
         document.addEventListener("keydown", handler);
-        return;
     }
 };
 
@@ -389,6 +388,7 @@ onUnmounted(() => {
                             : (item.href ?? '#')
                     "
                     class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+                    :aria-label="`Navigate to ${item.name}`"
                     :class="
                         isCurrent(item)
                             ? 'bg-gray-800 text-white'
@@ -450,6 +450,7 @@ onUnmounted(() => {
                 <button
                     class="rounded-lg border border-gray-800 p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white lg:hidden"
                     @click="toggleMobileMenu"
+                    aria-label="Toggle mobile menu"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -564,6 +565,7 @@ onUnmounted(() => {
                         <button
                             x-on:click="open = !open"
                             class="relative rounded-lg p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white"
+                            aria-label="Toggle notifications menu"
                         >
                             <BellIcon class="h-6 w-6" />
                             <span
@@ -609,6 +611,7 @@ onUnmounted(() => {
                             x-on:click="open = !open"
                             class="rounded-lg p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white"
                             :title="$page.props.auth?.user?.name || 'Settings'"
+                            aria-label="Toggle user menu"
                         >
                             <Cog6ToothIcon class="h-6 w-6" />
                             <span class="sr-only">Settings</span>
@@ -671,6 +674,7 @@ onUnmounted(() => {
                     <button
                         class="rounded-lg border border-gray-800 p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white"
                         @click="closeMobileMenu"
+                        aria-label="Close mobile menu"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -701,6 +705,7 @@ onUnmounted(() => {
                         "
                         class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 transition hover:bg-gray-800 hover:text-white"
                         @click="closeMobileMenu"
+                        :aria-label="`Navigate to ${item.name}`"
                     >
                         <component :is="item.icon" class="h-5 w-5" />
                         <span>{{ item.name }}</span>

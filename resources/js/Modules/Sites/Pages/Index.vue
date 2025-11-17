@@ -622,8 +622,10 @@ const exportSelected = () => {
     if (selectedSites.value.length === 0) return;
 
     const params = new URLSearchParams();
-    selectedSites.value.forEach((id) => params.append("ids[]", id.toString()));
-    window.location.href = route("sites.export") + "?" + params.toString();
+    for (const id of selectedSites.value) {
+        params.append("ids[]", id.toString());
+    }
+    globalThis.location.href = route("sites.export") + "?" + params.toString();
     clearSelection();
 };
 
@@ -632,7 +634,7 @@ const exportSelected = () => {
  */
 const exportSites = () => {
     isExporting.value = true;
-    window.location.href = route("sites.export");
+    globalThis.location.href = route("sites.export");
     setTimeout(() => {
         isExporting.value = false;
     }, 2000);
@@ -715,7 +717,7 @@ const onSearchFocus = () => {
 };
 
 const onSearchBlur = () => {
-    window.setTimeout(() => {
+    globalThis.setTimeout(() => {
         suggestionOpen.value = false;
     }, 120);
 };

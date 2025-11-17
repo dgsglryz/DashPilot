@@ -23,7 +23,7 @@ withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-    (e: "close"): void;
+    close: () => void;
 }>();
 </script>
 

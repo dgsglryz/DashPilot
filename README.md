@@ -4,6 +4,12 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 
 ## Latest Updates
 
+- **Nov 16** – **NODE.JS VERSION UPDATE**: Updated to Node.js 20.19+ requirement for Vite 7 compatibility:
+    - ✅ **package.json** - Updated engines to require Node.js >=20.19.0 and npm >=10.0.0
+    - ✅ **Dockerfile** - Updated to install Node.js 20 LTS via NodeSource repository
+    - ✅ **GitHub Actions** - Updated workflows to use `.nvmrc` file for consistent Node.js version
+    - ✅ **.nvmrc** - Updated to specify Node.js 20.19.0
+    - ⚠️ **Action Required**: Local developers must upgrade to Node.js 20.19+ (run `nvm use` if using nvm)
 - **Nov 16** – **SONARCLOUD INTEGRATION**: Code quality analysis and security scanning:
     - ✅ **SonarCloud CI Integration** - Automated code quality scans on every push/PR
     - ✅ **Security Hotspot Detection** - Identifies potential security vulnerabilities
@@ -60,14 +66,28 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 ## Tech Stack
 
 - Laravel 11, PHP 8.2, MySQL 8, Redis 7 (cache + queues), Docker Compose
+- **Node.js 20.19+** (required for Vite 7), npm 10+
 - Vue 3 (script setup), Inertia.js, TailwindCSS, Chart.js, Heroicons
 - Laravel Breeze auth, Laravel Scheduler/Queues, MailHog for SMTP testing
 - GitHub Actions (`.github/workflows/ci.yml`) runs composer/npm install, build, tests, SonarCloud scan, and optional webhook/email notifications
 - SonarCloud integration for code quality analysis and security hotspot detection
 
+## Prerequisites
+
+- **Node.js 20.19+** (check with `node --version`)
+- **npm 10+** (check with `npm --version`)
+- PHP 8.2+
+- Docker & Docker Compose
+- Composer
+
+**Note:** If you're using `nvm`, run `nvm use` to switch to the version specified in `.nvmrc` (20.19.0).
+
 ## Setup
 
 ```bash
+# Ensure correct Node.js version (if using nvm)
+nvm use
+
 cp .env.example .env
 composer install
 npm install

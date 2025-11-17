@@ -107,7 +107,7 @@ class ShopifyGraphQLService
         $endpoint = rtrim($site->shopify_store_url, '/').'/admin/api/2024-10/graphql.json';
 
         $logger = app(LoggingService::class);
-        $logger->logServiceMethod(ShopifyGraphQLService::class, 'requestAnalytics', [
+        $logger->logServiceMethod(self::class, 'requestAnalytics', [
             'site_id' => $site->id,
             'endpoint' => $endpoint,
         ]);
