@@ -330,7 +330,7 @@ const exportCsv = () => {
   if (dateFrom.value) params.append('date_from', dateFrom.value)
   if (dateTo.value) params.append('date_to', dateTo.value)
   
-  window.location.href = route('activity.export') + '?' + params.toString()
+  globalThis.location.href = route('activity.export') + '?' + params.toString()
   
   setTimeout(() => {
     isExporting.value = false
