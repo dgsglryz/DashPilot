@@ -19,7 +19,7 @@
 
 ## 🤔 Why DashPilot?
 
-Built for boutique web agencies managing large WordPress and Shopify portfolios. DashPilot centralizes uptime monitoring, SEO scoring, alerting, task management, and client reporting into a single, responsive control center.
+Built for web agencies managing large WordPress and Shopify portfolios. DashPilot centralizes uptime monitoring, SEO scoring, alerting, task management, and client reporting into a single, responsive control center.
 
 **Key Highlights:**
 
@@ -121,11 +121,23 @@ docker-compose exec app php artisan key:generate
 # 6. Run migrations + seed demo data
 docker-compose exec app php artisan migrate --seed
 
+The seeder will create:
+- 1 demo admin user (demo@dashpilot.test / Password123)
+- 12 developer users
+- 35 clients
+- 130 demo sites with health data
+- Sample alerts, tasks, reports, and activity logs
+- 20 Liquid snippets for Shopify editor
+- 5 webhook configurations
+
 # 7. Build frontend assets
 docker-compose exec app npm run build
 
-# 8. Start queue workers
+# 8. Start queue workers (in a separate terminal or background)
 docker-compose exec app php artisan queue:work --queue=health-checks,emails,webhooks --tries=3
+
+# Or run in background:
+docker-compose exec -d app php artisan queue:work --queue=health-checks,emails,webhooks --tries=3
 ```
 
 ### Access Services
@@ -134,14 +146,14 @@ docker-compose exec app php artisan queue:work --queue=health-checks,emails,webh
 - **phpMyAdmin**: http://localhost:8080
 - **MailHog**: http://localhost:8025
 
-**Default Credentials** (Development/Demo only - created by seeder):
+**Default Credentials** (Development/Demo only - automatically created by database seeder):
 
 ```
 Email: demo@dashpilot.test
 Password: Password123
 ```
 
-> **Note:** These credentials are for local development only. Never use default credentials in production. The demo account is automatically created by the database seeder.
+> **Note:** These credentials are for local development only. Never use default credentials in production. The demo account and all dummy data (130 sites, 35 clients, sample alerts, tasks, etc.) are automatically created when you run `php artisan migrate --seed` in step 6.
 
 ---
 
