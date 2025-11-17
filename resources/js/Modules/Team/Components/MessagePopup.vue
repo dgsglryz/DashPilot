@@ -104,6 +104,7 @@
 // @ts-nocheck
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { XMarkIcon, PaperAirplaneIcon } from '@heroicons/vue/24/outline'
+import { useToast } from 'vue-toastification'
 
 /**
  * Component props
@@ -129,6 +130,7 @@ const emit = defineEmits(['close'])
 /**
  * Local state
  */
+const toast = useToast()
 const messages = ref([])
 const messageContent = ref('')
 const loading = ref(false)
@@ -196,7 +198,7 @@ const loadMessages = async () => {
       scrollToBottom()
     }
   } catch (error) {
-    console.error('Failed to load messages:', error)
+    toast.error('Failed to load messages. Please try again.')
   } finally {
     loading.value = false
   }
@@ -237,12 +239,11 @@ const sendMessage = async () => {
       // Restore message content on error
       messageContent.value = content
       const errorData = await response.json()
-      alert(errorData.error || 'Failed to send message')
+      toast.error(errorData.error || 'Failed to send message. Please try again.')
     }
   } catch (error) {
-    console.error('Failed to send message:', error)
     messageContent.value = content
-    alert('Failed to send message. Please try again.')
+    toast.error('Failed to send message. Please try again.')
   } finally {
     sending.value = false
   }

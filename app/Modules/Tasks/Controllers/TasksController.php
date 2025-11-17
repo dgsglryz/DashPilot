@@ -9,11 +9,10 @@ use App\Modules\Tasks\Models\Task;
 use App\Modules\Tasks\Requests\StoreTaskRequest;
 use App\Modules\Tasks\Requests\UpdateTaskRequest;
 use App\Modules\Users\Models\User;
-use App\Shared\Services\LookupService;
+use App\Modules\Tasks\Services\TaskViewService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,10 +21,7 @@ use Inertia\Response;
  */
 class TasksController extends Controller
 {
-    /**
-     * @param LookupService $lookupService
-     */
-    public function __construct(private readonly LookupService $lookupService)
+    public function __construct(private readonly TaskViewService $taskViewService)
     {
     }
 
@@ -70,17 +66,16 @@ class TasksController extends Controller
         }
 
         $perPage = $request->integer('per_page', 20);
+        $statsCollection = (clone $query)->get();
         $tasks = $query->orderBy('created_at', 'desc')
             ->paginate($perPage)
-            ->through(fn (Task $task): array => $this->taskResource($task));
+            ->through(fn (Task $task): array => $this->taskViewService->resource($task));
         $paginatedTasksCollection = collect($tasks->items());
 
-        // Get all tasks for stats (before pagination)
-        $allTasks = $query->get();
-        $tasksByStatus = $this->groupTasksByStatus($paginatedTasksCollection);
-        $stats = $this->buildTaskStats($allTasks, $paginatedTasksCollection);
+        $tasksByStatus = $this->taskViewService->groupByStatus($paginatedTasksCollection);
+        $stats = $this->taskViewService->buildStats($statsCollection, $paginatedTasksCollection);
 
-        $lookups = $this->formLookups();
+        $lookups = $this->taskViewService->lookups();
 
         return Inertia::render('Tasks/Pages/Index', [
             'tasks' => $tasksByStatus,
@@ -106,7 +101,7 @@ class TasksController extends Controller
      */
     public function create(): Response
     {
-        $lookups = $this->formLookups();
+        $lookups = $this->taskViewService->lookups();
 
         return Inertia::render('Tasks/Pages/Create', [
             'developers' => $lookups['users'],
@@ -155,7 +150,7 @@ class TasksController extends Controller
         $task->load(['assignee:id,name,email', 'site:id,name', 'client:id,name']);
 
         return Inertia::render('Tasks/Pages/Show', [
-            'task' => $this->taskResource($task),
+            'task' => $this->taskViewService->resource($task),
         ]);
     }
 
@@ -170,7 +165,7 @@ class TasksController extends Controller
     {
         $task->load(['assignee:id,name,email', 'site:id,name', 'client:id,name']);
 
-        $lookups = $this->formLookups();
+        $lookups = $this->taskViewService->lookups();
 
         return Inertia::render('Tasks/Pages/Edit', [
             'task' => [
@@ -300,8 +295,8 @@ class TasksController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $tasks = $taskCollection->map(fn (Task $task): array => $this->taskResource($task));
-        $stats = $this->buildTaskStats($taskCollection);
+        $tasks = $taskCollection->map(fn (Task $task): array => $this->taskViewService->resource($task));
+        $stats = $this->taskViewService->buildStats($taskCollection);
 
         return response()->json([
             'tasks' => $tasks,
@@ -314,96 +309,5 @@ class TasksController extends Controller
         ]);
     }
 
-    /**
-     * Build a reusable task representation for API/SSR responses.
-     *
-     * @param Task $task
-     *
-     * @return array<string, mixed>
-     */
-    private function taskResource(Task $task): array
-    {
-        return [
-            'id' => $task->id,
-            'title' => $task->title,
-            'description' => $task->description,
-            'status' => $task->status,
-            'priority' => $task->priority,
-            'dueDate' => $task->due_date?->toDateString(),
-            'completedAt' => $task->completed_at?->toIso8601String(),
-            'assignee' => [
-                'id' => $task->assigned_to,
-                'name' => $task->assignee?->name,
-                'email' => $task->assignee?->email,
-            ],
-            'site' => $task->site ? [
-                'id' => $task->site->id,
-                'name' => $task->site->name,
-            ] : null,
-            'client' => $task->client ? [
-                'id' => $task->client->id,
-                'name' => $task->client->name,
-            ] : null,
-        ];
-    }
-
-    /**
-     * Build stats from the provided task collections.
-     *
-     * @param Collection<int, Task|array<string, mixed>> $allTasks
-     * @param Collection<int, array<string, mixed>>|null $paginatedTasks
-     *
-     * @return array<string, int>
-     */
-    private function buildTaskStats(Collection $allTasks, ?Collection $paginatedTasks = null): array
-    {
-        $paginatedTasks ??= collect();
-
-        return [
-            'total' => $allTasks->count(),
-            'pending' => $allTasks->where('status', 'pending')->count(),
-            'in_progress' => $allTasks->where('status', 'in_progress')->count(),
-            'completed' => $allTasks->where('status', 'completed')->count(),
-            'cancelled' => $allTasks->where('status', 'cancelled')->count(),
-            'urgent' => $paginatedTasks->where('priority', 'urgent')->count(),
-        ];
-    }
-
-    /**
-     * Group tasks by status for Kanban board.
-     *
-     * @param Collection<int, array<string, mixed>> $tasks
-     *
-     * @return array<string, array<int, array<string, mixed>>>
-     */
-    private function groupTasksByStatus(Collection $tasks): array
-    {
-        return [
-            'pending' => $tasks->where('status', 'pending')->values()->all(),
-            'in_progress' => $tasks->where('status', 'in_progress')->values()->all(),
-            'completed' => $tasks->where('status', 'completed')->values()->all(),
-            'cancelled' => $tasks->where('status', 'cancelled')->values()->all(),
-        ];
-    }
-
-    /**
-     * Prepare reusable lookup datasets for forms.
-     *
-     * @return array<string, Collection<int, array<string, mixed>>>
-     */
-    private function formLookups(): array
-    {
-        $clients = $this->lookupService->clientOptions()
-            ->map(fn (array $client): array => [
-                'id' => $client['id'],
-                'name' => $client['name'],
-            ]);
-
-        return [
-            'users' => $this->lookupService->activeDevelopers(),
-            'sites' => $this->lookupService->siteOptions(),
-            'clients' => $clients,
-        ];
-    }
 }
 

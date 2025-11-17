@@ -122,6 +122,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { useToast } from 'vue-toastification'
 
 /**
  * Component props
@@ -147,6 +148,7 @@ const emit = defineEmits(['close'])
 /**
  * Local state
  */
+const toast = useToast()
 const tasks = ref([])
 const stats = ref(null)
 const loading = ref(false)
@@ -230,7 +232,7 @@ const loadTasks = async () => {
       stats.value = data.stats || null
     }
   } catch (error) {
-    console.error('Failed to load tasks:', error)
+    toast.error('Failed to load tasks. Please try again.')
   } finally {
     loading.value = false
   }

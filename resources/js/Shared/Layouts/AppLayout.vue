@@ -8,6 +8,7 @@ import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { Link, router } from "@inertiajs/vue3";
 import { useDebounceFn } from "@vueuse/core";
 import axios from "axios";
+import { useToast } from "vue-toastification";
 import {
     ArrowRightOnRectangleIcon,
     BellIcon,
@@ -62,6 +63,7 @@ type SearchResult = {
     preview?: string;
 };
 
+const toast = useToast();
 const searchResults = ref<SearchResult[]>([]);
 const isSearching = ref(false);
 const searchContainer = ref<HTMLElement | null>(null);
@@ -169,7 +171,7 @@ const performSearch = useDebounceFn(async (query: string) => {
         });
         searchResults.value = response.data.results || [];
     } catch (error) {
-        console.error("Search error:", error);
+        toast.error("Search failed. Please try again.");
         searchResults.value = [];
     } finally {
         isSearching.value = false;

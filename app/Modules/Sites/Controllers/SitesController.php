@@ -12,14 +12,12 @@ use App\Modules\Sites\Jobs\CheckSiteHealth;
 use App\Modules\Sites\Models\Site;
 use App\Modules\Sites\Requests\StoreSiteRequest;
 use App\Modules\Sites\Requests\UpdateSiteRequest;
+use App\Modules\Sites\Services\SiteViewService;
 use App\Modules\Tasks\Models\Task;
 use App\Shared\Helpers\SiteMediaHelper;
 use App\Shared\Services\LookupService;
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
@@ -31,11 +29,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class SitesController extends Controller
 {
-    /**
-     * @param LookupService $lookupService
-     */
-    public function __construct(private readonly LookupService $lookupService)
-    {
+    public function __construct(
+        private readonly LookupService $lookupService,
+        private readonly SiteViewService $siteViewService
+    ) {
     }
 
     /**
@@ -54,16 +51,10 @@ class SitesController extends Controller
             })
             ->with(['client:id,name', 'checks' => fn ($q) => $q->latest()->take(5)]);
 
-        $this->applySiteFilters($query, $request);
+        $this->siteViewService->applyFilters($query, $request);
 
         // Get stats using database queries (more efficient than loading all records)
-        $baseQuery = clone $query;
-        $stats = [
-            'total' => $baseQuery->count(),
-            'healthy' => (clone $baseQuery)->where('status', 'healthy')->count(),
-            'warning' => (clone $baseQuery)->where('status', 'warning')->count(),
-            'critical' => (clone $baseQuery)->where('status', 'critical')->count(),
-        ];
+        $stats = $this->siteViewService->buildStats(clone $query);
 
         // Paginate results
         $perPage = $request->integer('per_page', 20);
@@ -98,7 +89,7 @@ class SitesController extends Controller
                 'status' => $request->string('status')->toString() ?: 'all',
                 'platform' => $request->string('platform')->toString() ?: 'all',
             ],
-            'clients' => $this->clientOptions(),
+            'clients' => $this->siteViewService->clientOptions(),
         ]);
     }
 
@@ -160,7 +151,7 @@ class SitesController extends Controller
                 'incidents' => $report->incidents_count,
             ]);
 
-        $seoInsights = $this->buildSeoInsights($site);
+        $seoInsights = $this->siteViewService->buildSeoInsights($site);
 
         return Inertia::render('Sites/Pages/Show', [
             'site' => [
@@ -187,7 +178,7 @@ class SitesController extends Controller
                 'seoMetrics' => $seoInsights['metrics'],
                 'seoIssues' => $seoInsights['issues'],
             ],
-            'chart' => $this->buildPerformanceSeries($recentChecks),
+            'chart' => $this->siteViewService->buildPerformanceSeries($recentChecks),
             'alerts' => $site->alerts->map(fn (Alert $alert) => [
                 'id' => $alert->id,
                 'title' => $alert->title,
@@ -204,105 +195,6 @@ class SitesController extends Controller
         ]);
     }
 
-    /**
-     * Build chart-ready data for the Vue chart component.
-     *
-     * @param Collection<int, array<string, mixed>> $checks
-     */
-    private function buildPerformanceSeries(Collection $checks): array
-    {
-        if ($checks->isEmpty()) {
-            return [
-                'labels' => [],
-                'datasets' => [],
-            ];
-        }
-
-        $ordered = $checks->sortBy('checkedAt');
-
-        $labels = $ordered->map(fn (array $check): string => Carbon::parse($check['checkedAt'])->format('M j · H:i'))->all();
-        $uptimeSeries = $ordered->map(fn (array $check): float => $this->uptimePoint($check['status']))->all();
-        $responseSeries = $ordered->map(fn (array $check): int => (int) ($check['responseTime'] ?? 0))->all();
-
-        return [
-            'labels' => $labels,
-            'datasets' => [
-                [
-                    'label' => 'Uptime %',
-                    'data' => $uptimeSeries,
-                    'borderColor' => 'rgb(16, 185, 129)',
-                    'backgroundColor' => 'rgba(16, 185, 129, 0.15)',
-                    'fill' => true,
-                    'tension' => 0.4,
-                ],
-                [
-                    'label' => 'Response (ms)',
-                    'data' => $responseSeries,
-                    'borderColor' => 'rgb(59, 130, 246)',
-                    'backgroundColor' => 'rgba(59, 130, 246, 0.15)',
-                    'fill' => true,
-                    'tension' => 0.4,
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * Calculate uptime percentage based on site status.
-     *
-     * @param string|null $status
-     *
-     * @return float
-     */
-    private function uptimePoint(?string $status): float
-    {
-        return match ($status) {
-            'pass', 'healthy' => 99.6,
-            'warning' => 96.2,
-            default => 92.4,
-        };
-    }
-
-    /**
-     * Build SEO insights data for a site including score, metrics, and issues.
-     *
-     * @param Site $site
-     *
-     * @return array<string, mixed>
-     */
-    private function buildSeoInsights(Site $site): array
-    {
-        $baseScore = (int) ($site->health_score ?? 78);
-        $score = max(55, min(100, $baseScore + random_int(-5, 7)));
-
-        $metrics = [
-            ['name' => 'Meta tags', 'score' => max(45, min(100, $score + random_int(-5, 5)))],
-            ['name' => 'H1 structure', 'score' => max(45, min(100, $score + random_int(-10, 3)))],
-            ['name' => 'Page speed', 'score' => max(45, min(100, $score + random_int(-8, 6)))],
-            ['name' => 'Image alts', 'score' => max(45, min(100, $score + random_int(-12, 4)))],
-        ];
-
-        $issues = $score >= 85
-            ? []
-            : [
-                [
-                    'id' => 'meta-length',
-                    'title' => 'Meta description is short',
-                    'description' => 'Add a 150-160 character description for better SERP snippets.',
-                ],
-                [
-                    'id' => 'image-alt',
-                    'title' => '8 images missing alt text',
-                    'description' => 'Add descriptive alternate text for all hero and gallery images.',
-                ],
-            ];
-
-        return [
-            'score' => $score,
-            'metrics' => $metrics,
-            'issues' => $issues,
-        ];
-    }
 
     /**
      * Show the form for creating a new site.
@@ -312,7 +204,7 @@ class SitesController extends Controller
     public function create(): Response
     {
         return Inertia::render('Sites/Pages/Create', [
-            'clients' => $this->clientOptions(),
+            'clients' => $this->siteViewService->clientOptions(),
         ]);
     }
 
@@ -508,7 +400,7 @@ class SitesController extends Controller
             $ids = array_map('intval', $request->input('ids'));
             $query->whereIn('id', $ids);
         } else {
-            $this->applySiteFilters($query, $request);
+            $this->siteViewService->applyFilters($query, $request);
         }
 
         $format = $request->string('format', 'csv')->toString();
@@ -568,43 +460,5 @@ class SitesController extends Controller
         ]);
     }
 
-    /**
-     * Apply the request filters shared by index/export endpoints.
-     *
-     * @param Builder $query
-     * @param Request $request
-     *
-     * @return Builder
-     */
-    private function applySiteFilters(Builder $query, Request $request): Builder
-    {
-        if ($request->filled('platform') && $request->string('platform')->toString() !== 'all') {
-            $query->where('type', $request->string('platform')->toString());
-        }
-
-        if ($request->filled('status') && $request->string('status')->toString() !== 'all') {
-            $query->where('status', $request->string('status')->toString());
-        }
-
-        if ($request->filled('query')) {
-            $search = $request->string('query')->toString();
-            $query->where(function (Builder $inner) use ($search): void {
-                $inner->where('name', 'like', "%{$search}%")
-                    ->orWhere('url', 'like', "%{$search}%");
-            });
-        }
-
-        return $query;
-    }
-
-    /**
-     * Retrieve reusable client dropdown options.
-     *
-     * @return Collection<int, array<string, mixed>>
-     */
-    private function clientOptions(): Collection
-    {
-        return $this->lookupService->clientOptions();
-    }
 }
 
