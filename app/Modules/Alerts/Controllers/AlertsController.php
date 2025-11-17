@@ -56,9 +56,12 @@ class AlertsController extends Controller
         $statsQuery = Alert::query()->forUser($user);
         
         $stats = [
-            'critical' => (clone $statsQuery)->where('severity', 'critical')->where('status', '!=', 'resolved')->count(),
-            'warning' => (clone $statsQuery)->where('severity', 'warning')->where('status', '!=', 'resolved')->count(),
-            'info' => (clone $statsQuery)->where('severity', 'info')->where('status', '!=', 'resolved')->count(),
+            // Critical: database values 'critical' or 'high' map to UI 'critical'
+            'critical' => (clone $statsQuery)->whereIn('severity', ['critical', 'high'])->where('status', '!=', 'resolved')->count(),
+            // Warning: database value 'medium' maps to UI 'warning'
+            'warning' => (clone $statsQuery)->where('severity', 'medium')->where('status', '!=', 'resolved')->count(),
+            // Info: database value 'low' maps to UI 'info'
+            'info' => (clone $statsQuery)->where('severity', 'low')->where('status', '!=', 'resolved')->count(),
             'resolved' => (clone $statsQuery)->where('status', 'resolved')->count(),
         ];
 
