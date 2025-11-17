@@ -10,12 +10,16 @@ import { nextTick } from 'vue'
 import AppLayout from '../AppLayout.vue'
 
 // Mock route and router visit functions - use vi.hoisted for proper hoisting
-const { mockRoute, mockRouterVisit } = vi.hoisted(() => {
-  const route = vi.fn((name: string) => `/${name}`)
+const { mockRoute, mockRouterVisit, mockRouteCurrent } = vi.hoisted(() => {
+  const routeCurrent = vi.fn<() => string | null>(() => null)
+  const routeFn = vi.fn((name: string) => `/${name}`) as any
+  // Add current method to route function
+  routeFn.current = routeCurrent
   const routerVisit = vi.fn()
   return {
-    mockRoute: route,
+    mockRoute: routeFn,
     mockRouterVisit: routerVisit,
+    mockRouteCurrent: routeCurrent,
   }
 })
 
@@ -61,12 +65,6 @@ vi.mock('@/Shared/Components/CommandPalette.vue', () => ({
     emits: ['close'],
   },
 }))
-
-// Mock route().current() function
-const mockRouteCurrent = vi.fn<() => string | null>(() => null)
-// Add current method to route mock
-;(mockRoute as any).current = mockRouteCurrent
-;(globalThis as any).route = mockRoute
 
 describe('AppLayout', () => {
   beforeEach(() => {
