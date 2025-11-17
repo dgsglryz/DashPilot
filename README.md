@@ -351,3 +351,7 @@ docker-compose exec app php artisan queue:work --tries=3   # recommended queue w
 ## License
 
 MIT – see `LICENSE`.
+
+---
+
+**Test Note:** This PR is created to verify What The Diff integration is working correctly.
