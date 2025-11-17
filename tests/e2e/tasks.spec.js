@@ -14,7 +14,7 @@
 import { test, expect } from "@playwright/test";
 import { loginAsAdmin } from "./helpers/auth.js";
 import { goToTasks } from "./helpers/navigation.js";
-import { waitForSuccessMessage, waitForPageReady } from "./helpers/wait.js";
+import { waitForSuccessMessage, waitForPageReady, waitForUIUpdate } from './helpers/wait.js';
 import {
     getInputSelector,
     getTextareaSelector,
@@ -36,7 +36,7 @@ test.describe("Tasks Management", () => {
 
     test("should display Kanban board", async ({ page }) => {
         // Wait for page to load
-        await page.waitForTimeout(2000);
+        await waitForUIUpdate(page);
 
         // Verify Kanban board exists (columns for different statuses)
         const kanbanBoard = page.locator(
@@ -137,7 +137,7 @@ test.describe("Tasks Management", () => {
 
     test("should move task to different status", async ({ page }) => {
         // Wait for Kanban board to load
-        await page.waitForTimeout(2000);
+        await waitForUIUpdate(page);
 
         // Find first task card
         const taskCard = page
@@ -153,7 +153,7 @@ test.describe("Tasks Management", () => {
             if (await targetColumn.isVisible()) {
                 // Drag and drop task to target column
                 await taskCard.dragTo(targetColumn);
-                await page.waitForTimeout(1000);
+                await waitForUIUpdate(page);
 
                 // Verify task moved (check for success message or visual change)
                 await waitForSuccessMessage(page);
@@ -215,7 +215,7 @@ test.describe("Tasks Management", () => {
 
     test("should delete task", async ({ page }) => {
         // Wait for tasks to load
-        await page.waitForTimeout(2000);
+        await waitForUIUpdate(page);
 
         // Find first task
         const taskCard = page
@@ -225,7 +225,7 @@ test.describe("Tasks Management", () => {
         if (await taskCard.isVisible()) {
             // Click on task
             await taskCard.click();
-            await page.waitForTimeout(1000);
+            await waitForUIUpdate(page);
 
             // Look for delete button
             const deleteButton = page
@@ -255,7 +255,7 @@ test.describe("Tasks Management", () => {
 
     test("should filter tasks by status", async ({ page }) => {
         // Wait for page to load
-        await page.waitForTimeout(2000);
+        await waitForUIUpdate(page);
 
         // Look for status filter
         const statusFilter = page
@@ -264,13 +264,13 @@ test.describe("Tasks Management", () => {
 
         if (await statusFilter.isVisible()) {
             await statusFilter.click();
-            await page.waitForTimeout(500);
+            await waitForUIUpdate(page);
         }
     });
 
     test("should search tasks", async ({ page }) => {
         // Wait for page to load
-        await page.waitForTimeout(2000);
+        await waitForUIUpdate(page);
 
         // Look for search input
         const searchInput = page
@@ -279,7 +279,7 @@ test.describe("Tasks Management", () => {
 
         if (await searchInput.isVisible()) {
             await searchInput.fill("test");
-            await page.waitForTimeout(500);
+            await waitForUIUpdate(page);
 
             // Verify filtered results
             const tasks = page.locator('[data-testid="task-card"], .task-card');

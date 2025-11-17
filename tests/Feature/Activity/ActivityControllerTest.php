@@ -50,4 +50,74 @@ class ActivityControllerTest extends TestCase
             ->has('activities.data', 1)
         );
     }
+
+    public function test_activity_index_filters_by_site(): void
+    {
+        $user = User::factory()->create();
+        $site1 = Site::factory()->create();
+        $site2 = Site::factory()->create();
+        ActivityLog::factory()->create(['site_id' => $site1->id]);
+        ActivityLog::factory()->create(['site_id' => $site2->id]);
+
+        $response = $this->actingAs($user)->get(route('activity.index', ['site_id' => $site1->id]));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->has('activities.data', 1)
+        );
+    }
+
+    public function test_activity_index_filters_by_action(): void
+    {
+        $user = User::factory()->create();
+        ActivityLog::factory()->create(['action' => 'site_checked']);
+        ActivityLog::factory()->create(['action' => 'alert_created']);
+
+        $response = $this->actingAs($user)->get(route('activity.index', ['action' => 'site_checked']));
+
+        $response->assertOk();
+    }
+
+    public function test_activity_index_filters_by_date_range(): void
+    {
+        $user = User::factory()->create();
+        ActivityLog::factory()->create(['created_at' => now()->subDays(5)]);
+        ActivityLog::factory()->create(['created_at' => now()->subDays(2)]);
+
+        $response = $this->actingAs($user)->get(route('activity.index', [
+            'date_from' => now()->subDays(3)->toDateString(),
+            'date_to' => now()->toDateString(),
+        ]));
+
+        $response->assertOk();
+    }
+
+    public function test_activity_export_generates_csv(): void
+    {
+        $user = User::factory()->create();
+        ActivityLog::factory()->count(3)->create();
+
+        $response = $this->actingAs($user)->get(route('activity.export'));
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+        $this->assertStringContainsString('ID,Action,Description', $response->getContent());
+    }
+
+    public function test_activity_export_applies_filters(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->create();
+        ActivityLog::factory()->create(['site_id' => $site->id, 'action' => 'site_checked']);
+        ActivityLog::factory()->create(['action' => 'alert_created']);
+
+        $response = $this->actingAs($user)->get(route('activity.export', [
+            'site_id' => $site->id,
+            'action' => 'site_checked',
+        ]));
+
+        $response->assertOk();
+        $content = $response->getContent();
+        $this->assertStringContainsString('site_checked', $content);
+    }
 }

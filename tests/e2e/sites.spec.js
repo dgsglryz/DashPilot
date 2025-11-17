@@ -17,11 +17,9 @@
 import { test, expect } from "@playwright/test";
 import { loginAsAdmin } from "./helpers/auth.js";
 import { goToSites } from "./helpers/navigation.js";
-import {
-    waitForSuccessMessage,
+import { waitForSuccessMessage,
     waitForTableData,
-    waitForPageReady,
-} from "./helpers/wait.js";
+    waitForPageReady, waitForUIUpdate } from './helpers/wait.js';
 import {
     getInputSelector,
     getSubmitButtonInForm,
@@ -66,7 +64,7 @@ test.describe("Sites Management", () => {
         // Type in search box
         const searchInput = page.locator('[data-testid="search-input"]');
         await searchInput.fill(firstSiteName);
-        await page.waitForTimeout(500); // Wait for debounce
+        await waitForUIUpdate(page); // Wait for debounce
 
         // Verify filtered results
         const rows = page.locator('[data-testid="site-row"]');
@@ -80,7 +78,7 @@ test.describe("Sites Management", () => {
 
         // Select WordPress platform filter
         await page.selectOption('select:has-text("Platform")', "wordpress");
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
 
         // Verify filtered results (all should be WordPress)
         const rows = page.locator('[data-testid="site-row"]');
@@ -98,7 +96,7 @@ test.describe("Sites Management", () => {
 
         // Select healthy status filter
         await page.selectOption('select:has-text("Status")', "healthy");
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
 
         // Verify filtered results
         const rows = page.locator('[data-testid="site-row"]');
@@ -272,7 +270,7 @@ test.describe("Sites Management", () => {
 
         // Click favorite button
         await favoriteButton.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
 
         // Verify favorite status changed (visual check)
         // Note: This depends on how favorite is displayed
@@ -284,7 +282,7 @@ test.describe("Sites Management", () => {
         await exportButton.click();
 
         // Wait for download (or verify button state changed)
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
 
         // Note: Actual file download verification would require download event listener
     });

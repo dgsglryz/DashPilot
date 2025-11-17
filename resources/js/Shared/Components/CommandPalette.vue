@@ -42,7 +42,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-    close: () => void;
+    (e: 'close'): void;
 }>();
 
 const toast = useToast();

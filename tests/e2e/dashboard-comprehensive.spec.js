@@ -13,6 +13,7 @@
 
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth.js';
+import { waitForUIUpdate } from './helpers/wait.js';
 
 test.describe('Dashboard - Comprehensive Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -77,7 +78,7 @@ test.describe('Dashboard - Comprehensive Tests', () => {
       const link = firstItem.locator('a, button');
       if (await link.isVisible()) {
         await link.click();
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
         // Should navigate somewhere or open modal
       }
     }
@@ -151,7 +152,7 @@ test.describe('Dashboard - Comprehensive Tests', () => {
     // Check for mobile menu
     if (await mobileMenuButton.isVisible()) {
       await mobileMenuButton.click();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Verify mobile menu opens
       const mobileMenu = page.locator('nav, aside');
@@ -180,7 +181,7 @@ test.describe('Dashboard - Comprehensive Tests', () => {
       
       // Toggle dark mode
       await darkModeToggle.click();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Verify theme changed
       const newTheme = await page.evaluate(() => document.documentElement.classList.contains('dark'));

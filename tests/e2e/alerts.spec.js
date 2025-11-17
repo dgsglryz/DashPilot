@@ -14,11 +14,9 @@
 import { test, expect } from "@playwright/test";
 import { loginAsAdmin } from "./helpers/auth.js";
 import { goToAlerts } from "./helpers/navigation.js";
-import {
-    waitForSuccessMessage,
+import { waitForSuccessMessage,
     waitForTableData,
-    waitForPageReady,
-} from "./helpers/wait.js";
+    waitForPageReady, waitForUIUpdate } from './helpers/wait.js';
 
 test.describe("Alerts Management", () => {
     test.beforeEach(async ({ page }) => {
@@ -35,7 +33,7 @@ test.describe("Alerts Management", () => {
 
     test("should display alerts list", async ({ page }) => {
         // Wait for alerts table/list to load
-        await page.waitForTimeout(2000);
+        await waitForUIUpdate(page);
 
         // Verify alerts container exists
         const alertsContainer = page.locator(
@@ -46,7 +44,7 @@ test.describe("Alerts Management", () => {
 
     test("should filter alerts by severity", async ({ page }) => {
         // Wait for page to load
-        await page.waitForTimeout(2000);
+        await waitForUIUpdate(page);
 
         // Look for severity filter (dropdown, buttons, etc.)
         const severityFilter = page
@@ -58,7 +56,7 @@ test.describe("Alerts Management", () => {
         if (await severityFilter.isVisible()) {
             // Click on critical filter
             await severityFilter.click();
-            await page.waitForTimeout(500);
+            await waitForUIUpdate(page);
 
             // Verify filtered results
             const alerts = page.locator(
@@ -71,7 +69,7 @@ test.describe("Alerts Management", () => {
 
     test("should mark alert as resolved", async ({ page }) => {
         // Wait for alerts to load
-        await page.waitForTimeout(2000);
+        await waitForUIUpdate(page);
 
         // Find first alert with resolve button
         const resolveButton = page
@@ -90,7 +88,7 @@ test.describe("Alerts Management", () => {
 
     test("should acknowledge alert", async ({ page }) => {
         // Wait for alerts to load
-        await page.waitForTimeout(2000);
+        await waitForUIUpdate(page);
 
         // Find first alert with acknowledge button
         const acknowledgeButton = page
@@ -109,7 +107,7 @@ test.describe("Alerts Management", () => {
 
     test("should mark all alerts as read", async ({ page }) => {
         // Wait for alerts to load
-        await page.waitForTimeout(2000);
+        await waitForUIUpdate(page);
 
         // Find mark all read button
         const markAllReadButton = page
@@ -128,7 +126,7 @@ test.describe("Alerts Management", () => {
 
     test("should export alerts", async ({ page }) => {
         // Wait for page to load
-        await page.waitForTimeout(2000);
+        await waitForUIUpdate(page);
 
         // Find export button
         const exportButton = page
@@ -137,13 +135,13 @@ test.describe("Alerts Management", () => {
 
         if (await exportButton.isVisible()) {
             await exportButton.click();
-            await page.waitForTimeout(1000);
+            await waitForUIUpdate(page);
         }
     });
 
     test("should display alert details when clicked", async ({ page }) => {
         // Wait for alerts to load
-        await page.waitForTimeout(2000);
+        await waitForUIUpdate(page);
 
         // Click first alert if it's a link
         const firstAlert = page
@@ -152,7 +150,7 @@ test.describe("Alerts Management", () => {
 
         if (await firstAlert.isVisible()) {
             await firstAlert.click();
-            await page.waitForTimeout(1000);
+            await waitForUIUpdate(page);
 
             // Verify alert details are shown (modal, expanded view, etc.)
             const alertDetails = page.locator(
@@ -166,7 +164,7 @@ test.describe("Alerts Management", () => {
 
     test("should display alert severity badges", async ({ page }) => {
         // Wait for alerts to load
-        await page.waitForTimeout(2000);
+        await waitForUIUpdate(page);
 
         // Verify severity badges exist
         const severityBadges = page.locator("text=/Critical|Warning|Info/i");

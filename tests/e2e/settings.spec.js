@@ -15,7 +15,7 @@
 import { test, expect } from "@playwright/test";
 import { loginAsAdmin } from "./helpers/auth.js";
 import { goToSettings } from "./helpers/navigation.js";
-import { waitForSuccessMessage, waitForPageReady } from "./helpers/wait.js";
+import { waitForSuccessMessage, waitForPageReady, waitForUIUpdate } from './helpers/wait.js';
 import {
     getInputSelector,
     getSubmitButtonInForm,
@@ -174,7 +174,7 @@ test.describe("Settings", () => {
 
             if (await testButton.isVisible()) {
                 await testButton.click();
-                await page.waitForTimeout(2000);
+                await waitForUIUpdate(page);
 
                 // Verify success message or test result
                 await waitForSuccessMessage(page, /test|success/i);
@@ -268,7 +268,7 @@ test.describe("Settings", () => {
 
             if (await testEmailButton.isVisible()) {
                 await testEmailButton.click();
-                await page.waitForTimeout(2000);
+                await waitForUIUpdate(page);
 
                 // Verify success message
                 await waitForSuccessMessage(page, /test|sent/i);

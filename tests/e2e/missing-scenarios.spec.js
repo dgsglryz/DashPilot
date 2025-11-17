@@ -15,7 +15,7 @@
 
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth.js';
-import { waitForPageReady, waitForErrorMessage, waitForLoadingToComplete } from './helpers/wait.js';
+import { waitForPageReady, waitForErrorMessage, waitForLoadingToComplete, waitForUIUpdate } from './helpers/wait.js';
 import { getInputSelector, getSubmitButtonInForm, waitForFormReady } from './helpers/selectors.js';
 
 test.describe('Missing Scenarios - Edge Cases & Error Handling', () => {
@@ -160,7 +160,7 @@ test.describe('Missing Scenarios - Edge Cases & Error Handling', () => {
       await submitButton.click();
 
       // Should show validation errors
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       const hasValidationError = await page.locator('text=/required|cannot be empty/i').isVisible({ timeout: 2000 }).catch(() => false);
       const isStillOnPage = page.url().includes('/clients/create');
       
@@ -231,7 +231,7 @@ test.describe('Missing Scenarios - Edge Cases & Error Handling', () => {
       await waitForPageReady(page);
 
       // Wait for table to load
-      await page.waitForTimeout(1000);
+      await waitForUIUpdate(page);
 
       // Try to select sites
       const checkboxes = page.locator('[data-testid="site-row"] input[type="checkbox"]');

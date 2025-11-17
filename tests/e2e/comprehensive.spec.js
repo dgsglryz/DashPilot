@@ -20,7 +20,9 @@ import {
 import { 
   waitForSuccessMessage, 
   waitForErrorMessage,
-  waitForTableData 
+  waitForTableData,
+  waitForUIUpdate,
+  fastWait
 } from './helpers/wait.js';
 
 test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
@@ -84,7 +86,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       // Type search query
       await searchInput.fill('test');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Verify search suggestions appear (if any)
       const suggestions = page.locator('[role="listbox"], .suggestions, [data-testid="search-results"]');
@@ -96,7 +98,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       // Press Cmd+K (or Ctrl+K)
       await page.keyboard.press('Meta+k');
-      await page.waitForTimeout(300);
+      await fastWait(page, 300);
       
       // Verify command palette opens
       const commandPalette = page.locator('[data-testid="command-palette"], .command-palette, input[placeholder*="command"]');
@@ -112,7 +114,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       // Click notification bell
       await bell.click();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Verify notification dropdown appears
       const notificationDropdown = page.locator('text=/Notification/i, [role="menu"]');
@@ -172,7 +174,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       if (await statCardLink.isVisible()) {
         await statCardLink.click();
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
         // Should navigate somewhere
       }
     });
@@ -229,7 +231,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const clickableIndicator = page.locator('button:has-text("Live updates"), button:has-text("Paused")');
       if (await clickableIndicator.isVisible()) {
         await clickableIndicator.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
     });
 
@@ -261,20 +263,20 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       // Test platform filter
       await page.selectOption('select:has-text("Platform")', 'wordpress');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       await page.selectOption('select:has-text("Platform")', 'shopify');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       await page.selectOption('select:has-text("Platform")', 'all');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Test status filter
       await page.selectOption('select:has-text("Status")', 'healthy');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       await page.selectOption('select:has-text("Status")', 'warning');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       await page.selectOption('select:has-text("Status")', 'all');
     });
@@ -286,15 +288,15 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       // Search by name
       await searchInput.fill('test');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Clear search
       await searchInput.clear();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Search by URL
       await searchInput.fill('.com');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
     });
 
     test('should test site table row interactions', async ({ page }) => {
@@ -321,7 +323,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       if (await favoriteButton.isVisible()) {
         await favoriteButton.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
     });
 
@@ -334,7 +336,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       if (await quickActions.isVisible()) {
         await quickActions.click();
-        await page.waitForTimeout(300);
+        await fastWait(page, 300);
         
         // Try to find dropdown menu
         const dropdown = page.locator('[role="menu"], .dropdown-menu');
@@ -343,7 +345,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
           const action = dropdown.locator('button, a').first();
           if (await action.isVisible()) {
             await action.click();
-            await page.waitForTimeout(1000);
+            await waitForUIUpdate(page);
           }
         }
       }
@@ -384,7 +386,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       if (await selectAll.isVisible()) {
         await selectAll.check();
-        await page.waitForTimeout(300);
+        await fastWait(page, 300);
         
         // Verify all rows selected
         const selectedRows = page.locator('[data-testid="site-row"] input[type="checkbox"]:checked');
@@ -403,7 +405,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const exportButton = page.locator('button:has-text("Export")');
       if (await exportButton.isVisible()) {
         await exportButton.click();
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
       }
     });
 
@@ -528,16 +530,16 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
   test.describe('Alerts - All Features', () => {
     test('should test all alert filters', async ({ page }) => {
       await goToAlerts(page);
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Test severity filter
       const severityFilter = page.locator('select:has-text("Severity")');
       if (await severityFilter.isVisible()) {
         await severityFilter.selectOption('critical');
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         await severityFilter.selectOption('warning');
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         await severityFilter.selectOption('all');
       }
@@ -546,28 +548,28 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const statusFilter = page.locator('select:has-text("Status")');
       if (await statusFilter.isVisible()) {
         await statusFilter.selectOption('active');
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         await statusFilter.selectOption('resolved');
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
       
       // Test type filter
       const typeFilter = page.locator('select:has-text("Type")');
       if (await typeFilter.isVisible()) {
         await typeFilter.selectOption('downtime');
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
     });
 
     test('should test alert search', async ({ page }) => {
       await goToAlerts(page);
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       const searchInput = page.locator('input[placeholder*="Search alerts"]');
       if (await searchInput.isVisible()) {
         await searchInput.fill('test');
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         await searchInput.clear();
       }
@@ -575,7 +577,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
 
     test('should test mark all as read', async ({ page }) => {
       await goToAlerts(page);
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       const markAllRead = page.locator('button:has-text("Mark All as Read"), button:has-text("Mark All Read")');
       if (await markAllRead.isVisible()) {
@@ -586,7 +588,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
 
     test('should test individual alert actions', async ({ page }) => {
       await goToAlerts(page);
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Find first alert card
       const alertCard = page.locator('.alert-card, [data-testid="alert-card"], article').first();
@@ -610,19 +612,19 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
         const viewSiteBtn = alertCard.locator('button:has-text("View"), a:has-text("site")');
         if (await viewSiteBtn.isVisible()) {
           await viewSiteBtn.click();
-          await page.waitForTimeout(1000);
+          await waitForUIUpdate(page);
         }
       }
     });
 
     test('should test alert export', async ({ page }) => {
       await goToAlerts(page);
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       const exportButton = page.locator('button:has-text("Export")');
       if (await exportButton.isVisible()) {
         await exportButton.click();
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
       }
     });
 
@@ -640,13 +642,13 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
   test.describe('Clients - All Features', () => {
     test('should test client search and filters', async ({ page }) => {
       await goToClients(page);
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Test search
       const searchInput = page.locator('input[placeholder*="Search clients"]');
       if (await searchInput.isVisible()) {
         await searchInput.fill('test');
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         await searchInput.clear();
       }
       
@@ -654,7 +656,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const statusFilter = page.locator('select:has-text("Status")');
       if (await statusFilter.isVisible()) {
         await statusFilter.selectOption('active');
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         await statusFilter.selectOption('all');
       }
     });
@@ -678,7 +680,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const viewButton = firstRow.locator('a[href*="/clients/"], button:has(svg)').first();
       if (await viewButton.isVisible()) {
         await viewButton.click({ force: true });
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
       }
     });
 
@@ -732,47 +734,47 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
   test.describe('Tasks - All Features', () => {
     test('should test all task filters', async ({ page }) => {
       await goToTasks(page);
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Test search
       const searchInput = page.locator('input[placeholder*="Search tasks"]');
       if (await searchInput.isVisible()) {
         await searchInput.fill('test');
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
       
       // Test status filter
       const statusFilter = page.locator('select:has-text("Status")');
       if (await statusFilter.isVisible()) {
         await statusFilter.selectOption('pending');
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
       
       // Test priority filter
       const priorityFilter = page.locator('select:has-text("Priority")');
       if (await priorityFilter.isVisible()) {
         await priorityFilter.selectOption('urgent');
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
       
       // Test "My Tasks" checkbox
       const myTasksCheckbox = page.locator('input[type="checkbox"] + span:has-text("My Tasks")');
       if (await myTasksCheckbox.isVisible()) {
         await myTasksCheckbox.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
       
       // Test "Urgent" checkbox
       const urgentCheckbox = page.locator('input[type="checkbox"] + span:has-text("Urgent")');
       if (await urgentCheckbox.isVisible()) {
         await urgentCheckbox.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
     });
 
     test('should test Kanban board columns', async ({ page }) => {
       await goToTasks(page);
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Verify all columns exist
       const columns = ['Pending', 'In Progress', 'Completed', 'Cancelled'];
@@ -783,7 +785,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
 
     test('should test move task between columns', async ({ page }) => {
       await goToTasks(page);
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Find first task card
       const taskCard = page.locator('.task-card, [data-testid="task-card"], .card').first();
@@ -802,20 +804,20 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
 
     test('should test task card actions', async ({ page }) => {
       await goToTasks(page);
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       const taskCard = page.locator('.task-card, [data-testid="task-card"], .card').first();
       
       if (await taskCard.isVisible()) {
         // Hover to show actions
         await taskCard.hover();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         // Test edit button
         const editButton = taskCard.locator('a[href*="/tasks/"], button:has(svg)').first();
         if (await editButton.isVisible()) {
           await editButton.click({ force: true });
-          await page.waitForTimeout(1000);
+          await waitForUIUpdate(page);
         }
       }
     });
@@ -856,7 +858,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
         const tabButton = page.locator(`button:has-text("${tab}")`);
         if (await tabButton.isVisible()) {
           await tabButton.click();
-          await page.waitForTimeout(500);
+          await waitForUIUpdate(page);
           
           // Verify tab content is visible
           await expect(page.locator(`text=/${tab}/i`)).toBeVisible();
@@ -871,7 +873,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const generalTab = page.locator('button:has-text("General")');
       if (await generalTab.isVisible()) {
         await generalTab.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
       
       // Update name
@@ -896,7 +898,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const notificationsTab = page.locator('button:has-text("Notifications")');
       if (await notificationsTab.isVisible()) {
         await notificationsTab.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         // Toggle email notifications
         const emailCheckboxes = page.locator('input[type="checkbox"][name*="email"]');
@@ -904,7 +906,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
         
         if (count > 0) {
           await emailCheckboxes.first().check();
-          await page.waitForTimeout(500);
+          await waitForUIUpdate(page);
           
           // Save if there's a save button
           const saveButton = page.locator('button:has-text("Save")');
@@ -922,7 +924,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const notificationsTab = page.locator('button:has-text("Notifications")');
       if (await notificationsTab.isVisible()) {
         await notificationsTab.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         // Find test email section
         const testEmailTemplate = page.locator('select:has(option[value*="alert"])');
@@ -945,13 +947,13 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const webhooksTab = page.locator('button:has-text("Webhooks")');
       if (await webhooksTab.isVisible()) {
         await webhooksTab.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         // Test add webhook
         const addWebhookButton = page.locator('button:has-text("Add Webhook"), a:has-text("Add Webhook")');
         if (await addWebhookButton.isVisible()) {
           await addWebhookButton.click();
-          await page.waitForTimeout(500);
+          await waitForUIUpdate(page);
           
           // Fill webhook form if modal/form appears
           const urlInput = page.locator('input[name="url"], input[placeholder*="webhook"]');
@@ -970,7 +972,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
         const testWebhookButton = page.locator('button:has-text("Test Webhook")');
         if (await testWebhookButton.isVisible()) {
           await testWebhookButton.first().click();
-          await page.waitForTimeout(2000);
+          await waitForUIUpdate(page);
         }
       }
     });
@@ -982,7 +984,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       const securityTab = page.locator('button:has-text("Security")');
       if (await securityTab.isVisible()) {
         await securityTab.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         // Find password form
         const currentPasswordInput = page.locator('input[name="current_password"], input[name="password"]');
@@ -1001,7 +1003,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
   test.describe('Pagination - All Pages', () => {
     test('should test pagination on sites page', async ({ page }) => {
       await goToSites(page);
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Find pagination
       const pagination = page.locator('.pagination, [data-testid="pagination"]');
@@ -1017,7 +1019,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
 
     test('should test pagination on alerts page', async ({ page }) => {
       await goToAlerts(page);
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       const pagination = page.locator('.pagination, [data-testid="pagination"]');
       if (await pagination.isVisible()) {
@@ -1038,7 +1040,7 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       await goToDashboard(page);
       
       await page.keyboard.press('Meta+k');
-      await page.waitForTimeout(300);
+      await fastWait(page, 300);
       
       // Command palette should open (if implemented)
       const commandPalette = page.locator('input[placeholder*="command"], [data-testid="command-palette"]');
@@ -1050,9 +1052,9 @@ test.describe('COMPREHENSIVE E2E TESTS - All Features', () => {
       
       // Test G+D for dashboard (if implemented)
       await page.keyboard.press('g');
-      await page.waitForTimeout(100);
+      await fastWait(page, 100);
       await page.keyboard.press('d');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Should still be on dashboard
       await expect(page).toHaveURL(/\/dashboard/);

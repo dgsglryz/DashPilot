@@ -8,6 +8,7 @@
 
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth.js';
+import { waitForUIUpdate } from './helpers/wait.js';
 
 test.describe('Notifications', () => {
   test.beforeEach(async ({ page }) => {
@@ -30,7 +31,7 @@ test.describe('Notifications', () => {
     
     if (await bell.isVisible()) {
       await bell.click();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Verify dropdown opens
       const dropdown = page.locator('[role="menu"], .dropdown-menu, [data-testid="notifications-dropdown"]');
@@ -43,7 +44,7 @@ test.describe('Notifications', () => {
     
     if (await bell.isVisible()) {
       await bell.click();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Check for notification items
       const notifications = page.locator('.notification-item, [data-testid="notification-item"]');
@@ -57,13 +58,13 @@ test.describe('Notifications', () => {
     
     if (await bell.isVisible()) {
       await bell.click();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Find "Mark all as read" button
       const markAllRead = page.locator('button:has-text("Mark all as read"), button:has-text("Mark All Read")');
       if (await markAllRead.isVisible()) {
         await markAllRead.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         // Verify badge disappears or updates
         const badge = bell.locator('.badge, [data-testid="notification-badge"]');
@@ -77,13 +78,13 @@ test.describe('Notifications', () => {
     
     if (await bell.isVisible()) {
       await bell.click();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Find first notification
       const firstNotification = page.locator('.notification-item, [data-testid="notification-item"]').first();
       if (await firstNotification.isVisible()) {
         await firstNotification.click();
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
         
         // Should navigate somewhere
         const currentUrl = page.url();
@@ -97,11 +98,11 @@ test.describe('Notifications', () => {
     
     if (await bell.isVisible()) {
       await bell.click();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Click outside
       await page.click('body', { position: { x: 10, y: 10 } });
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Verify dropdown closes
       const dropdown = page.locator('[role="menu"], .dropdown-menu');

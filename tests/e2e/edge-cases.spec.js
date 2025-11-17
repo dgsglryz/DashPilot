@@ -8,6 +8,7 @@
 
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth.js';
+import { waitForUIUpdate } from './helpers/wait.js';
 
 test.describe('Edge Cases', () => {
   test.beforeEach(async ({ page }) => {
@@ -25,7 +26,7 @@ test.describe('Edge Cases', () => {
     
     // Submit form
     await page.click('button[type="submit"]');
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
     
     // Verify no XSS or errors
     const alerts = await page.evaluate(() => {
@@ -75,7 +76,7 @@ test.describe('Edge Cases', () => {
     await page.click('button[type="submit"]');
     
     // Wait for response
-    await page.waitForTimeout(3000);
+    await waitForUIUpdate(page);
     
     // Should only create one site (prevent duplicate submissions)
     const currentUrl = page.url();
@@ -102,7 +103,7 @@ test.describe('Edge Cases', () => {
     await page.click('button[type="submit"]');
     
     // Verify validation prevents submission
-    await page.waitForTimeout(1000);
+    await waitForUIUpdate(page);
     
     // Should still be on create page
     await expect(page).toHaveURL(/\/sites\/create/);

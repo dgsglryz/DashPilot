@@ -12,6 +12,7 @@
 
 import { test, expect } from "@playwright/test";
 import { loginAsAdmin, logout, isLoggedIn } from "./helpers/auth.js";
+import { waitForUIUpdate } from './helpers/wait.js';
 
 test.describe("Authentication", () => {
     test.beforeEach(async ({ page }) => {
@@ -24,7 +25,7 @@ test.describe("Authentication", () => {
 
         // Wait for Vue/Inertia to hydrate
         await page.waitForLoadState("networkidle", { timeout: 30000 });
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
         
         // Verify login form elements - try multiple selectors for Vue/Inertia compatibility
         const emailSelector =
@@ -84,7 +85,7 @@ test.describe("Authentication", () => {
 
         // Wait for form submission and error message
         await page.waitForLoadState("networkidle", { timeout: 15000 });
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
         
         // Wait for error message (Laravel validation error) - try multiple patterns
         const errorSelectors = [
@@ -117,7 +118,7 @@ test.describe("Authentication", () => {
 
         // Wait for dashboard to fully load
         await page.waitForLoadState("networkidle", { timeout: 30000 });
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
 
         // Verify logged in
         const loggedInBefore = await isLoggedIn(page);
@@ -127,7 +128,7 @@ test.describe("Authentication", () => {
         await logout(page);
 
         // Wait for redirect
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
 
         // Verify redirect to home (/) or login - logout redirects to home
         const currentUrl = page.url();
@@ -165,7 +166,7 @@ test.describe("Authentication", () => {
         
         // Wait for dashboard to fully load
         await page.waitForLoadState("networkidle", { timeout: 30000 });
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
 
         // Verify logged in
         const loggedInBefore = await isLoggedIn(page);
@@ -174,7 +175,7 @@ test.describe("Authentication", () => {
         // Reload page
         await page.reload({ waitUntil: 'networkidle' });
         await page.waitForLoadState("networkidle", { timeout: 30000 });
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
 
         // Verify still logged in
         const loggedInAfter = await isLoggedIn(page);

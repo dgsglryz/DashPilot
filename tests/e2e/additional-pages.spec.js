@@ -8,7 +8,7 @@
 
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth.js';
-import { waitForSuccessMessage } from './helpers/wait.js';
+import { waitForSuccessMessage, waitForUIUpdate } from './helpers/wait.js';
 
 test.describe('Additional Pages - Comprehensive Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -26,7 +26,7 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
 
     test('should display all metric charts', async ({ page }) => {
       await page.goto('/metrics');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Verify charts exist (uptime, traffic, status codes, response time)
       const chartSelectors = [
@@ -45,7 +45,7 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
 
     test('should test metric filters', async ({ page }) => {
       await page.goto('/metrics');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Test date range filter if exists
       const dateFilter = page.locator('input[type="date"], select:has-text("Date")');
@@ -58,7 +58,7 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
       const platformFilter = page.locator('select:has-text("Platform")');
       if (await platformFilter.isVisible()) {
         await platformFilter.selectOption({ index: 0 });
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
     });
   });
@@ -74,14 +74,14 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
 
     test('should generate new report', async ({ page }) => {
       await page.goto('/reports');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Find generate report button
       const generateButton = page.locator('button:has-text("Generate"), a:has-text("Generate Report")');
       
       if (await generateButton.isVisible()) {
         await generateButton.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         // Fill report form if modal appears
         const reportNameInput = page.locator('input[name="name"], input[placeholder*="report"]');
@@ -106,20 +106,20 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
 
     test('should download existing report', async ({ page }) => {
       await page.goto('/reports');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Find download button
       const downloadButton = page.locator('a[href*="/reports/"]:has-text("Download"), button:has-text("Download")').first();
       
       if (await downloadButton.isVisible()) {
         await downloadButton.click();
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
       }
     });
 
     test('should delete report', async ({ page }) => {
       await page.goto('/reports');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Find delete button
       const deleteButton = page.locator('button:has-text("Delete")').first();
@@ -148,14 +148,14 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
 
     test('should invite new team member', async ({ page }) => {
       await page.goto('/team');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Find invite button
       const inviteButton = page.locator('button:has-text("Invite"), a:has-text("Invite Member")');
       
       if (await inviteButton.isVisible()) {
         await inviteButton.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         // Fill invite form if modal appears
         const emailInput = page.locator('input[type="email"], input[name="email"]');
@@ -180,7 +180,7 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
 
     test('should remove team member', async ({ page }) => {
       await page.goto('/team');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Find remove button
       const removeButton = page.locator('button:has-text("Remove"), button:has-text("Delete")').first();
@@ -209,7 +209,7 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
 
     test('should display activity feed', async ({ page }) => {
       await page.goto('/activity');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Verify activity items exist
       const activityItems = page.locator('.activity-item, [data-testid="activity-item"], article');
@@ -219,26 +219,26 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
 
     test('should export activity log', async ({ page }) => {
       await page.goto('/activity');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Find export button
       const exportButton = page.locator('button:has-text("Export"), a:has-text("Export")');
       
       if (await exportButton.isVisible()) {
         await exportButton.click();
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
       }
     });
 
     test('should filter activity by type', async ({ page }) => {
       await page.goto('/activity');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Test filter if exists
       const filterSelect = page.locator('select:has-text("Type"), select:has-text("Filter")');
       if (await filterSelect.isVisible()) {
         await filterSelect.selectOption({ index: 0 });
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
     });
   });
@@ -254,7 +254,7 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
 
     test('should display revenue charts', async ({ page }) => {
       await page.goto('/revenue');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Verify revenue data is displayed
       const revenueElements = page.locator('text=/Revenue|Sales|Orders/i');
@@ -263,7 +263,7 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
 
     test('should test revenue date filters', async ({ page }) => {
       await page.goto('/revenue');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Test date range if exists
       const dateFilter = page.locator('input[type="date"], select:has-text("Date")');
@@ -284,7 +284,7 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
 
     test('should select Shopify site', async ({ page }) => {
       await page.goto('/shopify/editor');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Find site selector
       const siteSelect = page.locator('select:has(option[value*="shopify"])');
@@ -293,14 +293,14 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
         const options = await siteSelect.locator('option').all();
         if (options.length > 1) {
           await siteSelect.selectOption({ index: 1 });
-          await page.waitForTimeout(2000);
+          await waitForUIUpdate(page);
         }
       }
     });
 
     test('should display file tree', async ({ page }) => {
       await page.goto('/shopify/editor');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Verify file tree exists
       const fileTree = page.locator('.file-tree, [data-testid="file-tree"], nav:has-text("Files")');
@@ -309,14 +309,14 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
 
     test('should open snippets panel', async ({ page }) => {
       await page.goto('/shopify/editor');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Find snippets button
       const snippetsButton = page.locator('button:has-text("Snippets")');
       
       if (await snippetsButton.isVisible()) {
         await snippetsButton.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         // Verify snippets panel opens
         const snippetsPanel = page.locator('.snippets-panel, [data-testid="snippets-panel"]');
@@ -326,7 +326,7 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
 
     test('should test code editor', async ({ page }) => {
       await page.goto('/shopify/editor');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Select a site first
       const siteSelect = page.locator('select:has(option[value*="shopify"])');
@@ -334,7 +334,7 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
         const options = await siteSelect.locator('option').all();
         if (options.length > 1) {
           await siteSelect.selectOption({ index: 1 });
-          await page.waitForTimeout(2000);
+          await waitForUIUpdate(page);
         }
       }
       
@@ -344,24 +344,24 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
         // Try to type in editor
         await codeEditor.click();
         await page.keyboard.type('{% comment %} Test {% endcomment %}');
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
     });
 
     test('should test format code button', async ({ page }) => {
       await page.goto('/shopify/editor');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       const formatButton = page.locator('button:has-text("Format")');
       if (await formatButton.isVisible()) {
         await formatButton.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
     });
 
     test('should test save template', async ({ page }) => {
       await page.goto('/shopify/editor');
-      await page.waitForTimeout(2000);
+      await waitForUIUpdate(page);
       
       // Select site and file first
       const siteSelect = page.locator('select:has(option[value*="shopify"])');
@@ -369,7 +369,7 @@ test.describe('Additional Pages - Comprehensive Tests', () => {
         const options = await siteSelect.locator('option').all();
         if (options.length > 1) {
           await siteSelect.selectOption({ index: 1 });
-          await page.waitForTimeout(2000);
+          await waitForUIUpdate(page);
         }
       }
       

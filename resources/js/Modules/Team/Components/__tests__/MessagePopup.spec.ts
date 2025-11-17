@@ -6,7 +6,7 @@ import { mount } from '@vue/test-utils'
 import MessagePopup from '../MessagePopup.vue'
 
 // Mock fetch
-global.fetch = vi.fn()
+globalThis.fetch = vi.fn() as any
 
 // Mock window methods
 window.scrollTo = vi.fn()
@@ -14,7 +14,7 @@ window.scrollTo = vi.fn()
 describe('MessagePopup', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    ;(fetch as any).mockResolvedValue({
+    ;(globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: async () => ({ messages: [] }),
     })
@@ -28,7 +28,7 @@ describe('MessagePopup', () => {
     const wrapper = mount(MessagePopup, {
       props: {
         isOpen: true,
-        recipient: null,
+        recipient: undefined,
       },
       global: {
         stubs: {
@@ -47,7 +47,7 @@ describe('MessagePopup', () => {
     const wrapper = mount(MessagePopup, {
       props: {
         isOpen: false,
-        recipient: null,
+        recipient: undefined,
       },
       global: {
         stubs: {
@@ -91,7 +91,7 @@ describe('MessagePopup', () => {
     const wrapper = mount(MessagePopup, {
       props: {
         isOpen: true,
-        recipient: null,
+        recipient: undefined,
       },
       global: {
         stubs: {
@@ -127,7 +127,7 @@ describe('MessagePopup', () => {
       },
     ]
 
-    ;(fetch as any).mockResolvedValue({
+    ;(globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: async () => ({ messages: mockMessages }),
     })
@@ -149,7 +149,7 @@ describe('MessagePopup', () => {
     await wrapper.vm.$nextTick()
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    expect(fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       expect.stringContaining(`/messages/conversation/${recipient.id}`),
       expect.any(Object)
     )
@@ -162,7 +162,7 @@ describe('MessagePopup', () => {
       email: 'john@example.com',
     }
 
-    ;(fetch as any).mockImplementation(() => new Promise(() => {}))
+    ;(globalThis.fetch as any).mockImplementation(() => new Promise(() => {}))
 
     const wrapper = mount(MessagePopup, {
       props: {
@@ -190,7 +190,7 @@ describe('MessagePopup', () => {
       email: 'john@example.com',
     }
 
-    ;(fetch as any).mockResolvedValue({
+    ;(globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: async () => ({ messages: [] }),
     })
@@ -229,7 +229,7 @@ describe('MessagePopup', () => {
       created_at: new Date().toISOString(),
     }
 
-    ;(fetch as any)
+    ;(globalThis.fetch as any)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ messages: [] }),
@@ -269,7 +269,7 @@ describe('MessagePopup', () => {
     await wrapper.vm.$nextTick()
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    expect(fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       '/messages/send',
       expect.objectContaining({
         method: 'POST',
@@ -282,7 +282,7 @@ describe('MessagePopup', () => {
     const wrapper = mount(MessagePopup, {
       props: {
         isOpen: true,
-        recipient: null,
+        recipient: undefined,
       },
       global: {
         stubs: {

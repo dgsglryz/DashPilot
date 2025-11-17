@@ -163,5 +163,70 @@ class MessagesControllerTest extends TestCase
         $conversations = $response->json('conversations');
         $this->assertCount(2, $conversations);
     }
+
+    /**
+     * Test getting conversation with no messages returns empty array.
+     */
+    public function test_get_conversation_returns_empty_when_no_messages(): void
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+
+        $response = $this->actingAs($user1)
+            ->getJson("/messages/conversation/{$user2->id}");
+
+        $response->assertStatus(200)
+            ->assertJson(['messages' => []]);
+    }
+
+    /**
+     * Test sending message with invalid recipient.
+     */
+    public function test_send_message_validates_recipient_exists(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->postJson('/messages/send', [
+                'recipient_id' => 99999,
+                'content' => 'Test message',
+            ]);
+
+        $response->assertStatus(422);
+    }
+
+    /**
+     * Test sending message with empty content.
+     */
+    public function test_send_message_validates_content_required(): void
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+
+        $response = $this->actingAs($user1)
+            ->postJson('/messages/send', [
+                'recipient_id' => $user2->id,
+                'content' => '',
+            ]);
+
+        $response->assertStatus(422);
+    }
+
+    /**
+     * Test sending message with content too long.
+     */
+    public function test_send_message_validates_content_max_length(): void
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+
+        $response = $this->actingAs($user1)
+            ->postJson('/messages/send', [
+                'recipient_id' => $user2->id,
+                'content' => str_repeat('a', 2001),
+            ]);
+
+        $response->assertStatus(422);
+    }
 }
 

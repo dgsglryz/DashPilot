@@ -9,7 +9,7 @@
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth.js';
 import { goToSites, goToAlerts } from './helpers/navigation.js';
-import { waitForTableData } from './helpers/wait.js';
+import { waitForTableData, waitForUIUpdate } from './helpers/wait.js';
 
 test.describe('Export & Reports', () => {
   test.beforeEach(async ({ page }) => {
@@ -47,7 +47,7 @@ test.describe('Export & Reports', () => {
 
   test('should export alerts as CSV', async ({ page }) => {
     await goToAlerts(page);
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
     
     const downloadPromise = page.waitForEvent('download', { timeout: 10000 }).catch(() => null);
     
@@ -76,7 +76,7 @@ test.describe('Export & Reports', () => {
     
     if (await generateButton.isVisible()) {
       await generateButton.click();
-      await page.waitForTimeout(1000);
+      await waitForUIUpdate(page);
       
       // Verify report generation started
       const successMessage = page.locator('text=/report|generated|success/i');
@@ -86,7 +86,7 @@ test.describe('Export & Reports', () => {
 
   test('should download generated report', async ({ page }) => {
     await page.goto('/reports');
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
     
     // Find download button for existing report
     const downloadButton = page.locator('a[href*="/reports/"]:has-text("Download"), button:has-text("Download")').first();

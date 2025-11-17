@@ -14,11 +14,9 @@
 import { test, expect } from "@playwright/test";
 import { loginAsAdmin } from "./helpers/auth.js";
 import { goToClients } from "./helpers/navigation.js";
-import {
-    waitForSuccessMessage,
+import { waitForSuccessMessage,
     waitForTableData,
-    waitForPageReady,
-} from "./helpers/wait.js";
+    waitForPageReady, waitForUIUpdate } from './helpers/wait.js';
 import {
     getInputSelector,
     getTextareaSelector,
@@ -40,7 +38,7 @@ test.describe("Clients Management", () => {
 
     test("should display clients list", async ({ page }) => {
         // Wait for clients table/list to load
-        await page.waitForTimeout(2000);
+        await waitForUIUpdate(page);
 
         // Verify clients container exists
         const clientsContainer = page.locator(
@@ -224,7 +222,7 @@ test.describe("Clients Management", () => {
 
         if (await reportsLink.isVisible()) {
             await reportsLink.click();
-            await page.waitForTimeout(1000);
+            await waitForUIUpdate(page);
 
             // Verify reports page or section
             await expect(page.locator("text=/Reports/i")).toBeVisible();

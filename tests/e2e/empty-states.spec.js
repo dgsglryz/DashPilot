@@ -8,6 +8,7 @@
 
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth.js';
+import { waitForUIUpdate } from './helpers/wait.js';
 
 test.describe('Empty States', () => {
   test.beforeEach(async ({ page }) => {
@@ -16,7 +17,7 @@ test.describe('Empty States', () => {
 
   test('should display empty state on sites page when no sites', async ({ page }) => {
     await page.goto('/sites');
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
     
     // Check for empty state
     const emptyState = page.locator('text=/No sites|empty|get started/i');
@@ -36,7 +37,7 @@ test.describe('Empty States', () => {
 
   test('should display empty state on alerts page when no alerts', async ({ page }) => {
     await page.goto('/alerts');
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
     
     const emptyState = page.locator('text=/No alerts|All systems|running smoothly/i');
     
@@ -50,7 +51,7 @@ test.describe('Empty States', () => {
 
   test('should display empty state on tasks page when no tasks', async ({ page }) => {
     await page.goto('/tasks');
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
     
     const emptyState = page.locator('text=/No tasks|empty|create/i');
     
@@ -68,7 +69,7 @@ test.describe('Empty States', () => {
 
   test('should display empty state on clients page when no clients', async ({ page }) => {
     await page.goto('/clients');
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
     
     const emptyState = page.locator('text=/No clients|empty|first client/i');
     

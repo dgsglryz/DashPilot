@@ -12,6 +12,7 @@
 
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth.js';
+import { waitForUIUpdate, fastWait } from './helpers/wait.js';
 
 test.describe('Search - Comprehensive Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -23,7 +24,7 @@ test.describe('Search - Comprehensive Tests', () => {
     
     // Press Cmd+K
     await page.keyboard.press('Meta+k');
-    await page.waitForTimeout(500);
+    await waitForUIUpdate(page);
     
     // Verify command palette/search opens
     const searchInput = page.locator('[data-testid="command-palette"] input, input[placeholder*="command"], input[placeholder*="Search"]');
@@ -35,13 +36,13 @@ test.describe('Search - Comprehensive Tests', () => {
     
     // Open search (if Cmd+K works)
     await page.keyboard.press('Meta+k');
-    await page.waitForTimeout(500);
+    await waitForUIUpdate(page);
     
     // Type search query
     const searchInput = page.locator('input[type="search"], input[placeholder*="Search"], input[placeholder*="command"]').first();
     if (await searchInput.isVisible()) {
       await searchInput.fill('test');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Verify results appear
       const results = page.locator('.search-results, [data-testid="search-results"], .suggestions');
@@ -54,20 +55,20 @@ test.describe('Search - Comprehensive Tests', () => {
     
     // Open search
     await page.keyboard.press('Meta+k');
-    await page.waitForTimeout(500);
+    await waitForUIUpdate(page);
     
     const searchInput = page.locator('input[type="search"], input[placeholder*="Search"]').first();
     if (await searchInput.isVisible()) {
       await searchInput.fill('test');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Press arrow down
       await page.keyboard.press('ArrowDown');
-      await page.waitForTimeout(200);
+      await fastWait(page, 200);
       
       // Press Enter to select
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(1000);
+      await waitForUIUpdate(page);
       
       // Should navigate somewhere
     }
@@ -75,13 +76,13 @@ test.describe('Search - Comprehensive Tests', () => {
 
   test('should test search on sites page', async ({ page }) => {
     await page.goto('/sites');
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
     
     const searchInput = page.locator('[data-testid="search-input"]');
     if (await searchInput.isVisible()) {
       // Search for site
       await searchInput.fill('example');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Verify filtered results
       const rows = page.locator('[data-testid="site-row"]');
@@ -90,18 +91,18 @@ test.describe('Search - Comprehensive Tests', () => {
       
       // Clear search
       await searchInput.clear();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
     }
   });
 
   test('should test search on alerts page', async ({ page }) => {
     await page.goto('/alerts');
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
     
     const searchInput = page.locator('[data-testid="alerts-search-input"]');
     if (await searchInput.isVisible()) {
       await searchInput.fill('test');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Verify results filtered
       const alerts = page.locator('[data-testid="alert-card"]');
@@ -112,12 +113,12 @@ test.describe('Search - Comprehensive Tests', () => {
 
   test('should test search autocomplete suggestions', async ({ page }) => {
     await page.goto('/sites');
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
     
     const searchInput = page.locator('[data-testid="search-input"]');
     if (await searchInput.isVisible()) {
       await searchInput.fill('test');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Check for autocomplete dropdown
       const suggestions = page.locator('.suggestions, [data-testid="search-suggestions"], .autocomplete');
@@ -126,7 +127,7 @@ test.describe('Search - Comprehensive Tests', () => {
         const firstSuggestion = suggestions.locator('button, a').first();
         if (await firstSuggestion.isVisible()) {
           await firstSuggestion.click();
-          await page.waitForTimeout(1000);
+          await waitForUIUpdate(page);
         }
       }
     }
@@ -139,11 +140,11 @@ test.describe('Search - Comprehensive Tests', () => {
     const searchInput = page.locator('input[placeholder*="Search"]').first();
     if (await searchInput.isVisible()) {
       await searchInput.fill('test1');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       await searchInput.clear();
       
       await searchInput.fill('test2');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       await searchInput.clear();
       
       // Check if history is saved

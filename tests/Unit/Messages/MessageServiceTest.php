@@ -125,5 +125,95 @@ class MessageServiceTest extends TestCase
             'is_read' => false,
         ]);
     }
+
+    /**
+     * Test getting conversations for a user.
+     */
+    public function test_get_conversations_returns_users_with_messages(): void
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $user3 = User::factory()->create();
+
+        // User1 sends message to user2
+        Message::factory()->create([
+            'sender_id' => $user1->id,
+            'recipient_id' => $user2->id,
+        ]);
+
+        // User3 sends message to user1
+        Message::factory()->create([
+            'sender_id' => $user3->id,
+            'recipient_id' => $user1->id,
+        ]);
+
+        $conversations = $this->messageService->getConversations($user1);
+
+        $this->assertCount(2, $conversations);
+        $userIds = $conversations->pluck('id')->toArray();
+        $this->assertContains($user2->id, $userIds);
+        $this->assertContains($user3->id, $userIds);
+        $this->assertNotContains($user1->id, $userIds);
+    }
+
+    /**
+     * Test getting conversations includes unread count.
+     */
+    public function test_get_conversations_includes_unread_count(): void
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+
+        // Create unread messages
+        Message::factory()->count(3)->create([
+            'sender_id' => $user2->id,
+            'recipient_id' => $user1->id,
+            'is_read' => false,
+        ]);
+
+        // Create read message
+        Message::factory()->create([
+            'sender_id' => $user2->id,
+            'recipient_id' => $user1->id,
+            'is_read' => true,
+        ]);
+
+        $conversations = $this->messageService->getConversations($user1);
+        $user2Conversation = $conversations->firstWhere('id', $user2->id);
+
+        $this->assertNotNull($user2Conversation);
+        $this->assertEquals(3, $user2Conversation->unread_count);
+    }
+
+    /**
+     * Test getting empty conversation returns empty collection.
+     */
+    public function test_get_conversation_returns_empty_when_no_messages(): void
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+
+        $conversation = $this->messageService->getConversation($user1->id, $user2->id);
+
+        $this->assertCount(0, $conversation);
+    }
+
+    /**
+     * Test getting conversation with limit.
+     */
+    public function test_get_conversation_respects_limit(): void
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+
+        Message::factory()->count(10)->create([
+            'sender_id' => $user1->id,
+            'recipient_id' => $user2->id,
+        ]);
+
+        $conversation = $this->messageService->getConversation($user1->id, $user2->id, 5);
+
+        $this->assertCount(5, $conversation);
+    }
 }
 

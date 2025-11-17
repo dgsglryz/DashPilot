@@ -13,13 +13,13 @@
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth.js';
 import { goToTasks } from './helpers/navigation.js';
-import { waitForSuccessMessage } from './helpers/wait.js';
+import { waitForSuccessMessage, waitForUIUpdate } from './helpers/wait.js';
 
 test.describe('Tasks Kanban - Comprehensive Tests', () => {
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
     await goToTasks(page);
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
   });
 
   test('should verify all Kanban columns exist', async ({ page }) => {
@@ -53,7 +53,7 @@ test.describe('Tasks Kanban - Comprehensive Tests', () => {
       if (await targetColumn.isVisible()) {
         // Drag and drop
         await firstTask.dragTo(targetColumn);
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
         
         // Verify task moved
         await waitForSuccessMessage(page);
@@ -67,7 +67,7 @@ test.describe('Tasks Kanban - Comprehensive Tests', () => {
     if (await firstTask.isVisible()) {
       // Hover to show actions
       await firstTask.hover();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Find "Move to" buttons
       const moveButtons = firstTask.locator('button:has-text("Move to")');
@@ -118,7 +118,7 @@ test.describe('Tasks Kanban - Comprehensive Tests', () => {
       const taskLink = firstTask.locator('a, button').first();
       if (await taskLink.isVisible()) {
         await taskLink.click();
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
         
         // Verify detail modal/page opens
         const detailModal = page.locator('.modal, [role="dialog"], [data-testid="task-detail"]');
@@ -134,7 +134,7 @@ test.describe('Tasks Kanban - Comprehensive Tests', () => {
       const tabButton = page.locator(`button:has-text("${tab}"), a:has-text("${tab}")`);
       if (await tabButton.isVisible()) {
         await tabButton.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         // Verify filter applied
         const tasks = page.locator('[data-testid="task-card"]');

@@ -13,6 +13,7 @@
 
 import { test, expect } from "@playwright/test";
 import { loginAsAdmin, logout, isLoggedIn } from "./helpers/auth.js";
+import { waitForUIUpdate } from './helpers/wait.js';
 
 test.describe("Authentication - Comprehensive Tests", () => {
     test.beforeEach(async ({ page }) => {
@@ -264,7 +265,7 @@ test.describe("Authentication - Comprehensive Tests", () => {
         await page.click('button[type="submit"]');
 
         // Wait a bit for validation to trigger
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
 
         // Verify validation errors appear
         const emailInput = page.locator(emailSelector);
@@ -313,7 +314,7 @@ test.describe("Authentication - Comprehensive Tests", () => {
         await page.click('button[type="submit"]');
 
         // Wait a bit for validation to trigger
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
 
         // Email should be invalid or we should still be on login page
         const isStillOnLogin = page.url().includes("/login");

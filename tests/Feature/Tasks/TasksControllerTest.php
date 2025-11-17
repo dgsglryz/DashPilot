@@ -170,5 +170,107 @@ class TasksControllerTest extends TestCase
         $response->assertRedirect(route('tasks.index'));
         $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
     }
+
+    public function test_tasks_index_filters_by_status(): void
+    {
+        $user = User::factory()->create();
+        Task::factory()->create(['status' => 'pending']);
+        Task::factory()->create(['status' => 'in_progress']);
+
+        $response = $this->actingAs($user)->get(route('tasks.index', ['status' => 'pending']));
+
+        $response->assertOk();
+        $pageData = $response->viewData('page');
+        $pendingTasks = $pageData['props']['tasks']['pending'] ?? [];
+        $this->assertCount(1, $pendingTasks);
+    }
+
+    public function test_tasks_index_filters_by_priority(): void
+    {
+        $user = User::factory()->create();
+        Task::factory()->create(['priority' => 'high']);
+        Task::factory()->create(['priority' => 'low']);
+
+        $response = $this->actingAs($user)->get(route('tasks.index', ['priority' => 'high']));
+
+        $response->assertOk();
+    }
+
+    public function test_tasks_index_filters_by_urgent(): void
+    {
+        $user = User::factory()->create();
+        Task::factory()->create(['priority' => 'urgent']);
+        Task::factory()->create(['priority' => 'low']);
+
+        $response = $this->actingAs($user)->get(route('tasks.index', ['urgent' => true]));
+
+        $response->assertOk();
+        $pageData = $response->viewData('page');
+        $stats = $pageData['props']['stats'] ?? [];
+        $this->assertGreaterThanOrEqual(1, $stats['urgent'] ?? 0);
+    }
+
+    public function test_tasks_index_searches_by_query(): void
+    {
+        $user = User::factory()->create();
+        Task::factory()->create(['title' => 'Find this task']);
+        Task::factory()->create(['title' => 'Other task']);
+
+        $response = $this->actingAs($user)->get(route('tasks.index', ['query' => 'Find']));
+
+        $response->assertOk();
+    }
+
+    public function test_get_user_tasks_returns_tasks_for_user(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        Task::factory()->count(3)->create(['assigned_to' => $user->id]);
+        Task::factory()->count(2)->create(['assigned_to' => $otherUser->id]);
+
+        $response = $this->actingAs($user)->getJson(route('tasks.user', $user));
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'tasks',
+                'stats',
+                'user',
+            ]);
+
+        $data = $response->json();
+        $this->assertCount(3, $data['tasks']);
+        $this->assertEquals($user->id, $data['user']['id']);
+    }
+
+    public function test_task_status_update_sets_completed_at_when_completed(): void
+    {
+        $user = User::factory()->create();
+        $task = Task::factory()->create(['status' => 'pending']);
+
+        $response = $this->actingAs($user)->post(route('tasks.status', $task), [
+            'status' => 'completed',
+        ]);
+
+        $response->assertRedirect();
+        $task->refresh();
+        $this->assertNotNull($task->completed_at);
+    }
+
+    public function test_task_status_update_clears_completed_at_when_uncompleted(): void
+    {
+        $user = User::factory()->create();
+        $task = Task::factory()->create([
+            'status' => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->post(route('tasks.status', $task), [
+            'status' => 'pending',
+        ]);
+
+        $response->assertRedirect();
+        $task->refresh();
+        $this->assertNull($task->completed_at);
+    }
 }
 

@@ -14,7 +14,7 @@
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth.js';
 import { goToSites } from './helpers/navigation.js';
-import { waitForSuccessMessage, waitForTableData } from './helpers/wait.js';
+import { waitForSuccessMessage, waitForTableData, waitForUIUpdate } from './helpers/wait.js';
 
 test.describe('Sites Management - Comprehensive Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -74,7 +74,7 @@ test.describe('Sites Management - Comprehensive Tests', () => {
     // Search
     const searchInput = page.locator('[data-testid="search-input"]');
     await searchInput.fill(searchTerm);
-    await page.waitForTimeout(500);
+    await waitForUIUpdate(page);
     
     // Verify filtered results
     const rows = page.locator('[data-testid="site-row"]');
@@ -87,7 +87,7 @@ test.describe('Sites Management - Comprehensive Tests', () => {
     
     const searchInput = page.locator('[data-testid="search-input"]');
     await searchInput.fill('.com');
-    await page.waitForTimeout(500);
+    await waitForUIUpdate(page);
     
     const rows = page.locator('[data-testid="site-row"]');
     const count = await rows.count();
@@ -99,11 +99,11 @@ test.describe('Sites Management - Comprehensive Tests', () => {
     
     const searchInput = page.locator('[data-testid="search-input"]');
     await searchInput.fill('test');
-    await page.waitForTimeout(500);
+    await waitForUIUpdate(page);
     
     // Clear search
     await searchInput.clear();
-    await page.waitForTimeout(500);
+    await waitForUIUpdate(page);
     
     // Verify full list returns
     const rows = page.locator('[data-testid="site-row"]');
@@ -121,7 +121,7 @@ test.describe('Sites Management - Comprehensive Tests', () => {
       
       for (const status of statuses) {
         await statusFilter.selectOption(status);
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         // Verify filter applied
         const rows = page.locator('[data-testid="site-row"]');
@@ -141,7 +141,7 @@ test.describe('Sites Management - Comprehensive Tests', () => {
       
       for (const platform of platforms) {
         await platformFilter.selectOption(platform);
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
       }
     }
   });
@@ -153,14 +153,14 @@ test.describe('Sites Management - Comprehensive Tests', () => {
     const platformFilter = page.locator('select:has-text("Platform")');
     if (await platformFilter.isVisible()) {
       await platformFilter.selectOption('wordpress');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
     }
     
     // Apply Healthy status filter
     const statusFilter = page.locator('select:has-text("Status")');
     if (await statusFilter.isVisible()) {
       await statusFilter.selectOption('healthy');
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
     }
     
     // Verify combined filter works
@@ -177,7 +177,7 @@ test.describe('Sites Management - Comprehensive Tests', () => {
     
     if (await nameHeader.isVisible()) {
       await nameHeader.click();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Verify sort applied
       const rows = page.locator('[data-testid="site-row"]');
@@ -251,7 +251,7 @@ test.describe('Sites Management - Comprehensive Tests', () => {
       const tabButton = page.locator(`button:has-text("${tab}"), a:has-text("${tab}")`);
       if (await tabButton.isVisible()) {
         await tabButton.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         // Verify tab content
         await expect(page.locator(`text=/${tab}/i`)).toBeVisible();
@@ -268,7 +268,7 @@ test.describe('Sites Management - Comprehensive Tests', () => {
     const healthTab = page.locator('button:has-text("Health History"), a:has-text("Health History")');
     if (await healthTab.isVisible()) {
       await healthTab.click();
-      await page.waitForTimeout(1000);
+      await waitForUIUpdate(page);
       
       // Verify chart exists
       const chart = page.locator('canvas, svg, .chart');
@@ -291,7 +291,7 @@ test.describe('Sites Management - Comprehensive Tests', () => {
     const seoTab = page.locator('button:has-text("SEO"), a:has-text("SEO Analysis")');
     if (await seoTab.isVisible()) {
       await seoTab.click();
-      await page.waitForTimeout(1000);
+      await waitForUIUpdate(page);
       
       // Verify SEO score displayed
       const seoScore = page.locator('text=/SEO|Score/i');
@@ -321,7 +321,7 @@ test.describe('Sites Management - Comprehensive Tests', () => {
         const cancelButton = page.locator('button:has-text("Cancel")');
         if (await cancelButton.isVisible()) {
           await cancelButton.click();
-          await page.waitForTimeout(500);
+          await waitForUIUpdate(page);
           
           // Verify still on detail page
           await expect(page).toHaveURL(/\/sites\/\d+/);

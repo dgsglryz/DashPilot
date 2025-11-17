@@ -57,5 +57,49 @@ class ShopifyGraphQLServiceTest extends TestCase
 
         (new ShopifyGraphQLService())->fetchAnalytics($site);
     }
+
+    public function test_fetch_analytics_throws_exception_when_store_url_missing(): void
+    {
+        $this->expectException(ShopifyApiException::class);
+        $this->expectExceptionMessage('Shopify credentials missing for site.');
+
+        $site = Site::factory()->create([
+            'shopify_store_url' => null,
+            'shopify_access_token' => 'token',
+        ]);
+
+        (new ShopifyGraphQLService())->fetchAnalytics($site);
+    }
+
+    public function test_fetch_analytics_throws_exception_when_access_token_missing(): void
+    {
+        $this->expectException(ShopifyApiException::class);
+        $this->expectExceptionMessage('Shopify credentials missing for site.');
+
+        $site = Site::factory()->create([
+            'shopify_store_url' => 'https://test.myshopify.com',
+            'shopify_access_token' => null,
+        ]);
+
+        (new ShopifyGraphQLService())->fetchAnalytics($site);
+    }
+
+    public function test_fetch_analytics_throws_exception_on_invalid_payload(): void
+    {
+        $this->expectException(ShopifyApiException::class);
+
+        $site = Site::factory()->create([
+            'shopify_store_url' => 'https://dashpilot-test.myshopify.com',
+            'shopify_access_token' => 'token',
+        ]);
+
+        Http::fake([
+            'https://dashpilot-test.myshopify.com/admin/api/2024-10/graphql.json' => Http::response([
+                'invalid' => 'payload',
+            ], 200),
+        ]);
+
+        (new ShopifyGraphQLService())->fetchAnalytics($site);
+    }
 }
 

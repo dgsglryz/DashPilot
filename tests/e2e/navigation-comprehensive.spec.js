@@ -13,6 +13,7 @@
 
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth.js';
+import { waitForUIUpdate, fastWait } from './helpers/wait.js';
 
 test.describe('Navigation - Comprehensive Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -74,7 +75,7 @@ test.describe('Navigation - Comprehensive Tests', () => {
     if (await hamburgerButton.isVisible()) {
       // Click to open menu
       await hamburgerButton.click();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Verify menu is open
       const mobileMenu = page.locator('aside, nav');
@@ -97,7 +98,7 @@ test.describe('Navigation - Comprehensive Tests', () => {
     
     if (await userMenu.isVisible()) {
       await userMenu.click();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Verify dropdown menu
       const dropdown = page.locator('[role="menu"], .dropdown-menu');
@@ -109,7 +110,7 @@ test.describe('Navigation - Comprehensive Tests', () => {
         const profileLink = dropdown.locator('a:has-text("Profile"), button:has-text("Profile")');
         if (await profileLink.isVisible()) {
           await profileLink.click();
-          await page.waitForTimeout(1000);
+          await waitForUIUpdate(page);
         }
       }
     }
@@ -120,7 +121,7 @@ test.describe('Navigation - Comprehensive Tests', () => {
     
     // Press Cmd+K (Mac) or Ctrl+K (Windows/Linux)
     await page.keyboard.press('Meta+k');
-    await page.waitForTimeout(500);
+    await waitForUIUpdate(page);
     
     // Verify command palette opens
     const commandPalette = page.locator('[data-testid="command-palette"], input[placeholder*="command"], input[placeholder*="Search"]');
@@ -132,9 +133,9 @@ test.describe('Navigation - Comprehensive Tests', () => {
     
     // Press G then D
     await page.keyboard.press('g');
-    await page.waitForTimeout(100);
+    await fastWait(page, 100);
     await page.keyboard.press('d');
-    await page.waitForTimeout(500);
+    await waitForUIUpdate(page);
     
     // Should navigate to dashboard
     await expect(page).toHaveURL(/\/dashboard/);
@@ -145,9 +146,9 @@ test.describe('Navigation - Comprehensive Tests', () => {
     
     // Press G then S
     await page.keyboard.press('g');
-    await page.waitForTimeout(100);
+    await fastWait(page, 100);
     await page.keyboard.press('s');
-    await page.waitForTimeout(500);
+    await waitForUIUpdate(page);
     
     // Should navigate to sites
     await expect(page).toHaveURL(/\/sites/);
@@ -158,9 +159,9 @@ test.describe('Navigation - Comprehensive Tests', () => {
     
     // Press G then A
     await page.keyboard.press('g');
-    await page.waitForTimeout(100);
+    await fastWait(page, 100);
     await page.keyboard.press('a');
-    await page.waitForTimeout(500);
+    await waitForUIUpdate(page);
     
     // Should navigate to alerts
     await expect(page).toHaveURL(/\/alerts/);
@@ -168,7 +169,7 @@ test.describe('Navigation - Comprehensive Tests', () => {
 
   test('should test breadcrumbs navigation', async ({ page }) => {
     await page.goto('/sites');
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
     
     // Find breadcrumbs
     const breadcrumbs = page.locator('.breadcrumbs, [data-testid="breadcrumbs"]');
@@ -185,7 +186,7 @@ test.describe('Navigation - Comprehensive Tests', () => {
 
   test('should test breadcrumbs on nested pages', async ({ page }) => {
     await page.goto('/sites');
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
     
     // Click first site
     const firstSite = page.locator('[data-testid="site-row"]').first();

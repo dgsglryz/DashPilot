@@ -13,13 +13,13 @@
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth.js';
 import { goToAlerts } from './helpers/navigation.js';
-import { waitForSuccessMessage } from './helpers/wait.js';
+import { waitForSuccessMessage, waitForUIUpdate } from './helpers/wait.js';
 
 test.describe('Alerts - Comprehensive Tests', () => {
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
     await goToAlerts(page);
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
   });
 
   test('should verify alerts table displays all columns', async ({ page }) => {
@@ -43,7 +43,7 @@ test.describe('Alerts - Comprehensive Tests', () => {
       const tabButton = page.locator(`button:has-text("${tab}"), a:has-text("${tab}")`);
       if (await tabButton.isVisible()) {
         await tabButton.click();
-        await page.waitForTimeout(500);
+        await waitForUIUpdate(page);
         
         // Verify filter applied
         const alerts = page.locator('[data-testid="alert-card"]');
@@ -58,7 +58,7 @@ test.describe('Alerts - Comprehensive Tests', () => {
     
     if (await firstAlert.isVisible()) {
       await firstAlert.click();
-      await page.waitForTimeout(1000);
+      await waitForUIUpdate(page);
       
       // Verify detail modal/page opens
       const detailModal = page.locator('.modal, [role="dialog"], [data-testid="alert-detail"]');
@@ -74,7 +74,7 @@ test.describe('Alerts - Comprehensive Tests', () => {
     
     if (await firstAlert.isVisible()) {
       await firstAlert.click();
-      await page.waitForTimeout(1000);
+      await waitForUIUpdate(page);
       
       // Find assign dropdown
       const assignDropdown = page.locator('select[name*="assign"], select:has-text("Assign")');
@@ -100,7 +100,7 @@ test.describe('Alerts - Comprehensive Tests', () => {
     
     if (await firstAlert.isVisible()) {
       await firstAlert.click();
-      await page.waitForTimeout(1000);
+      await waitForUIUpdate(page);
       
       // Find notes section
       const notesTextarea = page.locator('textarea[name*="note"], textarea[placeholder*="note"]');
@@ -129,7 +129,7 @@ test.describe('Alerts - Comprehensive Tests', () => {
     
     if (await createdHeader.isVisible()) {
       await createdHeader.click();
-      await page.waitForTimeout(500);
+      await waitForUIUpdate(page);
       
       // Verify sort applied (newest first)
       const alerts = page.locator('[data-testid="alert-card"]');
@@ -146,7 +146,7 @@ test.describe('Alerts - Comprehensive Tests', () => {
       const siteLink = firstAlert.locator('a:has-text("site"), button:has-text("site")');
       if (await siteLink.isVisible()) {
         await siteLink.click();
-        await page.waitForTimeout(1000);
+        await waitForUIUpdate(page);
         
         // Should navigate to site detail
         await expect(page).toHaveURL(/\/sites\/\d+/);

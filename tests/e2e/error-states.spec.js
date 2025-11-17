@@ -8,6 +8,7 @@
 
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth.js';
+import { waitForUIUpdate } from './helpers/wait.js';
 
 test.describe('Error States', () => {
   test.beforeEach(async ({ page }) => {
@@ -34,7 +35,7 @@ test.describe('Error States', () => {
     await page.click('button[type="submit"]');
     
     // Verify error message appears
-    await page.waitForTimeout(1000);
+    await waitForUIUpdate(page);
     
     // Check for validation errors
     const errorMessages = page.locator('text=/error|invalid|required/i');
@@ -49,7 +50,7 @@ test.describe('Error States', () => {
     
     // Verify error handling
     // May show error message or loading state
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
   });
 
   test('should handle API errors with user-friendly messages', async ({ page }) => {
@@ -67,7 +68,7 @@ test.describe('Error States', () => {
     await page.click('button[type="submit"]');
     
     // Wait for response
-    await page.waitForTimeout(2000);
+    await waitForUIUpdate(page);
     
     // Check for error message
     const errorMessage = page.locator('text=/error|already exists|duplicate/i');
