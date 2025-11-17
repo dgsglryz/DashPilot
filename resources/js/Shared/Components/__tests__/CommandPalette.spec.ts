@@ -36,7 +36,7 @@ const localStorageMock = {
   removeItem: vi.fn(),
   clear: vi.fn(),
 }
-global.localStorage = localStorageMock as any
+globalThis.localStorage = localStorageMock as any
 
 describe('CommandPalette', () => {
   beforeEach(() => {

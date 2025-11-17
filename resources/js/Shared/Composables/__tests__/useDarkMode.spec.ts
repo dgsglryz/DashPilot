@@ -21,15 +21,27 @@ const mockBody = {
   classList: mockClassList,
 }
 
-globalThis.window = {
-  ...globalThis.window,
-  document: {
-    documentElement: mockDocumentElement,
-    body: mockBody,
-  } as unknown as Document,
-} as unknown as Window
+const mockDocument = {
+  documentElement: mockDocumentElement,
+  body: mockBody,
+} as unknown as Document
 
-globalThis.document = globalThis.window.document
+const mockWindow = {
+  ...globalThis.window,
+  document: mockDocument,
+} as any
+
+Object.defineProperty(globalThis, 'window', {
+  value: mockWindow,
+  writable: true,
+  configurable: true,
+})
+
+Object.defineProperty(globalThis, 'document', {
+  value: mockDocument,
+  writable: true,
+  configurable: true,
+})
 
 describe('useDarkMode', () => {
   beforeEach(() => {

@@ -7,6 +7,7 @@
  * @see https://playwright.dev/docs/test-configuration
  */
 import { defineConfig, devices } from '@playwright/test';
+import { existsSync } from 'fs';
 
 export default defineConfig({
   // Test directory
@@ -70,7 +71,11 @@ export default defineConfig({
       use: { 
         ...devices['Desktop Chrome'],
         // Use authenticated storage state from global setup (reuses login session)
-        storageState: './tests/e2e/.auth/storage-state.json',
+        // Only use if file exists, otherwise tests will login individually
+        ...(existsSync('./tests/e2e/.auth/storage-state.json') 
+          ? { storageState: './tests/e2e/.auth/storage-state.json' }
+          : {}
+        ),
       },
     },
     // Uncomment for multi-browser testing (adds time but increases coverage)

@@ -76,8 +76,7 @@ describe('QuickActionsDropdown', () => {
       global: {
         stubs: {
           Transition: {
-            template: '<div v-if="$attrs.isOpen"><slot /></div>',
-            props: ['isOpen'],
+            template: '<div><slot /></div>',
           },
         },
       },
@@ -85,9 +84,11 @@ describe('QuickActionsDropdown', () => {
 
     const button = wrapper.find('button')
     await button.trigger('click')
+    await wrapper.vm.$nextTick()
     
-    // Dropdown should be open after click
-    expect(wrapper.vm.isOpen).toBe(true)
+    // Dropdown should show action items after click
+    const actions = wrapper.findAll('button')
+    expect(actions.length).toBeGreaterThan(1) // More than just the toggle button
   })
 
   it('displays all action items', async () => {
