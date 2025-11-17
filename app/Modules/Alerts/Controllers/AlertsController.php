@@ -24,12 +24,18 @@ class AlertsController extends Controller
     public function index(Request $request): Response
     {
         $perPage = $request->integer('per_page', 20);
-        // Filter alerts to only show those for sites belonging to user's assigned clients
-        $alerts = Alert::with(['site:id,name,url', 'resolver:id,name', 'acknowledger:id,name'])
-            ->whereHas('site.client', function ($q) use ($request) {
-                $q->where('assigned_developer_id', $request->user()->id);
-            })
-            ->latest('created_at')
+        $user = $request->user();
+        
+        // Admin users see all alerts, others see only their assigned clients
+        $alertsQuery = Alert::with(['site:id,name,url', 'resolver:id,name', 'acknowledger:id,name']);
+        
+        if ($user->role !== 'admin') {
+            $alertsQuery->whereHas('site.client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
+        
+        $alerts = $alertsQuery->latest('created_at')
             ->paginate($perPage)
             ->through(function (Alert $alert) {
                 return [
@@ -46,17 +52,19 @@ class AlertsController extends Controller
                 ];
             });
 
-        // Get stats using database queries, filtered by user's assigned clients
-        $userId = $request->user()->id;
+        // Get stats using database queries, filtered by user's assigned clients (or all for admin)
+        $user = $request->user();
+        $statsQuery = Alert::query();
+        
+        if ($user->role !== 'admin') {
+            $statsQuery->whereHas('site.client', fn ($q) => $q->where('assigned_developer_id', $user->id));
+        }
+        
         $stats = [
-            'critical' => Alert::whereHas('site.client', fn ($q) => $q->where('assigned_developer_id', $userId))
-                ->where('severity', 'critical')->where('status', '!=', 'resolved')->count(),
-            'warning' => Alert::whereHas('site.client', fn ($q) => $q->where('assigned_developer_id', $userId))
-                ->where('severity', 'warning')->where('status', '!=', 'resolved')->count(),
-            'info' => Alert::whereHas('site.client', fn ($q) => $q->where('assigned_developer_id', $userId))
-                ->where('severity', 'info')->where('status', '!=', 'resolved')->count(),
-            'resolved' => Alert::whereHas('site.client', fn ($q) => $q->where('assigned_developer_id', $userId))
-                ->where('status', 'resolved')->count(),
+            'critical' => (clone $statsQuery)->where('severity', 'critical')->where('status', '!=', 'resolved')->count(),
+            'warning' => (clone $statsQuery)->where('severity', 'warning')->where('status', '!=', 'resolved')->count(),
+            'info' => (clone $statsQuery)->where('severity', 'info')->where('status', '!=', 'resolved')->count(),
+            'resolved' => (clone $statsQuery)->where('status', 'resolved')->count(),
         ];
 
         return Inertia::render('Alerts/Pages/Index', [

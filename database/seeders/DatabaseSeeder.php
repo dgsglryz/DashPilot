@@ -67,14 +67,14 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
-     * Build the catalog of 125 demo sites, plus related operational data.
+     * Build the catalog of 130 demo sites, plus related operational data.
      *
      * @param Collection<int, Client> $clients
      * @param Collection<int, User>   $developers
      */
     private function seedSitesWithDemoData(Collection $clients, Collection $developers): void
     {
-        $blueprints = $this->generateSiteBlueprints(125);
+        $blueprints = $this->generateSiteBlueprints(130);
         $clientCount = $clients->count();
 
         foreach ($blueprints as $index => $blueprint) {
@@ -107,22 +107,26 @@ class DatabaseSeeder extends Seeder
     {
         $seeder = $this;
 
-        SiteCheck::factory()
-            ->count(random_int(5, 8))
-            ->state(function () use ($site, $seeder) {
-                return [
-                    'site_id' => $site->id,
-                    'check_type' => Arr::random(['uptime', 'performance', 'security', 'backup']),
-                    'status' => $seeder->checkStatusForSite($site->status),
-                    'response_time' => $seeder->responseTimeForStatus($site->status),
-                    'details' => [
-                        'http_status' => $site->status === 'critical' ? 503 : 200,
-                        'notes' => fake()->sentence(),
-                    ],
-                    'checked_at' => now()->subMinutes(random_int(5, 720)),
-                ];
-            })
-            ->create();
+        // Generate more site checks for better chart data (30 days of data)
+        $checkCount = random_int(25, 35);
+        $checks = [];
+        for ($i = 0; $i < $checkCount; $i++) {
+            $checkedAt = now()->subDays(random_int(0, 30))->subHours(random_int(0, 23))->subMinutes(random_int(0, 59));
+            $checks[] = [
+                'site_id' => $site->id,
+                'check_type' => Arr::random(['uptime', 'performance', 'security', 'backup']),
+                'status' => $seeder->checkStatusForSite($site->status),
+                'response_time' => $seeder->responseTimeForStatus($site->status),
+                'details' => json_encode([
+                    'http_status' => $site->status === 'critical' ? 503 : 200,
+                    'notes' => fake()->sentence(),
+                ]),
+                'checked_at' => $checkedAt,
+                'created_at' => $checkedAt,
+                'updated_at' => $checkedAt,
+            ];
+        }
+        SiteCheck::insert($checks);
 
         $this->seedAlerts($site, $developers);
         $this->seedTasks($site, $developers);
@@ -447,6 +451,7 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Curated set of hero images so the dashboard mirrors the Home.png aesthetic.
+     * Expanded collection for 130 sites with diverse imagery.
      *
      * @return array<int, string>
      */
@@ -461,10 +466,23 @@ class DatabaseSeeder extends Seeder
             'https://images.unsplash.com/photo-1474403078171-7f199e9d1336?auto=format&fit=crop&w=1200&q=80',
             'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?auto=format&fit=crop&w=1200&q=80',
             'https://images.unsplash.com/photo-1522199786352-3f7b4e60a6ab?auto=format&fit=crop&w=1200&q=80',
-            'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=1200&q=80',
             'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80',
             'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1200&q=80',
             'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1556155092-490a1ba16284?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1558655146-364adaf1fcc9?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=1200&q=80',
         ];
     }
 

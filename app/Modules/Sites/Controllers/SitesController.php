@@ -44,12 +44,16 @@ class SitesController extends Controller
      */
     public function index(Request $request): Response
     {
-        // Filter sites to only show those belonging to user's assigned clients
+        // Admin users see all sites, others see only their assigned clients
+        $user = $request->user();
         $query = Site::query()
-            ->whereHas('client', function ($q) use ($request) {
-                $q->where('assigned_developer_id', $request->user()->id);
-            })
             ->with(['client:id,name', 'checks' => fn ($q) => $q->latest()->take(5)]);
+        
+        if ($user->role !== 'admin') {
+            $query->whereHas('client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
 
         $this->siteViewService->applyFilters($query, $request);
 

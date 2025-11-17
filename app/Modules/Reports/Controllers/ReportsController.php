@@ -24,12 +24,17 @@ class ReportsController extends Controller
      */
     public function index(Request $request): Response
     {
-        // Filter sites to only show those belonging to user's assigned clients
-        $sites = Site::whereHas('client', function ($q) use ($request) {
-            $q->where('assigned_developer_id', $request->user()->id);
-        })
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        // Admin users see all sites, others see only their assigned clients
+        $user = $request->user();
+        $sitesQuery = Site::query();
+        
+        if ($user->role !== 'admin') {
+            $sitesQuery->whereHas('client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
+        
+        $sites = $sitesQuery->orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('Reports/Pages/Index', [
             'reportTemplates' => $this->templates(),
@@ -229,12 +234,16 @@ class ReportsController extends Controller
      */
     private function recentReports(Request $request): array
     {
-        return Report::with('site')
-            ->whereHas('site.client', function ($q) use ($request) {
-                $q->where('assigned_developer_id', $request->user()->id);
-            })
-            ->latest('generated_at')
-            ->limit(10)
+        $user = $request->user();
+        $reportsQuery = Report::with('site');
+        
+        if ($user->role !== 'admin') {
+            $reportsQuery->whereHas('site.client', function ($q) use ($user) {
+                $q->where('assigned_developer_id', $user->id);
+            });
+        }
+        
+        return $reportsQuery->latest('generated_at')->limit(10)
             ->get()
             ->map(function (Report $report) {
                 return [

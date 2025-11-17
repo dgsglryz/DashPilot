@@ -10,16 +10,40 @@
     </linearGradient>
   </defs>
   <rect width="640" height="320" rx="28" fill="url(#sitesGradient)"/>
-  <circle cx="500" cy="240" r="140" fill="#0ea5e9" opacity="0.25"/>
-  <circle cx="520" cy="100" r="100" fill="#38bdf8" opacity="0.3"/>
-  <rect x="80" y="70" width="200" height="140" rx="18" fill="rgba(15,23,42,0.85)"/>
-  <rect x="110" y="100" width="140" height="16" rx="8" fill="#bae6fd"/>
-  <rect x="110" y="130" width="110" height="12" rx="6" fill="#7dd3fc"/>
-  <rect x="110" y="155" width="90" height="12" rx="6" fill="#38bdf8"/>
-  <rect x="310" y="90" width="260" height="120" rx="24" fill="rgba(15,23,42,0.55)"/>
-  <rect x="340" y="120" width="200" height="16" rx="8" fill="#38bdf8" opacity="0.8"/>
-  <rect x="340" y="150" width="160" height="14" rx="7" fill="#bae6fd" opacity="0.9"/>
-  <text x="80" y="260" fill="#dbeafe" font-family="Inter, Arial, sans-serif" font-size="40" font-weight="600">Monitoring</text>
-  <text x="80" y="295" fill="#94a3b8" font-family="Inter, Arial, sans-serif" font-size="18">Uptime & incident visibility</text>
+  
+  <!-- Background circles -->
+  <circle cx="500" cy="240" r="140" fill="#0ea5e9" opacity="0.15"/>
+  <circle cx="520" cy="100" r="100" fill="#38bdf8" opacity="0.2"/>
+  
+  <!-- Server rack illustration -->
+  <rect x="80" y="60" width="240" height="180" rx="12" fill="rgba(15,23,42,0.85)" stroke="url(#sitesAccent)" stroke-width="2" opacity="0.8"/>
+  
+  <!-- Server units -->
+  <rect x="100" y="80" width="200" height="20" rx="4" fill="#0ea5e9" opacity="0.6"/>
+  <circle cx="110" cy="90" r="4" fill="#10b981"/>
+  <rect x="100" y="110" width="200" height="20" rx="4" fill="#38bdf8" opacity="0.5"/>
+  <circle cx="110" cy="120" r="4" fill="#10b981"/>
+  <rect x="100" y="140" width="200" height="20" rx="4" fill="#0ea5e9" opacity="0.4"/>
+  <circle cx="110" cy="150" r="4" fill="#f59e0b"/>
+  <rect x="100" y="170" width="200" height="20" rx="4" fill="#38bdf8" opacity="0.3"/>
+  <circle cx="110" cy="180" r="4" fill="#10b981"/>
+  
+  <!-- Network nodes -->
+  <circle cx="380" cy="100" r="12" fill="url(#sitesAccent)" opacity="0.8"/>
+  <circle cx="420" cy="80" r="10" fill="#38bdf8" opacity="0.7"/>
+  <circle cx="450" cy="120" r="10" fill="#0ea5e9" opacity="0.6"/>
+  <circle cx="480" cy="90" r="8" fill="#38bdf8" opacity="0.5"/>
+  
+  <!-- Connection lines -->
+  <line x1="380" y1="100" x2="420" y2="80" stroke="url(#sitesAccent)" stroke-width="2" opacity="0.4"/>
+  <line x1="420" y1="80" x2="450" y2="120" stroke="url(#sitesAccent)" stroke-width="2" opacity="0.4"/>
+  <line x1="450" y1="120" x2="480" y2="90" stroke="url(#sitesAccent)" stroke-width="2" opacity="0.4"/>
+  
+  <!-- Uptime indicator -->
+  <circle cx="380" cy="180" r="30" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="3"/>
+  <path d="M 370 180 L 377 187 L 390 174" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Text -->
+  <text x="80" y="260" fill="#dbeafe" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="700">Site Monitoring</text>
+  <text x="80" y="290" fill="#94a3b8" font-family="Inter, Arial, sans-serif" font-size="16">Track site performance & uptime</text>
 </svg>
-

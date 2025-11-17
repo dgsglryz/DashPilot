@@ -145,6 +145,29 @@ const updateLiveData = () => {
 // Auto-refresh every 30 seconds using VueUse
 useIntervalFn(updateLiveData, 30000);
 
+/**
+ * Handle thumbnail image load errors by falling back to placeholder
+ */
+const handleThumbnailError = (event: Event, siteId: number): void => {
+    const target = event.target as HTMLImageElement;
+    if (target) {
+        const placeholderIndex = ((siteId % 4) + 1);
+        target.src = `/images/placeholders/site-card-${placeholderIndex}.svg`;
+    }
+};
+
+/**
+ * Handle logo image load errors by generating SVG fallback
+ */
+const handleLogoError = (event: Event, siteName: string): void => {
+    const target = event.target as HTMLImageElement;
+    if (target) {
+        const initials = siteName.substring(0, 2).toUpperCase() || 'DP';
+        const svg = `<svg width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg"><rect width="160" height="160" rx="32" fill="#111827"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="600" fill="#f8fafc">${initials}</text></svg>`;
+        target.src = `data:image/svg+xml;base64,${btoa(svg)}`;
+    }
+};
+
 onMounted(() => {
     // Dashboard initialized with stats
 });
@@ -745,6 +768,8 @@ onMounted(() => {
                             :src="site.thumbnail"
                             :alt="site.name"
                             class="h-40 w-full object-cover transition duration-500 group-hover:scale-105"
+                            @error="(e) => handleThumbnailError(e, site.id)"
+                            loading="lazy"
                         />
                         <div
                             class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/70 to-transparent"
@@ -758,6 +783,8 @@ onMounted(() => {
                                         :src="site.logo"
                                         :alt="`${site.name} logo`"
                                         class="h-full w-full rounded-lg object-cover"
+                                        @error="(e) => handleLogoError(e, site.name)"
+                                        loading="lazy"
                                     />
                                 </div>
                                 <div>
@@ -837,6 +864,8 @@ onMounted(() => {
                             :src="site.thumbnail"
                             :alt="site.name"
                             class="h-40 w-full object-cover transition duration-500 group-hover:scale-105"
+                            @error="(e) => handleThumbnailError(e, site.id)"
+                            loading="lazy"
                         />
                         <div
                             class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/70 to-transparent"
@@ -851,6 +880,8 @@ onMounted(() => {
                                         :src="site.logo"
                                         :alt="`${site.name} logo`"
                                         class="h-full w-full rounded-lg object-cover"
+                                        @error="(e) => handleLogoError(e, site.name)"
+                                        loading="lazy"
                                     />
                                 </div>
                                 <div>
