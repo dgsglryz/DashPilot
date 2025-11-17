@@ -382,12 +382,11 @@ class TasksController extends Controller
     /**
      * Get all tasks assigned to a specific user.
      *
-     * @param Request $request
      * @param User $user
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getUserTasks(Request $request, User $user): \Illuminate\Http\JsonResponse
+    public function getUserTasks(User $user): \Illuminate\Http\JsonResponse
     {
         $tasks = Task::where('assigned_to', $user->id)
             ->with(['site:id,name', 'client:id,name'])

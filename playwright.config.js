@@ -12,20 +12,19 @@ export default defineConfig({
   // Test directory
   testDir: './tests/e2e',
 
-  // Test timeout (45 seconds per test for slower operations)
-  timeout: 45 * 1000,
+  // Test timeout (30 seconds per test - reduced for faster feedback)
+  timeout: 30 * 1000,
 
-  // Expect timeout (5 seconds for assertions)
+  // Expect timeout (3 seconds for assertions - reduced)
   expect: {
-    timeout: 5000
+    timeout: 3000
   },
 
   // Retry failed tests (2 retries in CI, 0 locally for faster feedback)
   retries: process.env.CI ? 2 : 0,
 
-  // Parallel workers (1 in CI for stability, auto locally)
-  // Increased workers for better performance
-  workers: process.env.CI ? 2 : 4,
+  // Parallel workers (optimized: 2 in CI, 6 locally for maximum speed)
+  workers: process.env.CI ? 2 : 6,
 
   // Reporter configuration
   reporter: [
@@ -50,11 +49,11 @@ export default defineConfig({
     // Viewport size
     viewport: { width: 1920, height: 1080 },
 
-    // Action timeout
-    actionTimeout: 10000,
+    // Action timeout (reduced for faster failure detection)
+    actionTimeout: 8000,
 
-    // Navigation timeout
-    navigationTimeout: 30000,
+    // Navigation timeout (reduced)
+    navigationTimeout: 20000,
   },
 
   // Test projects (browsers to test)

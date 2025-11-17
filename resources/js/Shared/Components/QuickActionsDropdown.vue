@@ -33,9 +33,7 @@ const props = withDefaults(defineProps<Props>(), {
     isFavorited: false,
 });
 
-const emit = defineEmits<{
-    'favorite-toggled': () => void;
-}>();
+const emit = defineEmits(['favorite-toggled']);
 
 const toast = useToast();
 const isOpen = ref(false);
@@ -91,7 +89,7 @@ const actions = computed<Action[]>(() => [
                             ? 'Removed from favorites'
                             : 'Added to favorites',
                     );
-                    emit('favorite-toggled');
+                    handleFavoriteToggled();
                     isOpen.value = false;
                 },
             });
@@ -120,6 +118,10 @@ const toggleDropdown = () => {
 
 const closeDropdown = () => {
     isOpen.value = false;
+};
+
+const handleFavoriteToggled = () => {
+    emit('favorite-toggled');
 };
 </script>
 

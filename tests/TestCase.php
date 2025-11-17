@@ -6,14 +6,22 @@ namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 /**
  * Base test case for all tests.
  * 
  * Automatically disables CSRF middleware and configures test environment.
+ * Uses database transactions for faster test execution (no migrations per test).
  */
 abstract class TestCase extends BaseTestCase
 {
+    /**
+     * Use database transactions instead of RefreshDatabase for speed.
+     * Transactions are much faster than running migrations for each test.
+     */
+    use DatabaseTransactions;
+
     /**
      * Creates the application.
      */
@@ -33,6 +41,13 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Run migrations once if database is empty (for :memory: SQLite)
+        static $migrated = false;
+        if (!$migrated && config('database.default') === 'sqlite' && config('database.connections.sqlite.database') === ':memory:') {
+            $this->artisan('migrate', ['--database' => 'sqlite'])->run();
+            $migrated = true;
+        }
 
         // Disable CSRF middleware for tests
         $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);

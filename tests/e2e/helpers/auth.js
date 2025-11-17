@@ -28,9 +28,8 @@ async function loginAsAdmin(
 ) {
     await page.goto("/login");
 
-    // Wait for page to load
-    await page.waitForLoadState("networkidle", { timeout: 30000 });
-    await page.waitForTimeout(1000); // Extra wait for Vue hydration
+    // Wait for page to load (optimized - no arbitrary timeout)
+    await page.waitForLoadState("domcontentloaded");
 
     // Get selectors using helper functions
     const emailSelector = getEmailInputSelector();
@@ -50,8 +49,7 @@ async function loginAsAdmin(
     await page.fill(emailSelector, email);
     await page.fill(passwordSelector, password);
 
-    // Wait a bit for form to be ready
-    await page.waitForTimeout(300);
+    // Form is ready after selectors are visible (no need to wait)
 
     // Try multiple ways to find and click submit button
     const submitSelectors = [
@@ -89,12 +87,11 @@ async function loginAsAdmin(
 
     // Wait for redirect - could be dashboard or intended URL
     await page.waitForURL(/\/(dashboard|sites|alerts|clients|tasks)/, {
-        timeout: 15000,
+        timeout: 10000,
     });
 
-    // Wait for Vue to hydrate on dashboard
-    await page.waitForLoadState("networkidle", { timeout: 30000 });
-    await page.waitForTimeout(1000); // Extra wait for Vue hydration
+    // Wait for page to be ready (optimized - no arbitrary timeout)
+    await page.waitForLoadState("domcontentloaded");
 
     // Verify we're logged in (check for dashboard content)
     try {
@@ -234,14 +231,13 @@ async function logout(page) {
     // Wait for redirect - logout redirects to home (/)
     await page.waitForURL(/\/(login|$)/, { timeout: 15000 });
 
-    // If on home page, wait a bit for potential redirect to login
+    // If on home page, check if redirected to login
     if (page.url().match(/\/$/)) {
-        await page.waitForTimeout(1000);
         // Check if redirected to login (some auth middleware might redirect)
         const currentUrl = page.url();
         if (!currentUrl.includes("/login")) {
             // If still on home, try navigating to login to check auth status
-            await page.goto("/login", { waitUntil: "networkidle" });
+            await page.goto("/login", { waitUntil: "domcontentloaded" });
         }
     }
 }
