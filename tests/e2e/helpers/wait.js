@@ -110,11 +110,42 @@ async function waitForTableData(page, tableSelector = 'table', minRows = 1) {
   );
 }
 
+/**
+ * Wait for Vue/Inertia page to be fully loaded and hydrated
+ * 
+ * @param {import('@playwright/test').Page} page - Playwright page object
+ * @param {number} timeout - Timeout in milliseconds (default: 15000)
+ * @returns {Promise<void>}
+ */
+async function waitForPageReady(page, timeout = 15000) {
+  // Wait for network to be idle (initial load complete)
+  await page.waitForLoadState('networkidle', { timeout });
+  
+  // Wait for Vue/Inertia to hydrate by checking if Inertia is available
+  await page.waitForFunction(
+    () => {
+      // Check if Inertia is loaded (window.Inertia or __INERTIA__)
+      return typeof window !== 'undefined' && (
+        (window.Inertia !== undefined) ||
+        (window.__INERTIA__ !== undefined) ||
+        // Fallback: check if page has been hydrated by looking for common Vue/Inertia patterns
+        document.querySelector('[data-page]') !== null ||
+        document.querySelector('[data-inertia]') !== null
+      );
+    },
+    { timeout: 10000 }
+  ).catch(() => {
+    // If Inertia check fails, just wait a bit more for hydration
+    return page.waitForTimeout(500);
+  });
+}
+
 export {
   waitForToast,
   waitForSuccessMessage,
   waitForErrorMessage,
   waitForLoadingToComplete,
   waitForTableData,
+  waitForPageReady,
 };
 

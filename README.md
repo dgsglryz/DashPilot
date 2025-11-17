@@ -4,6 +4,13 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 
 ## Latest Updates
 
+- **Nov 16** – **SONARCLOUD INTEGRATION**: Code quality analysis and security scanning:
+    - ✅ **SonarCloud CI Integration** - Automated code quality scans on every push/PR
+    - ✅ **Security Hotspot Detection** - Identifies potential security vulnerabilities
+    - ✅ **Bug Detection** - Finds code defects that could cause runtime errors
+    - ✅ **Code Smell Analysis** - Maintainability issue detection
+    - ✅ **PR Integration** - Automatic comments on pull requests with quality gate status
+    - ✅ **Dashboard** - Viewable code quality metrics and issue tracking
 - **Nov 16** – **DEBUGGING & LOGGING SYSTEM**: Comprehensive logging infrastructure:
     - ✅ **Laravel Telescope** - Full request/query/job/exception tracking with web UI (`/telescope`)
     - ✅ **LoggingService** - Structured logging for API calls, jobs, services, controllers, exceptions
@@ -55,7 +62,8 @@ Operations dashboard for agencies managing 100+ WordPress / Shopify installation
 - Laravel 11, PHP 8.2, MySQL 8, Redis 7 (cache + queues), Docker Compose
 - Vue 3 (script setup), Inertia.js, TailwindCSS, Chart.js, Heroicons
 - Laravel Breeze auth, Laravel Scheduler/Queues, MailHog for SMTP testing
-- GitHub Actions (`.github/workflows/ci.yml`) runs composer/npm install, build, tests, and optional webhook/email notifications
+- GitHub Actions (`.github/workflows/ci.yml`) runs composer/npm install, build, tests, SonarCloud scan, and optional webhook/email notifications
+- SonarCloud integration for code quality analysis and security hotspot detection
 
 ## Setup
 
@@ -184,6 +192,25 @@ npm run lint                               # ESLint (Vue 3 + TS)
 
 ### E2E Tests (Playwright)
 
+**ÖNEMLİ:** E2E testlerini çalıştırmadan önce uygulamanın çalışıyor olması gerekiyor:
+
+1. Docker container'ları başlatın: `docker-compose up -d`
+2. Veritabanını hazırlayın: `docker-compose exec app php artisan migrate:fresh --seed`
+3. Laravel server'ı başlatın: `docker-compose exec app php artisan serve --host=0.0.0.0 --port=8000`
+
+Ya da otomatik setup script'i kullanın:
+```bash
+./scripts/setup-e2e-tests.sh
+```
+
+**Test Kullanıcısı:**
+- Email: `admin@test.com`
+- Password: `password`
+
+Bu kullanıcı `DatabaseSeeder` tarafından otomatik olarak oluşturulur.
+
+Detaylı bilgi için: [tests/e2e/README.md](tests/e2e/README.md)
+
 Comprehensive end-to-end testing with Playwright covering all admin workflows:
 
 ```bash
@@ -265,6 +292,53 @@ CI runs both commands plus Vite build; failing lint/tests block the pipeline.
 
 - `app/Modules/SEO/Services/SEOService` runs a lightweight audit that checks meta description, H1 count, SSL, page speed, viewport meta, and missing image alt tags. Each issue deducts from 100 with caps noted in `.cursorrules`.
 - Results are cached for 1 hour per site via Redis. `tests/Unit/SEO/Services/SEOServiceTest` covers issue detection and cache behavior.
+
+## SonarCloud Code Quality
+
+DashPilot uses SonarCloud for automated code quality analysis, security hotspot detection, and bug identification.
+
+### Setup
+
+1. **Create SonarCloud Account & Project:**
+   - Go to [sonarcloud.io](https://sonarcloud.io) and sign in with GitHub
+   - Create a new project for your repository
+   - Note your **Organization Key** and **Project Key**
+
+2. **Configure GitHub Secrets:**
+   - Go to your GitHub repository → Settings → Secrets and variables → Actions
+   - Add `SONAR_TOKEN` secret with your SonarCloud token (found in SonarCloud → My Account → Security)
+
+3. **Update `sonar-project.properties`:**
+   - Update `sonar.organization` with your organization key
+   - Update `sonar.projectKey` if different from default
+
+4. **CI Integration:**
+   - SonarCloud scan runs automatically on every push/PR via `.github/workflows/ci.yml`
+   - The scan job runs after tests complete (even if tests fail)
+   - Results are available in SonarCloud dashboard and as PR comments
+
+### Viewing Results
+
+- **Dashboard**: Visit your SonarCloud project dashboard to see:
+  - Code quality metrics (maintainability, reliability, security)
+  - Security hotspots (potential vulnerabilities)
+  - Bugs (code defects)
+  - Code smells (maintainability issues)
+  - Coverage reports (if configured)
+
+- **PR Integration**: SonarCloud automatically comments on PRs with:
+  - New issues introduced
+  - Quality gate status
+  - Coverage changes
+
+### Fixing Issues
+
+After the first scan, review the SonarCloud dashboard for:
+1. **Security Hotspots** - Potential security vulnerabilities (priority: high)
+2. **Bugs** - Code defects that could cause runtime errors (priority: high)
+3. **Code Smells** - Maintainability issues (priority: medium)
+
+Export issues from SonarCloud and provide them to Cursor AI for automated fixes.
 
 ## Useful Commands
 

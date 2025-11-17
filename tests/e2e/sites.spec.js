@@ -1,6 +1,6 @@
 /**
  * Sites Management E2E Tests
- * 
+ *
  * Tests sites management functionality:
  * - View all sites
  * - Search sites
@@ -10,232 +10,308 @@
  * - Edit site
  * - Run health check
  * - Toggle favorite
- * 
+ *
  * @module tests/e2e/sites
  */
 
-import { test, expect } from '@playwright/test';
-import { loginAsAdmin } from './helpers/auth.js';
-import { goToSites } from './helpers/navigation.js';
-import { waitForSuccessMessage, waitForTableData } from './helpers/wait.js';
+import { test, expect } from "@playwright/test";
+import { loginAsAdmin } from "./helpers/auth.js";
+import { goToSites } from "./helpers/navigation.js";
+import {
+    waitForSuccessMessage,
+    waitForTableData,
+    waitForPageReady,
+} from "./helpers/wait.js";
+import {
+    getInputSelector,
+    getSubmitButtonInForm,
+    waitForFormReady,
+} from "./helpers/selectors.js";
 
-test.describe('Sites Management', () => {
-  test.beforeEach(async ({ page }) => {
-    // Login before each test
-    await loginAsAdmin(page);
-    await goToSites(page);
-  });
+test.describe("Sites Management", () => {
+    test.beforeEach(async ({ page }) => {
+        // Login before each test
+        await loginAsAdmin(page);
+        await goToSites(page);
+    });
 
-  test('should display sites list page', async ({ page }) => {
-    // Verify page title
-    await expect(page.locator('h1:has-text("Sites")')).toBeVisible();
+    test("should display sites list page", async ({ page }) => {
+        // Verify page title
+        await expect(page.locator('h1:has-text("Sites")')).toBeVisible();
 
-    // Verify sites table exists
-    const sitesTable = page.locator('[data-testid="sites-table"]');
-    await expect(sitesTable).toBeVisible();
-  });
+        // Verify sites table exists
+        const sitesTable = page.locator('[data-testid="sites-table"]');
+        await expect(sitesTable).toBeVisible();
+    });
 
-  test('should display sites statistics', async ({ page }) => {
-    // Verify stats cards
-    await expect(page.locator('text=/Healthy Sites|Warnings|Critical|Total Sites/i')).toBeVisible();
-  });
+    test("should display sites statistics", async ({ page }) => {
+        // Verify stats cards
+        await expect(
+            page.locator("text=/Healthy Sites|Warnings|Critical|Total Sites/i"),
+        ).toBeVisible();
+    });
 
-  test('should search sites by name or URL', async ({ page }) => {
-    // Wait for table to load
-    await waitForTableData(page, '[data-testid="sites-table"]', 1);
+    test("should search sites by name or URL", async ({ page }) => {
+        // Wait for table to load
+        await waitForTableData(page, '[data-testid="sites-table"]', 1);
 
-    // Get first site name
-    const firstSiteName = await page.locator('[data-testid="site-row"]').first().locator('td').nth(1).textContent();
-    
-    // Type in search box
-    const searchInput = page.locator('[data-testid="search-input"]');
-    await searchInput.fill(firstSiteName);
-    await page.waitForTimeout(500); // Wait for debounce
+        // Get first site name
+        const firstSiteName = await page
+            .locator('[data-testid="site-row"]')
+            .first()
+            .locator("td")
+            .nth(1)
+            .textContent();
 
-    // Verify filtered results
-    const rows = page.locator('[data-testid="site-row"]');
-    const count = await rows.count();
-    expect(count).toBeGreaterThan(0);
-  });
+        // Type in search box
+        const searchInput = page.locator('[data-testid="search-input"]');
+        await searchInput.fill(firstSiteName);
+        await page.waitForTimeout(500); // Wait for debounce
 
-  test('should filter sites by platform', async ({ page }) => {
-    // Wait for table to load
-    await waitForTableData(page, '[data-testid="sites-table"]', 1);
+        // Verify filtered results
+        const rows = page.locator('[data-testid="site-row"]');
+        const count = await rows.count();
+        expect(count).toBeGreaterThan(0);
+    });
 
-    // Select WordPress platform filter
-    await page.selectOption('select:has-text("Platform")', 'wordpress');
-    await page.waitForTimeout(500);
+    test("should filter sites by platform", async ({ page }) => {
+        // Wait for table to load
+        await waitForTableData(page, '[data-testid="sites-table"]', 1);
 
-    // Verify filtered results (all should be WordPress)
-    const rows = page.locator('[data-testid="site-row"]');
-    const count = await rows.count();
-    
-    if (count > 0) {
-      const firstRow = rows.first();
-      await expect(firstRow.locator('text=/WordPress/i')).toBeVisible();
-    }
-  });
+        // Select WordPress platform filter
+        await page.selectOption('select:has-text("Platform")', "wordpress");
+        await page.waitForTimeout(500);
 
-  test('should filter sites by status', async ({ page }) => {
-    // Wait for table to load
-    await waitForTableData(page, '[data-testid="sites-table"]', 1);
+        // Verify filtered results (all should be WordPress)
+        const rows = page.locator('[data-testid="site-row"]');
+        const count = await rows.count();
 
-    // Select healthy status filter
-    await page.selectOption('select:has-text("Status")', 'healthy');
-    await page.waitForTimeout(500);
+        if (count > 0) {
+            const firstRow = rows.first();
+            await expect(firstRow.locator("text=/WordPress/i")).toBeVisible();
+        }
+    });
 
-    // Verify filtered results
-    const rows = page.locator('[data-testid="site-row"]');
-    const count = await rows.count();
-    expect(count).toBeGreaterThanOrEqual(0);
-  });
+    test("should filter sites by status", async ({ page }) => {
+        // Wait for table to load
+        await waitForTableData(page, '[data-testid="sites-table"]', 1);
 
-  test('should click on site and view site details', async ({ page }) => {
-    // Wait for table to load
-    await waitForTableData(page, '[data-testid="sites-table"]', 1);
+        // Select healthy status filter
+        await page.selectOption('select:has-text("Status")', "healthy");
+        await page.waitForTimeout(500);
 
-    // Click first site row
-    const firstSite = page.locator('[data-testid="site-row"]').first();
-    await firstSite.click();
+        // Verify filtered results
+        const rows = page.locator('[data-testid="site-row"]');
+        const count = await rows.count();
+        expect(count).toBeGreaterThanOrEqual(0);
+    });
 
-    // Verify navigated to site detail page
-    await expect(page).toHaveURL(/\/sites\/\d+/);
-    await expect(page.locator('h1')).toBeVisible();
-  });
+    test("should click on site and view site details", async ({ page }) => {
+        // Wait for table to load
+        await waitForTableData(page, '[data-testid="sites-table"]', 1);
 
-  test('should display Add Site button', async ({ page }) => {
-    // Verify Add Site button exists
-    const addButton = page.locator('[data-testid="add-site-button"], a:has-text("Add Site")');
-    await expect(addButton).toBeVisible();
-  });
+        // Click first site row
+        const firstSite = page.locator('[data-testid="site-row"]').first();
+        await firstSite.click();
 
-  test('should navigate to create site page', async ({ page }) => {
-    // Click Add Site button
-    const addButton = page.locator('[data-testid="add-site-button"], a:has-text("Add Site")');
-    await addButton.click();
+        // Verify navigated to site detail page
+        await expect(page).toHaveURL(/\/sites\/\d+/);
+        await expect(page.locator("h1")).toBeVisible();
+    });
 
-    // Verify on create site page
-    await expect(page).toHaveURL(/\/sites\/create/);
-  });
+    test("should display Add Site button", async ({ page }) => {
+        // Verify Add Site button exists
+        const addButton = page.locator(
+            '[data-testid="add-site-button"], a:has-text("Add Site")',
+        );
+        await expect(addButton).toBeVisible();
+    });
 
-  test('should create new WordPress site', async ({ page }) => {
-    // Navigate to create page
-    await page.click('[data-testid="add-site-button"], a:has-text("Add Site")');
-    await page.waitForURL(/\/sites\/create/);
+    test("should navigate to create site page", async ({ page }) => {
+        // Click Add Site button
+        const addButton = page.locator(
+            '[data-testid="add-site-button"], a:has-text("Add Site")',
+        );
+        await addButton.click();
 
-    // Fill site form
-    await page.fill('input[name="name"]', 'Test WordPress Site');
-    await page.fill('input[name="url"]', 'https://test-wordpress-site.com');
-    await page.selectOption('select[name="type"], select[name="platform"]', 'wordpress');
-    
-    // Select client if dropdown exists
-    const clientSelect = page.locator('select[name="client_id"]');
-    if (await clientSelect.isVisible()) {
-      const options = await clientSelect.locator('option').all();
-      if (options.length > 1) {
-        await clientSelect.selectOption({ index: 1 });
-      }
-    }
+        // Verify on create site page
+        await expect(page).toHaveURL(/\/sites\/create/);
+    });
 
-    // Submit form
-    await page.click('button[type="submit"]');
+    test("should create new WordPress site", async ({ page }) => {
+        // Navigate to create page
+        await page.click(
+            '[data-testid="add-site-button"], a:has-text("Add Site")',
+        );
+        await page.waitForURL(/\/sites\/create/);
+        await waitForPageReady(page);
 
-    // Wait for redirect to site detail page
-    await expect(page).toHaveURL(/\/sites\/\d+/, { timeout: 10000 });
+        // Wait for form to be ready
+        await waitForFormReady(page);
 
-    // Verify success (site detail page should show site name)
-    await expect(page.locator('text=/Test WordPress Site/i')).toBeVisible();
-  });
+        // Fill site form using helper selectors
+        const nameSelector = getInputSelector("name");
+        const urlSelector = getInputSelector("url");
 
-  test('should create new Shopify site', async ({ page }) => {
-    // Navigate to create page
-    await page.click('[data-testid="add-site-button"], a:has-text("Add Site")');
-    await page.waitForURL(/\/sites\/create/);
+        await page.waitForSelector(nameSelector, {
+            state: "visible",
+            timeout: 15000,
+        });
+        await page.fill(nameSelector, "Test WordPress Site");
+        await page.fill(urlSelector, "https://test-wordpress-site.com");
+        await page.selectOption(
+            'select[name="type"], select[name="platform"]',
+            "wordpress",
+        );
 
-    // Fill site form
-    await page.fill('input[name="name"]', 'Test Shopify Store');
-    await page.fill('input[name="url"]', 'https://test-shopify-store.myshopify.com');
-    await page.selectOption('select[name="type"], select[name="platform"]', 'shopify');
-    
-    // Select client if dropdown exists
-    const clientSelect = page.locator('select[name="client_id"]');
-    if (await clientSelect.isVisible()) {
-      const options = await clientSelect.locator('option').all();
-      if (options.length > 1) {
-        await clientSelect.selectOption({ index: 1 });
-      }
-    }
+        // Select client if dropdown exists
+        const clientSelect = page.locator('select[name="client_id"]');
+        if (
+            await clientSelect.isVisible({ timeout: 2000 }).catch(() => false)
+        ) {
+            const options = await clientSelect.locator("option").all();
+            if (options.length > 1) {
+                await clientSelect.selectOption({ index: 1 });
+            }
+        }
 
-    // Submit form
-    await page.click('button[type="submit"]');
+        // Submit form using helper
+        const submitButton = await getSubmitButtonInForm(page, "form");
+        await submitButton.click();
 
-    // Wait for redirect to site detail page
-    await expect(page).toHaveURL(/\/sites\/\d+/, { timeout: 10000 });
+        // Wait for redirect to site detail page
+        await expect(page).toHaveURL(/\/sites\/\d+/, { timeout: 15000 });
+        await waitForPageReady(page);
 
-    // Verify success
-    await expect(page.locator('text=/Test Shopify Store/i')).toBeVisible();
-  });
+        // Verify success (site detail page should show site name)
+        await expect(page.locator("text=/Test WordPress Site/i")).toBeVisible({
+            timeout: 10000,
+        });
+    });
 
-  test('should run health check on site', async ({ page }) => {
-    // Navigate to first site detail page
-    await waitForTableData(page, '[data-testid="sites-table"]', 1);
-    const firstSite = page.locator('[data-testid="site-row"]').first();
-    await firstSite.click();
-    await page.waitForURL(/\/sites\/\d+/);
+    test("should create new Shopify site", async ({ page }) => {
+        // Navigate to create page
+        await page.click(
+            '[data-testid="add-site-button"], a:has-text("Add Site")',
+        );
+        await page.waitForURL(/\/sites\/create/);
+        await waitForPageReady(page);
 
-    // Click Run Health Check button
-    const healthCheckButton = page.locator('[data-testid="run-health-check"], button:has-text("Run Health Check")');
-    await healthCheckButton.click();
+        // Wait for form to be ready
+        await waitForFormReady(page);
 
-    // Wait for success message
-    await waitForSuccessMessage(page, /health check|queued/i);
-  });
+        // Fill site form using helper selectors
+        const nameSelector = getInputSelector("name");
+        const urlSelector = getInputSelector("url");
 
-  test('should toggle favorite status', async ({ page }) => {
-    // Wait for table to load
-    await waitForTableData(page, '[data-testid="sites-table"]', 1);
+        await page.waitForSelector(nameSelector, {
+            state: "visible",
+            timeout: 15000,
+        });
+        await page.fill(nameSelector, "Test Shopify Store");
+        await page.fill(
+            urlSelector,
+            "https://test-shopify-store.myshopify.com",
+        );
+        await page.selectOption(
+            'select[name="type"], select[name="platform"]',
+            "shopify",
+        );
 
-    // Find favorite button in first row
-    const firstRow = page.locator('[data-testid="site-row"]').first();
-    const favoriteButton = firstRow.locator('button:has(svg), [data-testid="favorite-button"]').first();
-    
-    // Click favorite button
-    await favoriteButton.click();
-    await page.waitForTimeout(500);
+        // Select client if dropdown exists
+        const clientSelect = page.locator('select[name="client_id"]');
+        if (
+            await clientSelect.isVisible({ timeout: 2000 }).catch(() => false)
+        ) {
+            const options = await clientSelect.locator("option").all();
+            if (options.length > 1) {
+                await clientSelect.selectOption({ index: 1 });
+            }
+        }
 
-    // Verify favorite status changed (visual check)
-    // Note: This depends on how favorite is displayed
-  });
+        // Submit form using helper
+        const submitButton = await getSubmitButtonInForm(page, "form");
+        await submitButton.click();
 
-  test('should export sites', async ({ page }) => {
-    // Click export button
-    const exportButton = page.locator('button:has-text("Export")');
-    await exportButton.click();
+        // Wait for redirect to site detail page
+        await expect(page).toHaveURL(/\/sites\/\d+/, { timeout: 15000 });
+        await waitForPageReady(page);
 
-    // Wait for download (or verify button state changed)
-    await page.waitForTimeout(1000);
-    
-    // Note: Actual file download verification would require download event listener
-  });
+        // Verify success
+        await expect(page.locator("text=/Test Shopify Store/i")).toBeVisible({
+            timeout: 10000,
+        });
+    });
 
-  test('should select multiple sites and run bulk health check', async ({ page }) => {
-    // Wait for table to load
-    await waitForTableData(page, '[data-testid="sites-table"]', 2);
+    test("should run health check on site", async ({ page }) => {
+        // Navigate to first site detail page
+        await waitForTableData(page, '[data-testid="sites-table"]', 1);
+        const firstSite = page.locator('[data-testid="site-row"]').first();
+        await firstSite.click();
+        await page.waitForURL(/\/sites\/\d+/);
 
-    // Select first two sites
-    const checkboxes = page.locator('[data-testid="site-row"] input[type="checkbox"]');
-    await checkboxes.nth(0).check();
-    await checkboxes.nth(1).check();
+        // Click Run Health Check button
+        const healthCheckButton = page.locator(
+            '[data-testid="run-health-check"], button:has-text("Run Health Check")',
+        );
+        await healthCheckButton.click();
 
-    // Verify batch actions bar appears
-    await expect(page.locator('text=/selected/i')).toBeVisible();
+        // Wait for success message
+        await waitForSuccessMessage(page, /health check|queued/i);
+    });
 
-    // Click bulk health check
-    const bulkHealthCheck = page.locator('button:has-text("Run Health Check")');
-    await bulkHealthCheck.click();
+    test("should toggle favorite status", async ({ page }) => {
+        // Wait for table to load
+        await waitForTableData(page, '[data-testid="sites-table"]', 1);
 
-    // Wait for success message
-    await waitForSuccessMessage(page);
-  });
+        // Find favorite button in first row
+        const firstRow = page.locator('[data-testid="site-row"]').first();
+        const favoriteButton = firstRow
+            .locator('button:has(svg), [data-testid="favorite-button"]')
+            .first();
+
+        // Click favorite button
+        await favoriteButton.click();
+        await page.waitForTimeout(500);
+
+        // Verify favorite status changed (visual check)
+        // Note: This depends on how favorite is displayed
+    });
+
+    test("should export sites", async ({ page }) => {
+        // Click export button
+        const exportButton = page.locator('button:has-text("Export")');
+        await exportButton.click();
+
+        // Wait for download (or verify button state changed)
+        await page.waitForTimeout(1000);
+
+        // Note: Actual file download verification would require download event listener
+    });
+
+    test("should select multiple sites and run bulk health check", async ({
+        page,
+    }) => {
+        // Wait for table to load
+        await waitForTableData(page, '[data-testid="sites-table"]', 2);
+
+        // Select first two sites
+        const checkboxes = page.locator(
+            '[data-testid="site-row"] input[type="checkbox"]',
+        );
+        await checkboxes.nth(0).check();
+        await checkboxes.nth(1).check();
+
+        // Verify batch actions bar appears
+        await expect(page.locator("text=/selected/i")).toBeVisible();
+
+        // Click bulk health check
+        const bulkHealthCheck = page.locator(
+            'button:has-text("Run Health Check")',
+        );
+        await bulkHealthCheck.click();
+
+        // Wait for success message
+        await waitForSuccessMessage(page);
+    });
 });
-

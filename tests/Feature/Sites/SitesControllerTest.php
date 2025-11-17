@@ -29,7 +29,7 @@ class SitesControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->has('sites', 5)
+            ->has('sites.data', 5)
             ->has('stats')
         );
     }
@@ -44,7 +44,7 @@ class SitesControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->has('sites', 3)
+            ->has('sites.data', 3)
         );
     }
 
@@ -58,7 +58,7 @@ class SitesControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->has('sites', 3)
+            ->has('sites.data', 3)
         );
     }
 
@@ -72,8 +72,8 @@ class SitesControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->has('sites', 1)
-            ->where('sites.0.name', 'Test Site')
+            ->has('sites.data', 1)
+            ->where('sites.data.0.name', 'Test Site')
         );
     }
 

@@ -596,8 +596,55 @@ onUnmounted(() => {
                                 </div>
                             </div>
                         </div>
+                        </div>
                     </div>
-                </div>
+
+                    <!-- Settings Dropdown - Using Alpine.js for lightweight interaction -->
+                    <div
+                        x-data="{ open: false }"
+                        x-on:click.away="open = false"
+                        class="relative"
+                    >
+                        <button
+                            x-on:click="open = !open"
+                            class="rounded-lg p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white"
+                            :title="$page.props.auth?.user?.name || 'Settings'"
+                        >
+                            <Cog6ToothIcon class="h-6 w-6" />
+                            <span class="sr-only">Settings</span>
+                        </button>
+
+                        <div
+                            x-show="open"
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="transform opacity-0 scale-95"
+                            x-transition:enter-end="transform opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-75"
+                            x-transition:leave-start="transform opacity-100 scale-100"
+                            x-transition:leave-end="transform opacity-0 scale-95"
+                            class="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-gray-700 bg-gray-800 shadow-xl"
+                            style="display: none"
+                        >
+                            <div class="py-1">
+                                <Link
+                                    :href="route('settings.index')"
+                                    class="block px-4 py-2 text-sm text-gray-300 transition hover:bg-gray-700 hover:text-white"
+                                    x-on:click="open = false"
+                                >
+                                    Settings
+                                </Link>
+                                <Link
+                                    href="/logout"
+                                    method="post"
+                                    as="button"
+                                    class="block w-full px-4 py-2 text-left text-sm text-gray-300 transition hover:bg-gray-700 hover:text-white"
+                                    x-on:click="open = false"
+                                >
+                                    Log out
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
             </header>
 
             <main class="flex-1 overflow-y-auto bg-gray-950 p-4 sm:p-6">

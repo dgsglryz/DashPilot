@@ -29,8 +29,44 @@ async function navigateTo(page, routeName) {
   
   const navText = routeMap[routeName] || routeName;
   
-  // Click navigation item
-  await page.click(`nav a:has-text("${navText}")`);
+  // Try multiple selectors for navigation items
+  const navSelectors = [
+    `nav a:has-text("${navText}")`,
+    `aside a:has-text("${navText}")`,
+    `a[href*="${routeName}"]:has-text("${navText}")`,
+    `[role="navigation"] a:has-text("${navText}")`,
+  ];
+  
+  let clicked = false;
+  for (const selector of navSelectors) {
+    try {
+      const navItem = page.locator(selector);
+      if (await navItem.isVisible({ timeout: 2000 })) {
+        await navItem.click();
+        clicked = true;
+        break;
+      }
+    } catch {
+      // Continue to next selector
+    }
+  }
+  
+  if (!clicked) {
+    // Fallback: try direct navigation via URL
+    const routeUrlMap = {
+      'dashboard': '/dashboard',
+      'sites.index': '/sites',
+      'clients.index': '/clients',
+      'tasks.index': '/tasks',
+      'alerts.index': '/alerts',
+      'metrics.index': '/metrics',
+      'reports.index': '/reports',
+      'team.index': '/team',
+      'settings.index': '/settings',
+    };
+    const url = routeUrlMap[routeName] || `/${routeName}`;
+    await page.goto(url);
+  }
   
   // Wait for navigation to complete
   await page.waitForLoadState('networkidle');

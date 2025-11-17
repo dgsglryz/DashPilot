@@ -690,3 +690,5 @@ Test suite sürekli geliştirilmeli:
 
 **Bu test suite ile interview'da E2E testing konusunda güçlü bir gösterim yapabilirsin!** 🚀
 
+
+

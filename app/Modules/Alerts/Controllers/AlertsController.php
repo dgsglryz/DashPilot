@@ -24,7 +24,7 @@ class AlertsController extends Controller
     public function index(Request $request): Response
     {
         $perPage = $request->integer('per_page', 20);
-        $alerts = Alert::with('site')
+        $alerts = Alert::with(['site:id,name,url', 'resolver:id,name', 'acknowledger:id,name'])
             ->latest('created_at')
             ->paginate($perPage)
             ->through(function (Alert $alert) {
@@ -43,7 +43,7 @@ class AlertsController extends Controller
             });
 
         // Get stats from all alerts (not paginated)
-        $allAlerts = Alert::with('site')->get();
+        $allAlerts = Alert::with('site:id,name')->get();
         $stats = [
             'critical' => $allAlerts->where('severity', 'critical')->where('status', '!=', 'resolved')->count(),
             'warning' => $allAlerts->where('severity', 'warning')->where('status', '!=', 'resolved')->count(),
@@ -119,7 +119,7 @@ class AlertsController extends Controller
      */
     public function export(Request $request): StreamedResponse
     {
-        $query = Alert::with('site:id,name')
+        $query = Alert::with(['site:id,name', 'resolver:id,name', 'acknowledger:id,name'])
             ->where('created_at', '>=', now()->subDays(30))
             ->latest('created_at');
 

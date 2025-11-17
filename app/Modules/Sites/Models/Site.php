@@ -59,6 +59,9 @@ class Site extends Model
         'avg_load_time' => 'decimal:2',
         'last_backup_at' => 'datetime',
         'ssl_expires_at' => 'datetime',
+        'wp_api_key' => 'encrypted',
+        'shopify_access_token' => 'encrypted',
+        'is_favorited' => 'boolean',
     ];
 
     /**

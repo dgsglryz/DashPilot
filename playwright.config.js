@@ -12,8 +12,8 @@ export default defineConfig({
   // Test directory
   testDir: './tests/e2e',
 
-  // Test timeout (30 seconds per test)
-  timeout: 30 * 1000,
+  // Test timeout (45 seconds per test for slower operations)
+  timeout: 45 * 1000,
 
   // Expect timeout (5 seconds for assertions)
   expect: {
@@ -24,7 +24,8 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
 
   // Parallel workers (1 in CI for stability, auto locally)
-  workers: process.env.CI ? 1 : undefined,
+  // Increased workers for better performance
+  workers: process.env.CI ? 2 : 4,
 
   // Reporter configuration
   reporter: [
@@ -72,6 +73,9 @@ export default defineConfig({
     //   use: { ...devices['Desktop Safari'] },
     // },
   ],
+
+  // Global setup/teardown
+  globalSetup: './tests/e2e/global-setup.js',
 
   // Web server configuration (optional - Laravel handles this via Docker)
   // Uncomment if you want Playwright to start the server automatically

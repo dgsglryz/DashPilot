@@ -38,7 +38,8 @@ class SitesController extends Controller
      */
     public function index(Request $request): Response
     {
-        $query = Site::query()->with('client:id,name');
+        $query = Site::query()
+            ->with(['client:id,name', 'checks' => fn($q) => $q->latest()->take(5)]);
 
         if ($request->filled('platform') && $request->string('platform')->toString() !== 'all') {
             $query->where('type', $request->string('platform')->toString());

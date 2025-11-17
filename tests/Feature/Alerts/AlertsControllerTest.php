@@ -30,7 +30,7 @@ class AlertsControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->has('alerts', 5)
+            ->has('alerts.data', 5)
             ->has('stats')
         );
     }

@@ -264,6 +264,18 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ],
         );
+
+        // E2E test kullanıcısı oluştur
+        User::query()->updateOrCreate(
+            ['email' => 'admin@test.com'],
+            [
+                'name' => 'Test Admin',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+                'status' => 'active',
+                'email_verified_at' => now(),
+            ],
+        );
     }
 
     /**

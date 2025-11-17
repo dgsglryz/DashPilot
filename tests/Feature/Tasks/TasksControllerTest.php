@@ -43,15 +43,21 @@ class TasksControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
-        Task::factory()->create(['assigned_to' => $user->id]);
-        Task::factory()->create(['assigned_to' => $otherUser->id]);
+        Task::factory()->create(['assigned_to' => $user->id, 'status' => 'pending']);
+        Task::factory()->create(['assigned_to' => $otherUser->id, 'status' => 'pending']);
 
-        $response = $this->actingAs($user)->get(route('tasks.index', ['filter' => 'my_tasks']));
+        $response = $this->actingAs($user)->get(route('tasks.index', ['my_tasks' => true]));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->has('tasks.pending', 1)
+            ->has('tasks.pending')
         );
+        
+        // Verify only user's task is returned
+        $pageData = $response->viewData('page');
+        $pendingTasks = $pageData['props']['tasks']['pending'] ?? [];
+        $this->assertCount(1, $pendingTasks);
+        $this->assertEquals($user->id, $pendingTasks[0]['assignee']['id']);
     }
 
     public function test_task_create_page_displays(): void

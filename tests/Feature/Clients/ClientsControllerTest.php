@@ -90,13 +90,15 @@ class ClientsControllerTest extends TestCase
             'assigned_developer_id' => $developer->id,
         ]);
 
-        $client = \App\Modules\Clients\Models\Client::where('email', 'client@example.com')->first();
-        $response->assertRedirect(route('clients.show', $client));
         $this->assertDatabaseHas('clients', [
             'name' => 'New Client',
             'company' => 'New Corp',
             'email' => 'client@example.com',
         ]);
+
+        $client = \App\Modules\Clients\Models\Client::where('email', 'client@example.com')->first();
+        $this->assertNotNull($client);
+        $response->assertRedirect(route('clients.show', $client));
     }
 
     public function test_client_show_displays_client_details(): void
