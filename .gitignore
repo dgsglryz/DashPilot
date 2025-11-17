@@ -27,3 +27,8 @@ Thumbs.db
 /test-results/
 /playwright-report/
 *.webm
+
+# Documentation files (only README.md should be committed per .cursorrules)
+*.md
+!README.md
+!tests/e2e/README.md
