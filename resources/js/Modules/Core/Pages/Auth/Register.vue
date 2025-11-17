@@ -24,8 +24,9 @@ const submit = () => {
 
 <template>
     <GuestLayout>
-        <Head title="Register - DashPilot" />
-        <title>Register - DashPilot</title>
+        <Head title="Register - DashPilot">
+            <title>Register - DashPilot</title>
+        </Head>
 
         <form @submit.prevent="submit">
             <div>
