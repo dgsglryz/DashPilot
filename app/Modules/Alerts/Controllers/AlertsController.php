@@ -48,7 +48,6 @@ class AlertsController extends Controller
                 ];
             });
 
-        // Get stats using database queries, filtered by user's assigned clients (or all for admin)
         $statsQuery = Alert::query()->forUser($user);
         
         $stats = [

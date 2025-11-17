@@ -19,7 +19,6 @@ abstract class BaseSiteRequest extends FormRequest
     {
         $user = $this->user();
         
-        // Admin can create sites for any client
         if ($user->role === 'admin') {
             return true;
         }

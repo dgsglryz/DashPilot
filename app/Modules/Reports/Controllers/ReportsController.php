@@ -26,7 +26,6 @@ class ReportsController extends Controller
     {
         $this->authorize('viewAny', Report::class);
         
-        // Admin users see all sites, others see only their assigned clients
         $user = $request->user();
         $sitesQuery = Site::query();
         

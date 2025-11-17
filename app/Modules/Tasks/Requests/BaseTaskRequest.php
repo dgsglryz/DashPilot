@@ -20,37 +20,66 @@ abstract class BaseTaskRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        
-        // Admin can create tasks for any client/site
+
         if ($user->role === 'admin') {
             return true;
         }
-        
+
         // Verify user has access to the client_id or site_id they're trying to use
-        if ($this->has('client_id')) {
-            $client = Client::find($this->input('client_id'));
-            if (!$client || $client->assigned_developer_id !== $user->id) {
-                return false;
-            }
+        if ($this->has('client_id') && !$this->canAccessClient($user)) {
+            return false;
         }
-        
-        if ($this->has('site_id')) {
-            $site = Site::with('client')->find($this->input('site_id'));
-            if (!$site || !$site->client || $site->client->assigned_developer_id !== $user->id) {
-                return false;
-            }
+
+        if ($this->has('site_id') && !$this->canAccessSite($user)) {
+            return false;
         }
-        
+
         // Verify assigned_to is valid (user can assign to themselves or admin can assign to anyone)
-        if ($this->has('assigned_to')) {
-            $assignedTo = (int) $this->input('assigned_to');
-            if ($assignedTo !== $user->id && $user->role !== 'admin') {
-                // Non-admin users can only assign tasks to themselves
-                return false;
-            }
+        if ($this->has('assigned_to') && !$this->canAssignTo($user)) {
+            return false;
         }
-        
+
         return true;
+    }
+
+    /**
+     * Check if user can access the specified client.
+     *
+     * @param \App\Modules\Users\Models\User $user
+     * @return bool
+     */
+    private function canAccessClient($user): bool
+    {
+        $client = Client::find($this->input('client_id'));
+
+        return $client && $client->assigned_developer_id === $user->id;
+    }
+
+    /**
+     * Check if user can access the specified site.
+     *
+     * @param \App\Modules\Users\Models\User $user
+     * @return bool
+     */
+    private function canAccessSite($user): bool
+    {
+        $site = Site::with('client')->find($this->input('site_id'));
+
+        return $site && $site->client && $site->client->assigned_developer_id === $user->id;
+    }
+
+    /**
+     * Check if user can assign task to the specified user.
+     *
+     * @param \App\Modules\Users\Models\User $user
+     * @return bool
+     */
+    private function canAssignTo($user): bool
+    {
+        $assignedTo = (int) $this->input('assigned_to');
+
+        // Non-admin users can only assign tasks to themselves
+        return $assignedTo === $user->id || $user->role === 'admin';
     }
 
     /**

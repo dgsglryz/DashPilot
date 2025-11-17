@@ -37,21 +37,7 @@ class RevenueController extends Controller
         $monthlyRevenue = $this->estimateMonthlyRevenue($shopifySites);
         $averageRevenue = $shopifySites->count() > 0 ? $totalRevenue / $shopifySites->count() : 0;
 
-        // Get revenue by site
-        $revenueBySite = $shopifySites->map(function (Site $site) {
-            return [
-                'id' => $site->id,
-                'name' => $site->name,
-                'url' => $site->url,
-                'thumbnail' => $site->thumbnail_url ?? $this->fallbackThumbnail($site->id),
-                'logo' => $site->logo_url ?? $this->fallbackLogo($site->name),
-                'revenue' => $this->estimateSiteRevenue($site),
-                'orders' => random_int(50, 500),
-                'growth' => round(fake()->randomFloat(2, -5, 25), 1),
-            ];
-        })->sortByDesc('revenue')->values();
-
-        // Monthly trend (last 6 months)
+        // Monthly trend (last 6 months) - calculate first for growth calculation
         $monthlyTrend = [];
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
@@ -61,12 +47,32 @@ class RevenueController extends Controller
             ];
         }
 
+        // Calculate overall growth from monthly trend
+        $overallGrowth = $this->calculateGrowthFromTrend($monthlyTrend);
+
+        // Get revenue by site
+        $revenueBySite = $shopifySites->map(function (Site $site) use ($monthlyTrend) {
+            $siteRevenue = $this->estimateSiteRevenue($site);
+            $siteGrowth = $this->calculateSiteGrowth($site, $siteRevenue);
+
+            return [
+                'id' => $site->id,
+                'name' => $site->name,
+                'url' => $site->url,
+                'thumbnail' => $site->thumbnail_url ?? $this->fallbackThumbnail($site->id),
+                'logo' => $site->logo_url ?? $this->fallbackLogo($site->name),
+                'revenue' => $siteRevenue,
+                'orders' => random_int(50, 500),
+                'growth' => $siteGrowth,
+            ];
+        })->sortByDesc('revenue')->values();
+
         $stats = [
             'totalRevenue' => $totalRevenue,
             'monthlyRevenue' => $monthlyRevenue,
             'averageRevenue' => (int) round($averageRevenue),
             'totalSites' => $shopifySites->count(),
-            'growth' => round(fake()->randomFloat(2, 5, 20), 1),
+            'growth' => $overallGrowth,
         ];
 
         return Inertia::render('Revenue/Pages/Index', [
@@ -123,6 +129,52 @@ class RevenueController extends Controller
         $slug = \Illuminate\Support\Str::slug($name);
 
         return "https://api.dicebear.com/7.x/initials/svg?seed={$slug}&backgroundColor=111827,1c1f2b&fontSize=60";
+    }
+
+    /**
+     * Calculate growth percentage from monthly trend data.
+     * Compares current month with previous month.
+     *
+     * @param array<int, array<string, mixed>> $monthlyTrend Monthly revenue data
+     * @return float Growth percentage (can be negative)
+     */
+    private function calculateGrowthFromTrend(array $monthlyTrend): float
+    {
+        if (count($monthlyTrend) < 2) {
+            return 0.0;
+        }
+
+        $current = $monthlyTrend[count($monthlyTrend) - 1]['revenue'];
+        $previous = $monthlyTrend[count($monthlyTrend) - 2]['revenue'];
+
+        if ($previous == 0) {
+            return 0.0;
+        }
+
+        return round((($current - $previous) / $previous) * 100, 1);
+    }
+
+    /**
+     * Calculate growth for a single site based on health score and uptime changes.
+     * Uses site metrics to estimate realistic growth.
+     *
+     * @param Site $site The site to calculate growth for
+     * @param int $currentRevenue Current estimated revenue
+     * @return float Growth percentage
+     */
+    private function calculateSiteGrowth(Site $site, int $currentRevenue): float
+    {
+        // Base growth on health score and uptime (better metrics = positive growth)
+        $healthFactor = ($site->health_score / 100) - 0.5; // -0.5 to +0.5
+        $uptimeFactor = (($site->uptime_percentage ?? 0) / 100) - 0.5; // -0.5 to +0.5
+
+        // Combine factors (weighted average)
+        $combinedFactor = ($healthFactor * 0.6) + ($uptimeFactor * 0.4);
+
+        // Convert to percentage growth (-25% to +25% range)
+        $growth = $combinedFactor * 50;
+
+        return round($growth, 1);
     }
 }
 

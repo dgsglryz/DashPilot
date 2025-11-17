@@ -41,27 +41,22 @@ class TasksController extends Controller
             ->with(['assignee:id,name,email', 'site:id,name', 'client:id,name'])
             ->forUser($user);
 
-        // Filter by status
         if ($request->filled('status') && $request->string('status')->toString() !== 'all') {
             $query->where('status', $request->string('status')->toString());
         }
 
-        // Filter by priority
         if ($request->filled('priority') && $request->string('priority')->toString() !== 'all') {
             $query->where('priority', $request->string('priority')->toString());
         }
 
-        // Filter: My Tasks
         if ($request->filled('my_tasks') && $request->boolean('my_tasks')) {
             $query->where('assigned_to', $request->user()->id);
         }
 
-        // Filter: Urgent
         if ($request->filled('urgent') && $request->boolean('urgent')) {
             $query->where('priority', 'urgent');
         }
 
-        // Search
         if ($request->filled('query')) {
             $query->search($request->string('query')->toString());
         }

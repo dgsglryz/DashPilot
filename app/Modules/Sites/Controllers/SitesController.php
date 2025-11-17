@@ -51,10 +51,8 @@ class SitesController extends Controller
 
         $this->siteViewService->applyFilters($query, $request);
 
-        // Get stats using database queries (more efficient than loading all records)
         $stats = $this->siteViewService->buildStats(clone $query);
 
-        // Paginate results
         $perPage = $request->integer('per_page', 20);
         $sites = $query
             ->orderBy('name')

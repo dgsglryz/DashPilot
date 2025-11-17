@@ -15,7 +15,7 @@ class TaskPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(): bool
     {
         // Users can view tasks for clients they are assigned to
         return true;
@@ -26,33 +26,17 @@ class TaskPolicy
      */
     public function view(User $user, Task $task): bool
     {
-        // Admin can view all tasks
         if ($user->role === 'admin') {
             return true;
         }
 
-        // User can view task if:
-        // 1. They are assigned to the task, OR
-        // 2. The task belongs to a client they are assigned to
-        if ($task->assigned_to === $user->id) {
-            return true;
-        }
-
-        if ($task->client && $task->client->assigned_developer_id === $user->id) {
-            return true;
-        }
-
-        if ($task->site && $task->site->client && $task->site->client->assigned_developer_id === $user->id) {
-            return true;
-        }
-
-        return false;
+        return $this->hasAccessToTask($user, $task);
     }
 
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $user): bool
+    public function create(): bool
     {
         // Users can create tasks for clients they are assigned to
         return true;
@@ -63,27 +47,11 @@ class TaskPolicy
      */
     public function update(User $user, Task $task): bool
     {
-        // Admin can update all tasks
         if ($user->role === 'admin') {
             return true;
         }
 
-        // User can update task if:
-        // 1. They are assigned to the task, OR
-        // 2. The task belongs to a client they are assigned to
-        if ($task->assigned_to === $user->id) {
-            return true;
-        }
-
-        if ($task->client && $task->client->assigned_developer_id === $user->id) {
-            return true;
-        }
-
-        if ($task->site && $task->site->client && $task->site->client->assigned_developer_id === $user->id) {
-            return true;
-        }
-
-        return false;
+        return $this->hasAccessToTask($user, $task);
     }
 
     /**
@@ -91,12 +59,38 @@ class TaskPolicy
      */
     public function delete(User $user, Task $task): bool
     {
-        // Admin can delete all tasks
         if ($user->role === 'admin') {
             return true;
         }
 
-        // User can delete task if they are assigned as developer to the client
+        return $this->hasAccessToClient($user, $task);
+    }
+
+    /**
+     * Check if user has access to the task (assigned to task or client).
+     *
+     * @param User $user
+     * @param Task $task
+     * @return bool
+     */
+    private function hasAccessToTask(User $user, Task $task): bool
+    {
+        if ($task->assigned_to === $user->id) {
+            return true;
+        }
+
+        return $this->hasAccessToClient($user, $task);
+    }
+
+    /**
+     * Check if user has access to the task's client.
+     *
+     * @param User $user
+     * @param Task $task
+     * @return bool
+     */
+    private function hasAccessToClient(User $user, Task $task): bool
+    {
         if ($task->client && $task->client->assigned_developer_id === $user->id) {
             return true;
         }
