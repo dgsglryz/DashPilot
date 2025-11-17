@@ -70,4 +70,39 @@ class TeamControllerTest extends TestCase
 
         $response->assertForbidden();
     }
+
+    public function test_team_approve_activates_pending_member(): void
+    {
+        Mail::fake();
+        $admin = User::factory()->create(['role' => 'admin']);
+        $pendingMember = User::factory()->create(['status' => 'pending']);
+
+        $response = $this->actingAs($admin)->post(route('team.approve', $pendingMember));
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('users', [
+            'id' => $pendingMember->id,
+            'status' => 'active',
+        ]);
+    }
+
+    public function test_team_approve_requires_admin(): void
+    {
+        $member = User::factory()->create(['role' => 'member']);
+        $pendingUser = User::factory()->create(['status' => 'pending']);
+
+        $response = $this->actingAs($member)->post(route('team.approve', $pendingUser));
+
+        $response->assertForbidden();
+    }
+
+    public function test_team_approve_fails_for_non_pending_user(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $activeUser = User::factory()->create(['status' => 'active']);
+
+        $response = $this->actingAs($admin)->post(route('team.approve', $activeUser));
+
+        $response->assertStatus(400);
+    }
 }

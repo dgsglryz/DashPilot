@@ -26,10 +26,10 @@ class MetricsController extends Controller
     {
         $user = $request->user();
         $timeRange = $request->string('time_range')->value() ?? '7d';
-        
+
         // Scope metrics to user's assigned clients (admin sees all)
-        $cacheKey = $user->role === 'admin' 
-            ? "metrics:{$timeRange}" 
+        $cacheKey = $user->role === 'admin'
+            ? "metrics:{$timeRange}"
             : "metrics:{$timeRange}:user:{$user->id}";
 
         $metrics = Cache::remember($cacheKey, 300, fn () => $this->metricsAggregator->buildMetrics($timeRange, $user));

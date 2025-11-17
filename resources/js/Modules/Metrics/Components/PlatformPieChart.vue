@@ -35,23 +35,34 @@ const props = defineProps({
 /**
  * Chart data configuration
  */
-const chartData = computed(() => ({
-  labels: ['WordPress', 'Shopify'],
-  datasets: [
-    {
-      data: [props.data.wordpress || 0, props.data.shopify || 0],
-      backgroundColor: [
-        'rgba(59, 130, 246, 0.8)',
-        'rgba(34, 197, 94, 0.8)'
-      ],
-      borderColor: [
-        'rgb(59, 130, 246)',
-        'rgb(34, 197, 94)'
-      ],
-      borderWidth: 2
-    }
-  ]
-}))
+const chartData = computed(() => {
+  const data = props.data || {}
+  const wordpress = data.wordpress || 0
+  const shopify = data.shopify || 0
+  
+  // If both are 0, show a single value to prevent empty chart
+  const total = wordpress + shopify
+  const wordpressValue = total > 0 ? wordpress : 1
+  const shopifyValue = total > 0 ? shopify : 0
+  
+  return {
+    labels: ['WordPress', 'Shopify'],
+    datasets: [
+      {
+        data: [wordpressValue, shopifyValue],
+        backgroundColor: [
+          'rgba(59, 130, 246, 0.8)',
+          'rgba(34, 197, 94, 0.8)'
+        ],
+        borderColor: [
+          'rgb(59, 130, 246)',
+          'rgb(34, 197, 94)'
+        ],
+        borderWidth: 2
+      }
+    ]
+  }
+})
 
 /**
  * Chart options configuration

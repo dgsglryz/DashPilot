@@ -222,6 +222,7 @@ const sendMessage = async () => {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        'X-Inertia': 'true',
       },
       credentials: 'same-origin',
       body: JSON.stringify({
@@ -238,12 +239,18 @@ const sendMessage = async () => {
     } else {
       // Restore message content on error
       messageContent.value = content
-      const errorData = await response.json()
-      toast.error(errorData.error || 'Failed to send message. Please try again.')
+      let errorMessage = 'Failed to send message. Please try again.'
+      try {
+        const errorData = await response.json()
+        errorMessage = errorData.error || errorData.message || errorMessage
+      } catch (e) {
+        // If response is not JSON, use default message
+      }
+      toast.error(errorMessage)
     }
   } catch (error) {
     messageContent.value = content
-    toast.error('Failed to send message. Please try again.')
+    toast.error('Network error. Please check your connection and try again.')
   } finally {
     sending.value = false
   }

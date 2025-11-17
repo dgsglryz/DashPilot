@@ -26,6 +26,11 @@ class SitePolicy
      */
     public function view(User $user, Site $site): bool
     {
+        // Admins can view all sites
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         // User can view site if they are assigned as developer to the client
         return $site->client && $site->client->assigned_developer_id === $user->id;
     }
@@ -44,6 +49,11 @@ class SitePolicy
      */
     public function update(User $user, Site $site): bool
     {
+        // Admins can update all sites
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         // User can update site if they are assigned as developer to the client
         return $site->client && $site->client->assigned_developer_id === $user->id;
     }
@@ -53,6 +63,11 @@ class SitePolicy
      */
     public function delete(User $user, Site $site): bool
     {
+        // Admins can delete all sites
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         // User can delete site if they are assigned as developer to the client
         return $site->client && $site->client->assigned_developer_id === $user->id;
     }

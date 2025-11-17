@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Searchable trait provides reusable search functionality for models.
- * 
+ *
  * This trait eliminates duplication of LIKE search patterns across controllers
  * by centralizing search logic in models.
  */
@@ -15,7 +15,7 @@ trait Searchable
 {
     /**
      * Scope a query to search across specified fields.
-     * 
+     *
      * @param Builder $query The query builder instance
      * @param string|null $search The search term
      * @return Builder
@@ -41,7 +41,7 @@ trait Searchable
 
     /**
      * Get the list of fields that should be searchable.
-     * 
+     *
      * Override this method in your model to specify which fields to search.
      *
      * @return array<int, string>

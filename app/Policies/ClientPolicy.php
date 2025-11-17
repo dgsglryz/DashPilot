@@ -26,6 +26,11 @@ class ClientPolicy
      */
     public function view(User $user, Client $client): bool
     {
+        // Admins can view all clients
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         // User can view client if they are assigned as developer
         return $client->assigned_developer_id === $user->id;
     }
@@ -44,6 +49,11 @@ class ClientPolicy
      */
     public function update(User $user, Client $client): bool
     {
+        // Admins can update all clients
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         // User can update client if they are assigned as developer
         return $client->assigned_developer_id === $user->id;
     }
@@ -53,6 +63,11 @@ class ClientPolicy
      */
     public function delete(User $user, Client $client): bool
     {
+        // Admins can delete all clients
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         // User can delete client if they are assigned as developer
         return $client->assigned_developer_id === $user->id;
     }

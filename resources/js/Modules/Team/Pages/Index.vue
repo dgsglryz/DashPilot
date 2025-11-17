@@ -54,6 +54,30 @@
                 </div>
             </div>
 
+            <!-- Pending Members Alert (if any) -->
+            <div
+                v-if="stats.pending > 0"
+                class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-center justify-between"
+            >
+                <div class="flex items-center gap-3">
+                    <ExclamationTriangleIcon class="w-6 h-6 text-yellow-400" />
+                    <div>
+                        <p class="text-white font-semibold">
+                            {{ stats.pending }} Pending Member(s) Awaiting Approval
+                        </p>
+                        <p class="text-gray-400 text-sm mt-1">
+                            Review and approve new team member invitations below
+                        </p>
+                    </div>
+                </div>
+                <button
+                    @click="showOnlyPending = !showOnlyPending"
+                    class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors text-sm font-medium"
+                >
+                    {{ showOnlyPending ? 'Show All' : 'Show Pending Only' }}
+                </button>
+            </div>
+
             <!-- Team Members List -->
             <div
                 class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden"
@@ -90,9 +114,10 @@
                     </thead>
                     <tbody class="divide-y divide-gray-700/50">
                         <tr
-                            v-for="member in members"
+                            v-for="member in filteredMembers"
                             :key="member.id"
                             class="hover:bg-gray-700/20 transition-colors"
+                            :class="{ 'bg-yellow-500/5': member.status === 'pending' }"
                         >
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
@@ -152,6 +177,15 @@
                                         />
                                     </button>
                                     <button
+                                        v-if="member.status === 'pending'"
+                                        @click="approveMember(member.id)"
+                                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-green-600/20"
+                                        title="Approve member"
+                                    >
+                                        <CheckIcon class="w-5 h-5" />
+                                        Approve
+                                    </button>
+                                    <button
                                         v-if="member.id !== currentUser.id"
                                         @click="openMessagePopup(member)"
                                         class="p-2 hover:bg-gray-700 rounded-lg transition-colors"
@@ -204,7 +238,7 @@
 
 <script setup lang="ts">
 // @ts-nocheck
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { router } from "@inertiajs/vue3";
 import AppLayout from "@/Shared/Layouts/AppLayout.vue";
 import InviteMemberModal from "@/Modules/Team/Components/InviteMemberModal.vue";
@@ -215,6 +249,8 @@ import {
     TrashIcon,
     ChatBubbleLeftIcon,
     DocumentTextIcon,
+    CheckIcon,
+    ExclamationTriangleIcon,
 } from "@heroicons/vue/24/outline";
 
 /**
@@ -223,7 +259,7 @@ import {
  * @property {Object} stats - Team statistics
  * @property {Object} currentUser - Current authenticated user
  */
-defineProps({
+const props = defineProps({
     members: {
         type: Array,
         required: true,
@@ -246,6 +282,7 @@ const showMessagePopup = ref(false);
 const selectedRecipient = ref(null);
 const showTasksPopup = ref(false);
 const selectedMember = ref(null);
+const showOnlyPending = ref(false);
 
 /**
  * Get user initials
@@ -339,6 +376,18 @@ const sendInvite = (data) => {
 };
 
 /**
+ * Approve pending member
+ * @param {number} memberId - Member ID
+ */
+const approveMember = (memberId) => {
+    router.post(`/team/${memberId}/approve`, {}, {
+        onSuccess: () => {
+            // Page will reload automatically via Inertia
+        },
+    });
+};
+
+/**
  * Remove member
  * @param {number} memberId - Member ID
  */
@@ -381,4 +430,14 @@ const closeTasksPopup = () => {
     showTasksPopup.value = false;
     selectedMember.value = null;
 };
+
+/**
+ * Filtered members based on pending filter
+ */
+const filteredMembers = computed(() => {
+    if (showOnlyPending.value) {
+        return props.members.filter((m) => m.status === 'pending');
+    }
+    return props.members;
+});
 </script>

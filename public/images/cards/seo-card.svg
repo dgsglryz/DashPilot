@@ -1,8 +1,8 @@
 <svg width="640" height="320" viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="seoGradient" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0f172a"/>
-      <stop offset="100%" stop-color="#1e293b"/>
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#334155"/>
     </linearGradient>
     <linearGradient id="seoAccent" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#818cf8"/>
@@ -12,30 +12,26 @@
   <rect width="640" height="320" rx="28" fill="url(#seoGradient)"/>
   
   <!-- Background elements -->
-  <circle cx="520" cy="60" r="80" fill="url(#seoAccent)" opacity="0.2"/>
-  <circle cx="460" cy="260" r="110" fill="url(#seoAccent)" opacity="0.15"/>
+  <circle cx="520" cy="60" r="80" fill="url(#seoAccent)" opacity="0.35"/>
+  <circle cx="460" cy="260" r="110" fill="url(#seoAccent)" opacity="0.25"/>
   
   <!-- Search icon -->
-  <circle cx="120" cy="120" r="35" fill="none" stroke="url(#seoAccent)" stroke-width="4" opacity="0.8"/>
-  <line x1="145" y1="145" x2="170" y2="170" stroke="url(#seoAccent)" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="120" cy="120" r="35" fill="none" stroke="url(#seoAccent)" stroke-width="5" opacity="1"/>
+  <line x1="145" y1="145" x2="170" y2="170" stroke="url(#seoAccent)" stroke-width="5" stroke-linecap="round" opacity="1"/>
   
   <!-- Chart bars -->
-  <rect x="240" y="140" width="25" height="60" rx="4" fill="#818cf8" opacity="0.8"/>
-  <rect x="280" y="120" width="25" height="80" rx="4" fill="#a78bfa" opacity="0.9"/>
-  <rect x="320" y="100" width="25" height="100" rx="4" fill="#c4b5fd" opacity="0.85"/>
-  <rect x="360" y="110" width="25" height="90" rx="4" fill="#818cf8" opacity="0.75"/>
-  <rect x="400" y="130" width="25" height="70" rx="4" fill="#a78bfa" opacity="0.7"/>
+  <rect x="240" y="140" width="25" height="60" rx="4" fill="#818cf8" opacity="1"/>
+  <rect x="280" y="120" width="25" height="80" rx="4" fill="#a78bfa" opacity="1"/>
+  <rect x="320" y="100" width="25" height="100" rx="4" fill="#c4b5fd" opacity="1"/>
+  <rect x="360" y="110" width="25" height="90" rx="4" fill="#818cf8" opacity="0.95"/>
+  <rect x="400" y="130" width="25" height="70" rx="4" fill="#a78bfa" opacity="0.9"/>
   
   <!-- Trending arrow -->
-  <path d="M 450 180 L 480 150 L 510 180" fill="none" stroke="#10b981" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M 480 150 L 480 120" fill="none" stroke="#10b981" stroke-width="6" stroke-linecap="round"/>
+  <path d="M 450 180 L 480 150 L 510 180" fill="none" stroke="#10b981" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 480 150 L 480 120" fill="none" stroke="#10b981" stroke-width="7" stroke-linecap="round"/>
   
   <!-- Score badge -->
-  <rect x="480" y="200" width="100" height="50" rx="12" fill="rgba(129,140,248,0.2)" stroke="url(#seoAccent)" stroke-width="2"/>
+  <rect x="480" y="200" width="100" height="50" rx="12" fill="rgba(129,140,248,0.3)" stroke="url(#seoAccent)" stroke-width="2"/>
   <text x="530" y="230" fill="#c4b5fd" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700" text-anchor="middle">85</text>
   <text x="530" y="245" fill="#a78bfa" font-family="Inter, Arial, sans-serif" font-size="12" text-anchor="middle">Score</text>
-  
-  <!-- Text -->
-  <text x="80" y="250" fill="#e2e8f0" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="42">SEO Performance</text>
-  <text x="80" y="280" fill="#94a3b8" font-family="Inter, Arial, sans-serif" font-size="16">Check SEO scores & insights</text>
 </svg>

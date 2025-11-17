@@ -72,8 +72,8 @@ class SearchController extends Controller
                 'route' => 'sites.index',
                 'params' => [],
                 'icon' => 'GlobeAltIcon',
-                'keywords' => ['site monitoring', 'uptime', 'status', 'health'],
-                'preview' => 'https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=600&q=80',
+                'keywords' => ['site monitoring', 'uptime', 'status', 'health', 'site', 'sites'],
+                'preview' => '/images/cards/sites-card.svg',
             ],
             [
                 'type' => 'card',
@@ -83,7 +83,7 @@ class SearchController extends Controller
                 'params' => [],
                 'icon' => 'ChartBarIcon',
                 'keywords' => ['seo', 'performance', 'score', 'search'],
-                'preview' => 'https://images.unsplash.com/photo-1494790108375-be55c52b42c6?auto=format&fit=crop&w=600&q=80',
+                'preview' => '/images/cards/seo-card.svg',
             ],
             [
                 'type' => 'card',
@@ -93,7 +93,7 @@ class SearchController extends Controller
                 'params' => [],
                 'icon' => 'CurrencyDollarIcon',
                 'keywords' => ['revenue', 'shopify', 'finance', 'sales'],
-                'preview' => 'https://images.unsplash.com/photo-1460925891237-14d9a24401e9?auto=format&fit=crop&w=600&q=80',
+                'preview' => '/images/cards/revenue-card.svg',
             ],
         ];
 

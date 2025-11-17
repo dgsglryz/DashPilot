@@ -770,6 +770,8 @@ onMounted(() => {
                             class="h-40 w-full object-cover transition duration-500 group-hover:scale-105"
                             @error="(e) => handleThumbnailError(e, site.id)"
                             loading="lazy"
+                            crossorigin="anonymous"
+                            referrerpolicy="no-referrer"
                         />
                         <div
                             class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/70 to-transparent"
@@ -785,6 +787,8 @@ onMounted(() => {
                                         class="h-full w-full rounded-lg object-cover"
                                         @error="(e) => handleLogoError(e, site.name)"
                                         loading="lazy"
+                                        crossorigin="anonymous"
+                                        referrerpolicy="no-referrer"
                                     />
                                 </div>
                                 <div>
@@ -866,6 +870,8 @@ onMounted(() => {
                             class="h-40 w-full object-cover transition duration-500 group-hover:scale-105"
                             @error="(e) => handleThumbnailError(e, site.id)"
                             loading="lazy"
+                            crossorigin="anonymous"
+                            referrerpolicy="no-referrer"
                         />
                         <div
                             class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/70 to-transparent"
@@ -882,6 +888,8 @@ onMounted(() => {
                                         class="h-full w-full rounded-lg object-cover"
                                         @error="(e) => handleLogoError(e, site.name)"
                                         loading="lazy"
+                                        crossorigin="anonymous"
+                                        referrerpolicy="no-referrer"
                                     />
                                 </div>
                                 <div>

@@ -5,6 +5,9 @@ namespace Tests\Unit\Metrics\Services;
 
 use App\Modules\Clients\Models\Client;
 use App\Modules\Metrics\Services\MetricsAggregator;
+use App\Modules\Metrics\Services\MetricsCalculator;
+use App\Modules\Metrics\Services\MetricsHistoryBuilder;
+use App\Modules\Metrics\Services\MetricsDistributionBuilder;
 use App\Modules\Monitoring\Models\SiteCheck;
 use App\Modules\Sites\Models\Site;
 use App\Modules\Users\Models\User;
@@ -23,7 +26,11 @@ class MetricsAggregatorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new MetricsAggregator();
+        $this->service = new MetricsAggregator(
+            new MetricsCalculator(),
+            new MetricsHistoryBuilder(),
+            new MetricsDistributionBuilder()
+        );
     }
 
     /**
@@ -86,7 +93,8 @@ class MetricsAggregatorTest extends TestCase
         $distribution1 = $metrics1['platformDistribution'];
 
         $this->assertEquals(3, $distribution1['wordpress'] ?? 0);
-        $this->assertArrayNotHasKey('shopify', $distribution1);
+        // shopify key always exists now, but should be 0 for user1's sites
+        $this->assertEquals(0, $distribution1['shopify'] ?? 0);
     }
 
     /**
@@ -160,15 +168,18 @@ class MetricsAggregatorTest extends TestCase
         $client1 = Client::factory()->create(['assigned_developer_id' => $user1->id]);
         $client2 = Client::factory()->create(['assigned_developer_id' => $user2->id]);
         
-        Site::factory()->count(3)->create(['client_id' => $client1->id]);
-        Site::factory()->count(2)->create(['client_id' => $client2->id]);
+        // Create sites with explicit wordpress type (default) to ensure they're counted
+        Site::factory()->count(3)->create(['client_id' => $client1->id, 'type' => 'wordpress']);
+        Site::factory()->count(2)->create(['client_id' => $client2->id, 'type' => 'wordpress']);
 
         $metrics = $this->service->buildMetrics('7d', $admin);
         $distribution = $metrics['platformDistribution'];
 
-        // Admin should see all 5 sites (assuming they're all same type)
+        // Admin should see all 5 sites (all wordpress type)
         $total = array_sum($distribution);
         $this->assertEquals(5, $total);
+        $this->assertEquals(5, $distribution['wordpress'] ?? 0);
+        $this->assertEquals(0, $distribution['shopify'] ?? 0);
     }
 }
 

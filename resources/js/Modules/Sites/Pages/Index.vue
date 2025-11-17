@@ -53,7 +53,8 @@
                             placeholder="Search sites..."
                             data-testid="search-input"
                             class="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-                            @keyup.enter="refreshSite"
+                            @keyup.enter="handleSearchEnter"
+                            @keydown.enter.prevent
                             @focus="onSearchFocus"
                             @blur="onSearchBlur"
                         />
@@ -471,6 +472,7 @@
 // @ts-nocheck
 import { ref, computed, watch } from "vue";
 import { router } from "@inertiajs/vue3";
+import { useDebounceFn } from "@vueuse/core";
 import AppLayout from "@/Shared/Layouts/AppLayout.vue";
 import {
     MagnifyingGlassIcon,
@@ -520,6 +522,7 @@ const props = defineProps({
  * Local reactive state
  */
 const searchQuery = ref(props.filters?.query ?? "");
+const debouncedSearchQuery = ref(props.filters?.query ?? "");
 const filterPlatform = ref(props.filters?.platform ?? "all");
 const filterStatus = ref(props.filters?.status ?? "all");
 const suggestionOpen = ref(false);
@@ -530,15 +533,24 @@ const toast = useToast();
 
 /**
  * Computed filtered sites based on search and filters
+ * Uses immediate search query for instant UI feedback
+ * Backend refresh is debounced separately to prevent excessive API calls
  * @returns {Array} Filtered site list
  */
 const filteredSites = computed(() => {
     // If sites is paginated, use sites.data, otherwise use sites directly
     const sitesList = props.sites.data || props.sites;
+    const query = searchQuery.value.toLowerCase().trim();
+    
+    // Early return if no search query and no filters
+    if (!query && filterPlatform.value === "all" && filterStatus.value === "all") {
+        return sitesList;
+    }
+    
     return sitesList.filter((site) => {
-        const matchesSearch =
-            site.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-            site.url.toLowerCase().includes(searchQuery.value.toLowerCase());
+        const matchesSearch = !query || 
+            site.name.toLowerCase().includes(query) ||
+            site.url.toLowerCase().includes(query);
         const matchesPlatform =
             filterPlatform.value === "all" ||
             site.platform === filterPlatform.value;
@@ -688,14 +700,14 @@ const toggleFavorite = async (siteId: number) => {
 };
 
 /**
- * Refresh single site data
- * @param {number} siteId - Site ID to refresh
+ * Internal refresh function (not debounced)
+ * Used for immediate refreshes (e.g., Enter key)
  */
-const refreshSite = () => {
+const performRefresh = () => {
     router.get(
         route("sites.index"),
         {
-            query: searchQuery.value || undefined,
+            query: debouncedSearchQuery.value || undefined,
             platform:
                 filterPlatform.value === "all"
                     ? undefined
@@ -711,18 +723,33 @@ const refreshSite = () => {
     );
 };
 
+/**
+ * Refresh single site data
+ * Debounced to prevent excessive API calls during typing
+ * @param {number} siteId - Site ID to refresh
+ */
+const refreshSite = useDebounceFn(performRefresh, 500);
+
+/**
+ * Computed suggestion results for search autocomplete
+ * Uses immediate search query (not debounced) for instant feedback
+ * @returns {Array} Filtered suggestions (max 6)
+ */
 const suggestionResults = computed(() => {
-    if (!searchQuery.value) {
+    const query = searchQuery.value.toLowerCase().trim();
+    if (!query) {
         return [];
     }
 
-    const needle = searchQuery.value.toLowerCase();
-
-    return props.sites
+    const sitesList = props.sites.data || props.sites;
+    
+    // Limit to first 50 sites for performance
+    return sitesList
+        .slice(0, 50)
         .filter(
             (site) =>
-                site.name.toLowerCase().includes(needle) ||
-                site.url.toLowerCase().includes(needle),
+                site.name.toLowerCase().includes(query) ||
+                site.url.toLowerCase().includes(query),
         )
         .slice(0, 6);
 });
@@ -742,6 +769,22 @@ const onSearchBlur = () => {
     }, 120);
 };
 
+/**
+ * Handle Enter key in search input
+ * Immediately refreshes without debounce delay
+ */
+const handleSearchEnter = () => {
+    if (suggestionResults.value.length > 0) {
+        // If there are suggestions, go to first one
+        goToSite(suggestionResults.value[0].id);
+    } else if (searchQuery.value.trim()) {
+        // Update debounced query immediately
+        debouncedSearchQuery.value = searchQuery.value;
+        // If no suggestions but has query, refresh immediately
+        performRefresh();
+    }
+};
+
 const handleSiteCreated = () => {
     showCreateModal.value = false;
     toast.success("Site created successfully");
@@ -751,6 +794,19 @@ const handleSiteCreated = () => {
     });
 };
 
+/**
+ * Watch for search query changes and update debounced value
+ * This prevents excessive re-renders while typing
+ */
+watch(searchQuery, (newValue) => {
+    debouncedSearchQuery.value = newValue;
+    // Trigger refresh after debounce delay
+    refreshSite();
+}, { immediate: false });
+
+/**
+ * Watch for filter changes and refresh
+ */
 watch([filterPlatform, filterStatus], () => {
     refreshSite();
 });

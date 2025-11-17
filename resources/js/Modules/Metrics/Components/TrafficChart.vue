@@ -63,19 +63,28 @@ const metricLabel = computed(() => {
 /**
  * Chart data configuration
  */
-const chartData = computed(() => ({
-  labels: props.data.labels || [],
-  datasets: [
-    {
-      label: metricLabel.value,
-      data: props.data[props.metric] || [],
-      backgroundColor: 'rgba(147, 51, 234, 0.8)',
-      borderColor: 'rgb(147, 51, 234)',
-      borderWidth: 0,
-      borderRadius: 4,
-    }
-  ]
-}))
+const chartData = computed(() => {
+  const data = props.data || {}
+  const labels = data.labels || []
+  const metricData = data[props.metric] || []
+  
+  // Ensure labels and data arrays have the same length
+  const normalizedData = labels.map((_, index) => metricData[index] ?? 0)
+  
+  return {
+    labels: labels.length > 0 ? labels : [],
+    datasets: [
+      {
+        label: metricLabel.value,
+        data: normalizedData.length > 0 ? normalizedData : [],
+        backgroundColor: 'rgba(147, 51, 234, 0.8)',
+        borderColor: 'rgb(147, 51, 234)',
+        borderWidth: 0,
+        borderRadius: 4,
+      }
+    ]
+  }
+})
 
 /**
  * Chart options configuration

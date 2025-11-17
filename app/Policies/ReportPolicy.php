@@ -26,6 +26,11 @@ class ReportPolicy
      */
     public function view(User $user, Report $report): bool
     {
+        // Admins can view all reports
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         // User can view report if they have access to the associated site
         if (!$report->site || !$report->site->client) {
             return false;
@@ -57,6 +62,11 @@ class ReportPolicy
      */
     public function delete(User $user, Report $report): bool
     {
+        // Admins can delete all reports
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         // User can delete report if they have access to the associated site
         return $this->view($user, $report);
     }

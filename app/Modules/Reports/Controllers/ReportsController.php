@@ -65,23 +65,36 @@ class ReportsController extends Controller
         // Filter out 'all' if specific sites are selected
         $siteIds = array_filter($siteIds, fn($id) => $id !== 'all');
         
-        // If no specific sites selected or only 'all' was selected, use all sites for user's assigned clients
+        $user = $request->user();
+        
+        // If no specific sites selected or only 'all' was selected, use all sites
         if (empty($siteIds)) {
-            $siteIds = Site::whereHas('client', function ($q) use ($request) {
-                $q->where('assigned_developer_id', $request->user()->id);
-            })
-                ->pluck('id')
-                ->map(fn ($id) => (string) $id)
-                ->all();
+            if ($user->role === 'admin') {
+                $siteIds = Site::pluck('id')->map(fn ($id) => (string) $id)->all();
+            } else {
+                $siteIds = Site::whereHas('client', function ($q) use ($user) {
+                    $q->where('assigned_developer_id', $user->id);
+                })
+                    ->pluck('id')
+                    ->map(fn ($id) => (string) $id)
+                    ->all();
+            }
         } else {
-            // Verify all requested sites belong to user's assigned clients
-            $validSiteIds = Site::whereHas('client', function ($q) use ($request) {
-                $q->where('assigned_developer_id', $request->user()->id);
-            })
-                ->whereIn('id', array_map('intval', $siteIds))
-                ->pluck('id')
-                ->map(fn ($id) => (string) $id)
-                ->all();
+            // Verify all requested sites belong to user's assigned clients (or admin can access all)
+            if ($user->role === 'admin') {
+                $validSiteIds = Site::whereIn('id', array_map('intval', $siteIds))
+                    ->pluck('id')
+                    ->map(fn ($id) => (string) $id)
+                    ->all();
+            } else {
+                $validSiteIds = Site::whereHas('client', function ($q) use ($user) {
+                    $q->where('assigned_developer_id', $user->id);
+                })
+                    ->whereIn('id', array_map('intval', $siteIds))
+                    ->pluck('id')
+                    ->map(fn ($id) => (string) $id)
+                    ->all();
+            }
 
             if (count($validSiteIds) !== count($siteIds)) {
                 abort(403, 'Unauthorized access to one or more sites.');
@@ -150,7 +163,7 @@ class ReportsController extends Controller
         $this->authorize('view', $report);
 
         if (!$report->pdf_path || !Storage::disk('local')->exists($report->pdf_path)) {
-            return back()->with('error', 'Report file is not available.');
+            abort(404, 'Report file is not available.');
         }
 
         // Prevent path traversal attacks

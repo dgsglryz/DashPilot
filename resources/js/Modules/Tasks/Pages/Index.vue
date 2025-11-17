@@ -286,6 +286,7 @@ const columns = [
                             v-model="searchQuery"
                             type="text"
                             placeholder="Search tasks..."
+                            autocomplete="off"
                             class="w-full rounded-lg border border-gray-700 bg-gray-900 py-2 pl-10 pr-4 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
                             @keyup.enter="applyFilters"
                         />

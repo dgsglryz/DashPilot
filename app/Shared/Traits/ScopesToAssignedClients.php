@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 /**
  * ScopesToAssignedClients provides reusable methods for scoping queries to user's assigned clients.
- * 
+ *
  * This trait eliminates duplication of admin role checks and client scoping logic
  * across multiple controllers and request classes.
  */

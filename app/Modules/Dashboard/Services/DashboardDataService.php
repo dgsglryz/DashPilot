@@ -81,10 +81,10 @@ class DashboardDataService
      */
     public function stats(?User $user = null): array
     {
-        $cacheKey = $user && $user->role === 'admin' 
-            ? 'dashboard:stats' 
+        $cacheKey = $user && $user->role === 'admin'
+            ? 'dashboard:stats'
             : "dashboard:stats:user:{$user->id}";
-            
+
         return Cache::remember($cacheKey, 60, function () use ($user): array {
             $sitesQuery = $this->scopedSitesQuery($user);
             $totalSites = $sitesQuery->count();
@@ -113,7 +113,7 @@ class DashboardDataService
                 'criticalAlerts' => $criticalAlerts,
                 'avgUptime' => $avgUptime,
                 'totalRevenue' => $this->estimateRevenue($totalSites, $avgUptime),
-                'avgSeoScore' => (int) round($sitesQuery->avg('health_score') ?: 82),
+                'avgSeoScore' => (int) round((float) ($sitesQuery->avg('health_score') ?? 82)),
                 'activitiesToday' => $activitiesToday,
                 'warningSites' => $warningSites,
             ];

@@ -50,24 +50,33 @@ const props = defineProps({
 /**
  * Chart data configuration
  */
-const chartData = computed(() => ({
-  labels: props.data.labels || [],
-  datasets: [
-    {
-      label: 'Uptime %',
-      data: props.data.values || [],
-      borderColor: 'rgb(34, 197, 94)',
-      backgroundColor: 'rgba(34, 197, 94, 0.1)',
-      tension: 0.4,
-      fill: true,
-      pointRadius: 0,
-      pointHoverRadius: 6,
-      pointHoverBackgroundColor: 'rgb(34, 197, 94)',
-      pointHoverBorderColor: 'rgb(255, 255, 255)',
-      pointHoverBorderWidth: 2,
-    }
-  ]
-}))
+const chartData = computed(() => {
+  const data = props.data || {}
+  const labels = data.labels || []
+  const values = data.values || []
+  
+  // Ensure labels and values arrays have the same length
+  const normalizedValues = labels.map((_, index) => values[index] ?? 0)
+  
+  return {
+    labels: labels.length > 0 ? labels : [],
+    datasets: [
+      {
+        label: 'Uptime %',
+        data: normalizedValues.length > 0 ? normalizedValues : [],
+        borderColor: 'rgb(34, 197, 94)',
+        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+        tension: 0.4,
+        fill: true,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: 'rgb(34, 197, 94)',
+        pointHoverBorderColor: 'rgb(255, 255, 255)',
+        pointHoverBorderWidth: 2,
+      }
+    ]
+  }
+})
 
 /**
  * Chart options configuration

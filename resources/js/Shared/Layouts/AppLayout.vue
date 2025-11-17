@@ -25,6 +25,7 @@ import {
     CurrencyDollarIcon,
 } from "@heroicons/vue/24/outline";
 import CommandPalette from "@/Shared/Components/CommandPalette.vue";
+import NotificationBell from "@/Shared/Components/NotificationBell.vue";
 
 type NavigationItem = {
     name: string;
@@ -644,51 +645,8 @@ watch(searchSuggestions, () => {
                 </div>
 
                 <div class="ml-4 flex items-center gap-2 sm:gap-3">
-                    <!-- Notification Bell Dropdown - Using Alpine.js for lightweight interaction -->
-                    <!-- eslint-disable vue/valid-v-on -->
-                    <div
-                        x-data="{ open: false }"
-                        x-on:click.away="open = false"
-                        class="relative"
-                    >
-                        <button
-                            x-on:click="open = !open"
-                            class="relative rounded-lg p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white"
-                            aria-label="Toggle notifications menu"
-                        >
-                            <BellIcon class="h-6 w-6" />
-                            <span
-                                class="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500"
-                            ></span>
-                            <span class="sr-only">Notifications</span>
-                        </button>
-
-                        <div
-                            x-show="open"
-                            x-transition:enter="transition ease-out duration-100"
-                            x-transition:enter-start="transform opacity-0 scale-95"
-                            x-transition:enter-end="transform opacity-100 scale-100"
-                            x-transition:leave="transition ease-in duration-75"
-                            x-transition:leave-start="transform opacity-100 scale-100"
-                            x-transition:leave-end="transform opacity-0 scale-95"
-                            class="absolute right-0 z-50 mt-2 w-80 rounded-lg border border-gray-700 bg-gray-800 shadow-xl"
-                            style="display: none"
-                        >
-                            <div class="p-4">
-                                <h3
-                                    class="mb-3 text-sm font-semibold text-white"
-                                >
-                                    Notifications
-                                </h3>
-                                <div class="space-y-2">
-                                    <p class="text-sm text-gray-400">
-                                        No new notifications
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        </div>
-                    </div>
+                    <!-- Notification Bell -->
+                    <NotificationBell />
 
                     <!-- Settings Dropdown - Using Alpine.js for lightweight interaction -->
                     <div
@@ -737,6 +695,7 @@ watch(searchSuggestions, () => {
                             </div>
                         </div>
                     </div>
+                </div>
             </header>
 
             <main class="flex-1 overflow-y-auto bg-gray-950 p-4 sm:p-6">

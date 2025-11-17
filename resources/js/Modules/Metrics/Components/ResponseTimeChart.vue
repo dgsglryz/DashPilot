@@ -50,24 +50,33 @@ const props = defineProps({
 /**
  * Chart data configuration
  */
-const chartData = computed(() => ({
-  labels: props.data.labels || [],
-  datasets: [
-    {
-      label: 'Response Time (ms)',
-      data: props.data.values || [],
-      borderColor: 'rgb(59, 130, 246)',
-      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-      tension: 0.4,
-      fill: true,
-      pointRadius: 0,
-      pointHoverRadius: 6,
-      pointHoverBackgroundColor: 'rgb(59, 130, 246)',
-      pointHoverBorderColor: 'rgb(255, 255, 255)',
-      pointHoverBorderWidth: 2,
-    }
-  ]
-}))
+const chartData = computed(() => {
+  const data = props.data || {}
+  const labels = data.labels || []
+  const values = data.values || []
+  
+  // Ensure labels and values arrays have the same length
+  const normalizedValues = labels.map((_, index) => values[index] ?? 0)
+  
+  return {
+    labels: labels.length > 0 ? labels : [],
+    datasets: [
+      {
+        label: 'Response Time (ms)',
+        data: normalizedValues.length > 0 ? normalizedValues : [],
+        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        tension: 0.4,
+        fill: true,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: 'rgb(59, 130, 246)',
+        pointHoverBorderColor: 'rgb(255, 255, 255)',
+        pointHoverBorderWidth: 2,
+      }
+    ]
+  }
+})
 
 /**
  * Chart options configuration

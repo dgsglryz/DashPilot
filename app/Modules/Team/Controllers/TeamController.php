@@ -44,10 +44,17 @@ class TeamController extends Controller
             'pending' => $members->where('status', 'pending')->count(),
         ];
 
+        $currentUser = Auth::user();
+        
         return Inertia::render('Team/Pages/Index', [
             'members' => $members,
             'stats' => $stats,
-            'currentUser' => Auth::user(),
+            'currentUser' => [
+                'id' => $currentUser->id,
+                'name' => $currentUser->name,
+                'email' => $currentUser->email,
+                'role' => $currentUser->role,
+            ],
         ]);
     }
 
@@ -84,6 +91,31 @@ class TeamController extends Controller
         );
 
         return back()->with('success', 'Invitation sent.');
+    }
+
+    /**
+     * Approve a pending team member.
+     */
+    public function approve(User $user): RedirectResponse
+    {
+        abort_unless(Auth::user()->role === 'admin', 403, 'Only administrators can approve team members.');
+        
+        abort_if($user->status !== 'pending', 400, 'User is not pending approval.');
+
+        $user->update([
+            'status' => 'active',
+        ]);
+
+        // Send notification email
+        Mail::raw(
+            "Your DashPilot account has been approved. You can now log in and access the dashboard.\n\n" .
+            "Login: " . route('login', absolute: false),
+            function ($mail) use ($user): void {
+                $mail->to($user->email)->subject('DashPilot Account Approved');
+            }
+        );
+
+        return back()->with('success', 'Member approved successfully.');
     }
 
     /**

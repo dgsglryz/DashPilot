@@ -5,6 +5,7 @@ namespace App\Modules\Alerts\Models;
 
 use App\Modules\Sites\Models\Site;
 use App\Modules\Users\Models\User;
+use App\Shared\Traits\Searchable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Alert extends Model
 {
-    use HasFactory;
+    use HasFactory, Searchable;
 
     /**
      * @var array<int, string>
@@ -90,5 +91,15 @@ class Alert extends Model
         return $query->whereHas('site.client', function ($q) use ($user) {
             $q->where('assigned_developer_id', $user->id);
         });
+    }
+
+    /**
+     * Get the list of fields that should be searchable.
+     *
+     * @return array<int, string>
+     */
+    protected function getSearchableFields(): array
+    {
+        return ['title', 'message', 'type'];
     }
 }

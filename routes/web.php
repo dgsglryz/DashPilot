@@ -13,6 +13,7 @@ use App\Modules\Shopify\Controllers\LiquidEditorController;
 use App\Modules\Sites\Controllers\SitesController;
 use App\Modules\Tasks\Controllers\TasksController;
 use App\Modules\Messages\Controllers\MessagesController;
+use App\Modules\Notifications\Controllers\NotificationsController;
 use App\Modules\Team\Controllers\TeamController;
 use App\Modules\Users\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -55,6 +56,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/team', [TeamController::class, 'index'])->name('team.index');
     Route::post('/team/invite', [TeamController::class, 'invite'])->name('team.invite');
+    Route::post('/team/{user}/approve', [TeamController::class, 'approve'])->name('team.approve');
     Route::delete('/team/{user}', [TeamController::class, 'destroy'])->name('team.destroy');
 
     Route::prefix('messages')->name('messages.')->group(function () {
@@ -62,6 +64,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/send', [MessagesController::class, 'send'])->middleware('throttle:30,1')->name('send');
         Route::get('/unread-count', [MessagesController::class, 'unreadCount'])->name('unread-count');
         Route::get('/conversations', [MessagesController::class, 'conversations'])->name('conversations');
+    });
+
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationsController::class, 'index'])->name('index');
+        Route::post('/{id}/read', [NotificationsController::class, 'markAsRead'])->name('read');
+        Route::post('/mark-all-read', [NotificationsController::class, 'markAllAsRead'])->name('markAllRead');
     });
 
     Route::get('/sites/export', [SitesController::class, 'export'])->name('sites.export');

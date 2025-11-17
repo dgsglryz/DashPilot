@@ -57,13 +57,28 @@ const imageUrl = computed(() => {
         'multiple website dashboards and analytics screens': '/images/cards/sites-card.svg',
     };
     
-    return imageMap[props.imageQuery] ?? '/images/cards/sites-card.svg';
+    const url = imageMap[props.imageQuery] ?? '/images/cards/sites-card.svg';
+    
+    // Debug: log the image URL to help diagnose issues
+    if (import.meta.env.DEV) {
+        console.log('[StatCard] Image query:', props.imageQuery, '→ URL:', url);
+    }
+    
+    return url;
 });
 
 /**
  * Handle image load errors
  */
-const onImageError = () => {
+const onImageError = (event: Event) => {
+    const target = event.target as HTMLImageElement;
+    if (import.meta.env.DEV) {
+        console.error('[StatCard] Image load error:', {
+            src: target?.src,
+            imageQuery: props.imageQuery,
+            imageUrl: imageUrl.value,
+        });
+    }
     imageError.value = true;
 };
 </script>
@@ -78,10 +93,11 @@ const onImageError = () => {
             <img
                 :src="imageUrl"
                 :alt="title"
-                class="h-full w-full object-contain opacity-80 transition-opacity group-hover:opacity-90"
+                class="h-full w-full object-cover opacity-100 transition-opacity group-hover:opacity-100"
                 @error="onImageError"
+                loading="lazy"
             />
-            <div class="absolute inset-0 bg-gradient-to-t from-gray-800/90 via-gray-800/40 to-transparent"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-gray-800/20 via-transparent to-transparent"></div>
             <div class="absolute inset-x-0 bottom-0 p-4">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">

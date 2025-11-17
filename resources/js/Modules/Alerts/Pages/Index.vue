@@ -94,6 +94,7 @@
               type="text" 
               placeholder="Search alerts..."
               data-testid="alerts-search-input"
+              autocomplete="off"
               class="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
             />
           </div>
@@ -167,8 +168,9 @@
 
 <script setup lang="ts">
 // @ts-nocheck
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
+import { useDebounceFn } from '@vueuse/core'
 import AppLayout from '@/Shared/Layouts/AppLayout.vue'
 import AlertCard from '@/Modules/Alerts/Components/AlertCard.vue'
 import AlertDetailsModal from '@/Modules/Alerts/Components/AlertDetailsModal.vue'
@@ -188,6 +190,7 @@ import {
  * Component props from Inertia
  * @property {Array} alerts - List of system alerts
  * @property {Object} stats - Alert statistics
+ * @property {Object} filters - Current filter values
  */
 const props = defineProps({
   alerts: {
@@ -197,13 +200,19 @@ const props = defineProps({
   stats: {
     type: Object,
     required: true
-  }
+  },
+  filters: {
+    type: Object,
+    default: () => ({
+      search: '',
+    }),
+  },
 })
 
 /**
  * Local reactive state
  */
-const searchQuery = ref('')
+const searchQuery = ref(props.filters?.search ?? '')
 const filterSeverity = ref('all')
 const filterStatus = ref('all')
 const filterType = ref('all')
@@ -211,20 +220,50 @@ const showDetailsModal = ref(false)
 const selectedAlert = ref(null)
 
 /**
- * Computed filtered alerts
+ * Refresh alerts with current filters
+ */
+const refreshAlerts = () => {
+  router.get(
+    route('alerts.index'),
+    {
+      search: searchQuery.value || undefined,
+    },
+    {
+      preserveState: true,
+      preserveScroll: true,
+      replace: true,
+    }
+  )
+}
+
+/**
+ * Debounced search function
+ */
+const debouncedSearch = useDebounceFn(() => {
+  refreshAlerts()
+}, 500)
+
+/**
+ * Watch search query and trigger debounced search
+ */
+watch(searchQuery, () => {
+  debouncedSearch()
+})
+
+/**
+ * Computed filtered alerts (client-side filtering for severity, status, type only)
+ * Search is handled server-side
  * @returns {Array} Filtered alert list
  */
 const filteredAlerts = computed(() => {
   // If alerts is paginated, use alerts.data, otherwise use alerts directly
   const alertsList = props.alerts.data || props.alerts;
   return alertsList.filter(alert => {
-    const matchesSearch = alert.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                         alert.message.toLowerCase().includes(searchQuery.value.toLowerCase())
     const matchesSeverity = filterSeverity.value === 'all' || alert.severity === filterSeverity.value
     const matchesStatus = filterStatus.value === 'all' || alert.status === filterStatus.value
     const matchesType = filterType.value === 'all' || alert.type === filterType.value
     
-    return matchesSearch && matchesSeverity && matchesStatus && matchesType
+    return matchesSeverity && matchesStatus && matchesType
   })
 })
 

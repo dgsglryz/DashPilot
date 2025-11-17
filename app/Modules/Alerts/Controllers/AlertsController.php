@@ -31,6 +31,11 @@ class AlertsController extends Controller
         $alertsQuery = Alert::with(['site:id,name,url', 'resolver:id,name', 'acknowledger:id,name'])
             ->forUser($user);
         
+        // Apply search filter if provided
+        if ($request->filled('search')) {
+            $alertsQuery->search($request->string('search')->toString());
+        }
+        
         $alerts = $alertsQuery->latest('created_at')
             ->paginate($perPage)
             ->through(function (Alert $alert) {
@@ -60,6 +65,9 @@ class AlertsController extends Controller
         return Inertia::render('Alerts/Pages/Index', [
             'alerts' => $alerts,
             'stats' => $stats,
+            'filters' => [
+                'search' => $request->string('search')->toString(),
+            ],
         ]);
     }
 

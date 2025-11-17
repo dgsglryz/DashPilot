@@ -26,6 +26,11 @@ class AlertPolicy
      */
     public function view(User $user, Alert $alert): bool
     {
+        // Admins can view all alerts
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         // User can view alert if they have access to the associated site
         if (!$alert->site || !$alert->site->client) {
             return false;
@@ -48,6 +53,11 @@ class AlertPolicy
      */
     public function update(User $user, Alert $alert): bool
     {
+        // Admins can update all alerts
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         // User can update alert if they have access to the associated site
         return $this->view($user, $alert);
     }
@@ -57,6 +67,11 @@ class AlertPolicy
      */
     public function delete(User $user, Alert $alert): bool
     {
+        // Admins can delete all alerts
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         // User can delete alert if they have access to the associated site
         return $this->view($user, $alert);
     }
