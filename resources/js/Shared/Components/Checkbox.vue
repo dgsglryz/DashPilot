@@ -6,6 +6,8 @@ const emit = defineEmits(['update:checked']);
 const props = defineProps<{
     checked: boolean;
     value?: string | number | boolean;
+    id?: string;
+    name?: string;
 }>();
 
 const proxyChecked = computed({
@@ -22,6 +24,8 @@ const proxyChecked = computed({
 <template>
     <input
         type="checkbox"
+        :id="id"
+        :name="name"
         :value="value"
         v-model="proxyChecked"
         class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
