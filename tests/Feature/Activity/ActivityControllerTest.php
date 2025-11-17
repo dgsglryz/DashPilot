@@ -101,7 +101,9 @@ class ActivityControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
-        $this->assertStringContainsString('ID,Action,Description', $response->getContent());
+        // Streamed responses need to be read differently
+        $content = $response->streamedContent();
+        $this->assertStringContainsString('ID,Action,Description', $content);
     }
 
     public function test_activity_export_applies_filters(): void
@@ -117,7 +119,7 @@ class ActivityControllerTest extends TestCase
         ]));
 
         $response->assertOk();
-        $content = $response->getContent();
+        $content = $response->streamedContent();
         $this->assertStringContainsString('site_checked', $content);
     }
 }

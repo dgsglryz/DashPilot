@@ -166,23 +166,24 @@ class LiquidEditorServiceTest extends TestCase
 
     /**
      * Test saving snippet creates new snippet.
-     * Note: Service uses 'name' but model/db uses 'title' - this may need fixing
      */
     public function test_save_snippet_creates_new(): void
     {
+        $user = \App\Modules\Users\Models\User::factory()->create();
+        
         $data = [
             'name' => 'test-snippet',
             'description' => 'Test description',
             'code' => '{% comment %} Test {% endcomment %}',
             'category' => 'general',
+            'user_id' => $user->id,
         ];
 
         $snippet = $this->service->saveSnippet($data);
 
         $this->assertInstanceOf(LiquidSnippet::class, $snippet);
-        // Service uses 'name' in updateOrCreate, but model uses 'title'
-        // This test will verify the service behavior
-        $this->assertNotNull($snippet->id);
+        $this->assertEquals('test-snippet', $snippet->title);
+        $this->assertEquals('Test description', $snippet->description);
     }
 
     /**
@@ -190,22 +191,23 @@ class LiquidEditorServiceTest extends TestCase
      */
     public function test_save_snippet_updates_existing(): void
     {
-        // Create with title since that's the actual column
+        $user = \App\Modules\Users\Models\User::factory()->create();
         $existing = LiquidSnippet::factory()->create([
             'title' => 'test-snippet',
             'code' => 'old code',
+            'user_id' => $user->id,
         ]);
 
         $data = [
-            'name' => 'test-snippet', // Service uses 'name'
+            'name' => 'test-snippet',
             'code' => 'new code',
+            'user_id' => $user->id,
         ];
 
         $snippet = $this->service->saveSnippet($data);
 
-        // The service uses 'name' in updateOrCreate, so it should find by 'name'
-        // But the column is 'title', so this might fail - testing actual behavior
-        $this->assertNotNull($snippet);
+        $this->assertEquals($existing->id, $snippet->id);
+        $this->assertEquals('new code', $snippet->code);
     }
 
     /**

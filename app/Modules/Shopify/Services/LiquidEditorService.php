@@ -181,24 +181,34 @@ class LiquidEditorService
      */
     public function getSnippets(): Collection
     {
-        return LiquidSnippet::orderBy('name')->get();
+        return LiquidSnippet::orderBy('title')->get();
     }
 
     /**
      * Create or update a Liquid snippet.
      *
-     * @param array<string, mixed> $data Snippet data (name, description, code)
+     * @param array<string, mixed> $data Snippet data (name/title, description, code, user_id)
      * @return LiquidSnippet The created/updated snippet
      */
     public function saveSnippet(array $data): LiquidSnippet
     {
+        // Support both 'name' and 'title' for backward compatibility
+        $title = $data['name'] ?? $data['title'] ?? 'Untitled Snippet';
+        
+        $attributes = [
+            'description' => $data['description'] ?? null,
+            'code' => $data['code'],
+            'category' => $data['category'] ?? 'general',
+        ];
+        
+        // Include user_id if provided
+        if (isset($data['user_id'])) {
+            $attributes['user_id'] = $data['user_id'];
+        }
+        
         return LiquidSnippet::updateOrCreate(
-            ['name' => $data['name']],
-            [
-                'description' => $data['description'] ?? null,
-                'code' => $data['code'],
-                'category' => $data['category'] ?? 'general',
-            ]
+            ['title' => $title],
+            $attributes
         );
     }
 
