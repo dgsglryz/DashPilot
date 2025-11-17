@@ -17,8 +17,9 @@
         
         <form @submit.prevent="handleInvite" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
+            <label for="invite-name" class="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
             <input
+              id="invite-name"
               v-model="form.name"
               type="text"
               required
@@ -28,8 +29,9 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+            <label for="invite-email" class="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
             <input 
+              id="invite-email"
               v-model="form.email"
               type="email"
               required
@@ -39,8 +41,9 @@
           </div>
           
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Role</label>
+            <label for="invite-role" class="block text-sm font-medium text-gray-300 mb-2">Role</label>
             <select 
+              id="invite-role"
               v-model="form.role"
               class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
             >
@@ -52,8 +55,9 @@
           </div>
           
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Message (Optional)</label>
+            <label for="invite-message" class="block text-sm font-medium text-gray-300 mb-2">Message (Optional)</label>
             <textarea 
+              id="invite-message"
               v-model="form.message"
               rows="3"
               class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"

@@ -18,8 +18,9 @@
         <form @submit.prevent="handleGenerate" class="space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
+              <label for="report-start-date" class="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
               <input 
+                id="report-start-date"
                 v-model="form.startDate"
                 type="date"
                 required
@@ -28,8 +29,9 @@
             </div>
             
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">End Date</label>
+              <label for="report-end-date" class="block text-sm font-medium text-gray-300 mb-2">End Date</label>
               <input 
+                id="report-end-date"
                 v-model="form.endDate"
                 type="date"
                 required
@@ -39,8 +41,9 @@
           </div>
           
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Sites to Include</label>
+            <label for="report-sites" class="block text-sm font-medium text-gray-300 mb-2">Sites to Include</label>
             <select 
+              id="report-sites"
               v-model="form.siteIds"
               multiple
               class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
@@ -54,10 +57,11 @@
           </div>
           
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Format</label>
+            <span class="block text-sm font-medium text-gray-300 mb-2">Format</span>
             <div class="flex gap-3">
-              <label class="flex items-center gap-2 cursor-pointer">
+              <label for="format-pdf" class="flex items-center gap-2 cursor-pointer">
                 <input 
+                  id="format-pdf"
                   v-model="form.format"
                   type="radio"
                   value="pdf"
@@ -65,8 +69,9 @@
                 />
                 <span class="text-white">PDF</span>
               </label>
-              <label class="flex items-center gap-2 cursor-pointer">
+              <label for="format-csv" class="flex items-center gap-2 cursor-pointer">
                 <input 
+                  id="format-csv"
                   v-model="form.format"
                   type="radio"
                   value="csv"
@@ -74,8 +79,9 @@
                 />
                 <span class="text-white">CSV</span>
               </label>
-              <label class="flex items-center gap-2 cursor-pointer">
+              <label for="format-xlsx" class="flex items-center gap-2 cursor-pointer">
                 <input 
+                  id="format-xlsx"
                   v-model="form.format"
                   type="radio"
                   value="xlsx"

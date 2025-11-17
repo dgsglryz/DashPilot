@@ -33,16 +33,18 @@
             <form @submit.prevent="saveProfile" class="space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
+                  <label for="profile-name" class="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
                   <input 
+                    id="profile-name"
                     v-model="profileForm.name"
                     type="text"
                     class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+                  <label for="profile-email" class="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
                   <input 
+                    id="profile-email"
                     v-model="profileForm.email"
                     type="email"
                     class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
@@ -51,8 +53,9 @@
               </div>
               
               <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Company Name</label>
+                <label for="profile-company" class="block text-sm font-medium text-gray-300 mb-2">Company Name</label>
                 <input 
+                  id="profile-company"
                   v-model="profileForm.company"
                   type="text"
                   class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
@@ -74,8 +77,9 @@
             <form @submit.prevent="savePreferences" class="space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-2">Timezone</label>
+                  <label for="profile-timezone" class="block text-sm font-medium text-gray-300 mb-2">Timezone</label>
                   <select 
+                    id="profile-timezone"
                     v-model="profileForm.timezone"
                     class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
                   >
@@ -87,8 +91,9 @@
                   </select>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-2">Language</label>
+                  <label for="profile-language" class="block text-sm font-medium text-gray-300 mb-2">Language</label>
                   <select 
+                    id="profile-language"
                     v-model="profileForm.language"
                     class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
                   >
@@ -235,8 +240,9 @@
           <SettingsCard title="Webhook Test Console">
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Select Webhook</label>
+                <label for="webhook-select" class="block text-sm font-medium text-gray-300 mb-2">Select Webhook</label>
                 <select 
+                  id="webhook-select"
                   v-model="selectedWebhookForTest"
                   class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                 >
@@ -248,8 +254,9 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Test Payload</label>
+                <label for="webhook-payload" class="block text-sm font-medium text-gray-300 mb-2">Test Payload</label>
                 <textarea 
+                  id="webhook-payload"
                   v-model="testWebhookPayload"
                   rows="8"
                   class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white text-sm font-mono focus:outline-none focus:border-blue-500"
@@ -295,8 +302,9 @@
           <SettingsCard title="Change Password">
             <form @submit.prevent="changePassword" class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Current Password</label>
+                <label for="password-current" class="block text-sm font-medium text-gray-300 mb-2">Current Password</label>
                 <input 
+                  id="password-current"
                   v-model="passwordForm.currentPassword"
                   type="password"
                   class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
@@ -304,8 +312,9 @@
               </div>
               
               <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">New Password</label>
+                <label for="password-new" class="block text-sm font-medium text-gray-300 mb-2">New Password</label>
                 <input 
+                  id="password-new"
                   v-model="passwordForm.newPassword"
                   type="password"
                   class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
@@ -313,8 +322,9 @@
               </div>
               
               <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Confirm New Password</label>
+                <label for="password-confirm" class="block text-sm font-medium text-gray-300 mb-2">Confirm New Password</label>
                 <input 
+                  id="password-confirm"
                   v-model="passwordForm.newPassword_confirmation"
                   type="password"
                   class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
@@ -379,8 +389,9 @@
           <SettingsCard title="Check Intervals">
             <form @submit.prevent="saveMonitoring" class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Default Check Interval</label>
+                <label for="check-interval" class="block text-sm font-medium text-gray-300 mb-2">Default Check Interval</label>
                 <select 
+                  id="check-interval"
                   v-model="monitoringSettings.checkInterval"
                   class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
                 >
@@ -393,8 +404,9 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Timeout Duration</label>
+                <label for="timeout-duration" class="block text-sm font-medium text-gray-300 mb-2">Timeout Duration</label>
                 <select 
+                  id="timeout-duration"
                   v-model="monitoringSettings.timeout"
                   class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
                 >
@@ -420,8 +432,9 @@
             <form @submit.prevent="saveThresholds" class="space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-2">Uptime Threshold (%)</label>
+                  <label for="uptime-threshold" class="block text-sm font-medium text-gray-300 mb-2">Uptime Threshold (%)</label>
                   <input 
+                    id="uptime-threshold"
                     v-model.number="monitoringSettings.uptimeThreshold"
                     type="number"
                     min="0"
@@ -430,8 +443,9 @@
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-2">Response Time Threshold (ms)</label>
+                  <label for="response-time-threshold" class="block text-sm font-medium text-gray-300 mb-2">Response Time Threshold (ms)</label>
                   <input 
+                    id="response-time-threshold"
                     v-model.number="monitoringSettings.responseTimeThreshold"
                     type="number"
                     min="0"

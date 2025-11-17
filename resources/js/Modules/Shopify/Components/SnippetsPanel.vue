@@ -75,8 +75,9 @@
           
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Title</label>
+              <label for="snippet-title" class="block text-sm font-medium text-gray-300 mb-2">Title</label>
               <input 
+                id="snippet-title"
                 v-model="newSnippet.title"
                 type="text"
                 class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
@@ -84,8 +85,9 @@
             </div>
             
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
+              <label for="snippet-description" class="block text-sm font-medium text-gray-300 mb-2">Description</label>
               <input 
+                id="snippet-description"
                 v-model="newSnippet.description"
                 type="text"
                 class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
@@ -93,8 +95,9 @@
             </div>
             
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Category</label>
+              <label for="snippet-category" class="block text-sm font-medium text-gray-300 mb-2">Category</label>
               <select 
+                id="snippet-category"
                 v-model="newSnippet.category"
                 class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
               >
@@ -106,8 +109,9 @@
             </div>
             
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Code</label>
+              <label for="snippet-code" class="block text-sm font-medium text-gray-300 mb-2">Code</label>
               <textarea 
+                id="snippet-code"
                 v-model="newSnippet.code"
                 rows="8"
                 class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-blue-500"
